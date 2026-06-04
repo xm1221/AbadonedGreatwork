@@ -1,0 +1,8 @@
+{
+  hexdoc: {
+    abadoned_greatwork: {
+      title: "Abadoned Greatwork Book",
+      description: "Abadoned Greatwork addon for Hex Casting",
+    },
+  }
+}

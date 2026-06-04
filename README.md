@@ -1,2 +1,5 @@
-# AbadonedGreatwork
-A Hex Casting addon add some structures and blocks
+# Abadoned Greatwork
+
+[![powered by hexdoc](https://img.shields.io/endpoint?url=https://hexxy.media/api/v0/badge/hexdoc?label=1)](https://github.com/hexdoc-dev/hexdoc)
+
+Abadoned Greatwork addon for Hex Casting
