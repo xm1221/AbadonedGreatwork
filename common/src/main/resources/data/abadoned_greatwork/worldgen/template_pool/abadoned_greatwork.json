@@ -1,5 +1,5 @@
 {
-    "name": "abadoned_greatwork",
+    "name": "abadoned_greatwork:abadoned_greatwork",
     "fallback": "minecraft:empty",
     "elements": [{
         "weight": 2,
@@ -7,7 +7,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_center"
+                "location": "abadoned_greatwork:abadoned_greatwork_center"
         }
     },
 {
@@ -16,7 +16,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_road"
+                "location": "abadoned_greatwork:abadoned_greatwork_road"
         }
     },
 {
@@ -25,7 +25,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_road_1"
+                "location": "abadoned_greatwork:abadoned_greatwork_road_1"
         }
     },
 {
@@ -34,7 +34,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_road_2"
+                "location": "abadoned_greatwork:abadoned_greatwork_road_2"
         }
     },
 {
@@ -43,7 +43,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_room_1"
+                "location": "abadoned_greatwork:abadoned_greatwork_room_1"
         }
     },
 {
@@ -52,7 +52,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_room_2"
+                "location": "abadoned_greatwork:abadoned_greatwork_room_2"
         }
     },
 {
@@ -61,7 +61,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_akasha"
+                "location": "abadoned_greatwork:abadoned_akasha"
         }
     },
 {
@@ -70,7 +70,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_room_3"
+                "location": "abadoned_greatwork:abadoned_greatwork_room_3"
         }
     },
 {
@@ -79,7 +79,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_room_4"
+                "location": "abadoned_greatwork:abadoned_greatwork_room_4"
         }
     },
 {
@@ -88,7 +88,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_room_5"
+                "location": "abadoned_greatwork:abadoned_greatwork_room_5"
         }
 
     },
@@ -98,7 +98,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_room_6"
+                "location": "abadoned_greatwork:abadoned_greatwork_room_6"
         }
 
     },
@@ -108,7 +108,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_room_7"
+                "location": "abadoned_greatwork:abadoned_greatwork_room_7"
         }
 
     },
@@ -118,7 +118,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_up"
+                "location": "abadoned_greatwork:abadoned_greatwork_up"
         }
 
     },
@@ -128,7 +128,7 @@
             "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors": "minecraft:empty",
-                "location": "miehex:abadoned_greatwork_circles_1"
+                "location": "abadoned_greatwork:abadoned_greatwork_circles_1"
         }
 
     },
@@ -138,7 +138,7 @@
             "element_type": "minecraft:single_pool_element",
             "projection": "rigid",
             "processors": "minecraft:empty",
-            "location": "miehex:abadoned_akasha_1"
+            "location": "abadoned_greatwork:abadoned_akasha_1"
 
         }
     },
@@ -148,7 +148,7 @@
             "element_type": "minecraft:single_pool_element",
             "projection": "rigid",
             "processors": "minecraft:empty",
-            "location": "miehex:abadoned_greatwork_room_8"
+            "location": "abadoned_greatwork:abadoned_greatwork_room_8"
 
         }
     },
@@ -158,7 +158,7 @@
             "element_type": "minecraft:single_pool_element",
             "projection": "rigid",
             "processors": "minecraft:empty",
-            "location": "miehex:abadoned_greatwork_room_9"
+            "location": "abadoned_greatwork:abadoned_greatwork_room_9"
 
         }
     },
@@ -168,7 +168,7 @@
             "element_type": "minecraft:single_pool_element",
             "projection": "rigid",
             "processors": "minecraft:empty",
-            "location": "miehex:abadoned_greatwork_room_10"
+            "location": "abadoned_greatwork:abadoned_greatwork_room_10"
 
         }
     },
@@ -178,7 +178,7 @@
             "element_type": "minecraft:single_pool_element",
             "projection": "rigid",
             "processors": "minecraft:empty",
-            "location": "miehex:abadoned_greatwork_room_11"
+            "location": "abadoned_greatwork:abadoned_greatwork_room_11"
         }
     },
     {
@@ -187,7 +187,7 @@
             "element_type": "minecraft:single_pool_element",
             "projection": "rigid",
             "processors": "minecraft:empty",
-            "location": "miehex:abadoned_greatwork_room_12"
+            "location": "abadoned_greatwork:abadoned_greatwork_room_12"
         }
     },
     {
@@ -196,7 +196,7 @@
             "element_type": "minecraft:single_pool_element",
             "projection": "rigid",
             "processors": "minecraft:empty",
-            "location": "miehex:abadoned_greatwork_room_13"
+            "location": "abadoned_greatwork:abadoned_greatwork_room_13"
         }
     }
     

@@ -6,7 +6,7 @@ import at.petrak.hexcasting.api.casting.math.HexDir
 import at.petrak.hexcasting.api.casting.math.HexPattern
 import at.petrak.hexcasting.common.lib.HexRegistries
 import at.petrak.hexcasting.common.lib.hex.HexActions
-import cn.xm1221.abadoned_greatwork.casting.actions.spells.OpCongratulate
+
 
 object Abadoned_greatworkActions : Abadoned_greatworkRegistrar<ActionRegistryEntry>(
     HexRegistries.ACTION,

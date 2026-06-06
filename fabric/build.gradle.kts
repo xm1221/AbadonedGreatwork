@@ -67,7 +67,7 @@ dependencies {
     modLocalRuntime(libs.paucal.fabric)
     modLocalRuntime(libs.patchouli.fabric)
     modLocalRuntime(libs.cardinalComponents)
-    //modLocalRuntime(libs.serializationHooks)
+    modLocalRuntime(libs.serializationHooks)
     //modLocalRuntime(libs.trinkets)
     modLocalRuntime(libs.inline.fabric) { isTransitive = false }
 

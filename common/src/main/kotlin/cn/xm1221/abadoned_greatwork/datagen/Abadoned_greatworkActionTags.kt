@@ -17,12 +17,7 @@ class Abadoned_greatworkActionTags(
 ) : TagsProvider<ActionRegistryEntry>(output, HexRegistries.ACTION, provider) {
     override fun addTags(provider: HolderLookup.Provider) {
         // per-world great spells
-        for (entry in arrayOf(
-            Abadoned_greatworkActions.GREAT_CONGRATULATE,
-        )) {
-            tag(HexTags.Actions.CAN_START_ENLIGHTEN).add(entry.key)
-            tag(HexTags.Actions.PER_WORLD_PATTERN).add(entry.key)
-            tag(HexTags.Actions.REQUIRES_ENLIGHTENMENT).add(entry.key)
+
         }
     }
-}
+

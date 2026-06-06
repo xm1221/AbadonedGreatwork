@@ -4,7 +4,7 @@
     "step": "strongholds",
     "terrain_adaptation": "beard_thin",
     "spawn_overrides": {},
-    "start_pool": "miehex:ruined_circles_nether",
+    "start_pool": "abadoned_greatwork:ruined_circles_nether",
     "size": 7,
     "start_height": {
         "absolute": 80

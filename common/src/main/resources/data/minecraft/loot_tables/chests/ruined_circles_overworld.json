@@ -1,0 +1,70 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 2,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:directrix/empty",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:impetus/empty",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:impetus/rightclick",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:impetus/redstone",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:impetus/look",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:directrix/redstone",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:directrix/boolean",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 7,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:slate_block",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:quenched_allay_shard",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:charged_amethyst",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:slate",
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

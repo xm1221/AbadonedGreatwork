@@ -1,5 +1,5 @@
 {
-    "name": "miehex:ruined_circles_shulik",
+    "name": "abadoned_greatwork:ruined_circles_shulik",
     "fallback":"minecraft:empty",
     "elements": [
         {
@@ -8,7 +8,7 @@
                 "projection":"rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors":"minecraft:empty",
-                "location":"miehex:ruined_circle_shulk"
+                "location":"abadoned_greatwork:ruined_circle_shulk"
             }
         }
     ]

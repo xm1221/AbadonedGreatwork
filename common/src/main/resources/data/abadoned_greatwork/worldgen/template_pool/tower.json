@@ -1,5 +1,5 @@
 {
-    "name": "miehex:tower",
+    "name": "abadoned_greatwork:tower",
     "fallback":"minecraft:empty",
     "elements": [
         {
@@ -8,7 +8,7 @@
                 "projection":"rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors":"minecraft:empty",
-                "location":"miehex:tower"
+                "location":"abadoned_greatwork:tower"
             }
         }
     ]

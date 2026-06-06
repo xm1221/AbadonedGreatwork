@@ -4,7 +4,7 @@
     "step": "underground_decoration",
     "terrain_adaptation": "beard_thin",
     "spawn_overrides": {},
-    "start_pool": "miehex:ruined_circles_overworld",
+    "start_pool": "abadoned_greatwork:ruined_circles_overworld",
     "size": 7,
     "start_height": {
         "absolute": 68

@@ -4,7 +4,7 @@
     "step": "strongholds",
     "terrain_adaptation": "bury",
     "spawn_overrides": {},
-    "start_pool": "miehex:abadoned_greatwork",
+    "start_pool": "abadoned_greatwork:abadoned_greatwork",
     "size": 7,
     "start_height": {
         "absolute": -10

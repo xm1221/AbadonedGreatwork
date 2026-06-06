@@ -1,0 +1,573 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": 3,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:scroll",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{op_id:\"hexcasting:brainsweep\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:scroll",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{op_id:\"miehex:allay_mix\"}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:quenched_allay_shard",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:slate",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:slate_block",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:slate_block",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:air",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:air",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:1}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:2}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:3}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:4}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:5}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:6}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:7}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:trinket",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:1}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:trinket",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:2}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:trinket",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:3}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:trinket",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:4}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:trinket",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:5}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:trinket",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:6}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:trinket",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:7}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:tag",
+          "name": "hexcasting:staves",
+          "expand": true,
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:air",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:air",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:jeweler_hammer",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{Damage:0}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:jeweler_hammer",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{Damage:1000}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:jeweler_hammer",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{Damage:500}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 5,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:amethyst_dust",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:charged_amethyst",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:amethyst_dust",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:charged_amethyst",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:amethyst_dust",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:charged_amethyst",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:amethyst_dust",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:charged_amethyst",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:amethyst_dust",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:charged_amethyst",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:quenched_allay_tiles",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:quenched_allay_bricks",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:air",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:battery",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{\"hexcasting:media\":6400000L,\"hexcasting:start_media\":6400000L}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:battery",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{\"hexcasting:media\":6400000L,\"hexcasting:start_media\":64000000L}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:air",
+          "weight": 1
+        },
+        {
+          "type": "minecraft:tag",
+          "name": "hex_machina:hex_machina",
+          "expand": true,
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:1}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:2}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:3}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:4}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:5}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:6}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:focus",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:7}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:artifact",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:1}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:artifact",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:2}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:artifact",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:3}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:artifact",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:4}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:artifact",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:5}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:artifact",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:6}"
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hexcasting:artifact",
+          "weight": 1,
+          "functions": [
+            {
+              "function": "minecraft:set_nbt",
+              "tag": "{variant:7}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

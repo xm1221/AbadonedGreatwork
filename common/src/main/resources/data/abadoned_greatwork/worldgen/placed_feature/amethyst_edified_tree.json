@@ -1,0 +1,8 @@
+{
+  "feature": "hexcasting:amethyst_edified_tree",
+  "placement": [
+    {
+      "type": "minecraft:biome"
+      }
+  ]
+}

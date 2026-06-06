@@ -1,5 +1,5 @@
 {
-    "name": "miehex:ruined_circles_overworld",
+    "name": "abadoned_greatwork:ruined_circles_overworld",
     "fallback":"minecraft:empty",
     "elements": [
         {
@@ -8,7 +8,7 @@
                 "projection":"rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors":"minecraft:empty",
-                "location":"miehex:ruined_circle_1"
+                "location":"abadoned_greatwork:ruined_circle_1"
             }
         },
         {
@@ -17,7 +17,7 @@
                 "projection":"rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors":"minecraft:empty",
-                "location":"miehex:ruined_circle_2"
+                "location":"abadoned_greatwork:ruined_circle_2"
             }
         },
         {
@@ -26,7 +26,7 @@
                 "projection":"rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors":"minecraft:empty",
-                "location":"miehex:ruined_circle_4"
+                "location":"abadoned_greatwork:ruined_circle_4"
             }
         },
         {
@@ -35,7 +35,7 @@
                 "projection":"rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors":"minecraft:empty",
-                "location":"miehex:ruined_circle_5"
+                "location":"abadoned_greatwork:ruined_circle_5"
             }
         },
         {
@@ -44,7 +44,7 @@
                 "projection":"rigid",
                 "element_type": "minecraft:single_pool_element",
                 "processors":"minecraft:empty",
-                "location":"miehex:ruined_circle_6"
+                "location":"abadoned_greatwork:ruined_circle_6"
             }
         }
     

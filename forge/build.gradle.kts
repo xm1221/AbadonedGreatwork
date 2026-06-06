@@ -74,7 +74,7 @@ dependencies {
     modLocalRuntime(libs.patchouli.forge)
     modLocalRuntime(libs.caelus)
     modLocalRuntime(libs.inline.forge) { isTransitive = false }
-
+    modLocalRuntime(libs.serializationHooks)
     modApi(libs.clothConfig.forge)
 
     libs.mixinExtras.common.also {
