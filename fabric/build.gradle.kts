@@ -62,6 +62,7 @@ dependencies {
         // If not excluded here, calls a nonexistent method and crashes the dev client
         exclude(module = "phosphor")
     }
+
     // Hex Casting dependencies
     // we use modLocalRuntime to add these to the development runtime, but not at compile time or for consumers of this project
     modLocalRuntime(libs.paucal.fabric)
@@ -81,4 +82,5 @@ dependencies {
         exclude(group = "net.fabricmc.fabric-api")
     }
     modImplementation(libs.modMenu)
+    fileTree(baseDir = "libs").also { it.include("fabric") }
 }

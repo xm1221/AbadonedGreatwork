@@ -6,6 +6,9 @@ import org.apache.logging.log4j.Logger
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkServerConfig
 import cn.xm1221.abadoned_greatwork.networking.Abadoned_greatworkNetworking
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkActions
+import net.minecraft.core.registries.Registries
+import net.minecraft.server.MinecraftServer
+import net.minecraft.world.level.biome.Biome
 
 object Abadoned_greatwork {
     const val MODID = "abadoned_greatwork"
@@ -15,6 +18,9 @@ object Abadoned_greatwork {
 
     @JvmStatic
     fun id(path: String) = ResourceLocation(MODID, path)
+
+    @JvmStatic
+    val EDIFIED_BIOME: ResourceLocation = ResourceLocation(MODID, "edified")
 
     fun init() {
         Abadoned_greatworkServerConfig.init()

@@ -6,7 +6,8 @@
   "client": [
   ],
   "mixins": [
-    "MixinDatagenMain"
+    "MixinDatagenMain",
+    "PatternIotaMixin"
   ],
   "plugin": "cn.xm1221.abadoned_greatwork.mixin.Abadoned_greatworkMixinConfigPlugin",
   "injectors": {

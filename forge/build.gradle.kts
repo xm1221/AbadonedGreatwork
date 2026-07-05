@@ -86,6 +86,8 @@ dependencies {
         localRuntime(it)
         include(it)
     }
+
+    fileTree(baseDir = "libs").also { it.include("forge") }
 }
 
 tasks {

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:random_selector",
+  "config": {
+    "default": "abadoned_greatwork:amethyst_edified_tree",
+    "features": [
+      {
+        "chance": 0.1,
+        "feature": "abadoned_greatwork:citrine_edified_tree"
+      },
+      {
+        "chance": 0.3,
+        "feature": "abadoned_greatwork:aventurine_edified_tree"
+      },
+      {
+        "chance": 0.33333334,
+        "feature": "abadoned_greatwork:amethyst_edified_tree"
+      }
+    ]
+  }
+}

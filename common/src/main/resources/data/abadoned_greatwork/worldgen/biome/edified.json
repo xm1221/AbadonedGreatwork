@@ -1,6 +1,6 @@
 {
   "has_precipitation": true,
-  "temperature": 0.8,
+  "temperature": 0.7,
   "temperature_modifier": "none",
   "downfall": 0.4,
   "attributes": {
@@ -11,7 +11,7 @@
     "water_color": 4159204,
     "fog_color": 329011,
     "water_fog_color": 329011,
-    "grass_color": 11691775,
+    "grass_color": 26112,
     "foliage_color": 9562529,
     "dry_foliage_color": 16777215,
     "grass_color_modifier": "none"
@@ -67,7 +67,7 @@
     ],
     [
       "minecraft:glow_lichen",
-      "abadoned_greatwork:amethyst_edified_tree",
+      "abadoned_greatwork:edified_trees",
       "minecraft:patch_pumpkin"
     ],
     [
