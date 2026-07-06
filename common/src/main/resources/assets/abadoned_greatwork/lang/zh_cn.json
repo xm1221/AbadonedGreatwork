@@ -1,3 +1,13 @@
 {
-  "abandoned_greatwork.test.mishap": "Can not use the SPELL!"
+  "itemGroup.abadoned_greatwork.main": "被遗弃的卓伟之作",
+  "block.abadoned_greatwork.truth_crystal": "真理水晶基座",
+  "item.abadoned_greatwork.item_truth_crystal": "真理水晶",
+  "item.abadoned_greatwork.truth_crystal": "真理水晶基座",
+  "abandoned_greatwork.test.mishap": "不能使用法术！",
+  "text.abadoned_greatwork.crystal.tooltip": "谜题",
+  "text.abadoned_greatwork.crystal.length_exceed": "错误：手持法术列表长度(%s)超过水晶长度上限！",
+  "text.abadoned_greatwork.crystal.no_input": "错误：水晶未设置输入数据！",
+  "text.abadoned_greatwork.crystal.no_output": "错误：水晶未设置输出数据！",
+  "text.abadoned_greatwork.crystal.wrong": "验证失败：栈结果与期望输出不一致！",
+  "text.abadoned_greatwork.crystal.success": "祝贺！所有验证通过！"
 }

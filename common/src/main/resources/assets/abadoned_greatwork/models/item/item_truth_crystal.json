@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "abadoned_greatwork:block/truth_crystal"
+  }
+}

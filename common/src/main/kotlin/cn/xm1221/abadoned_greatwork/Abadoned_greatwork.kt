@@ -6,6 +6,10 @@ import org.apache.logging.log4j.Logger
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkServerConfig
 import cn.xm1221.abadoned_greatwork.networking.Abadoned_greatworkNetworking
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkActions
+import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
+import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlocks
+import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkCreativeTabs
+import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkItems
 import net.minecraft.core.registries.Registries
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.level.biome.Biome
@@ -26,6 +30,10 @@ object Abadoned_greatwork {
         Abadoned_greatworkServerConfig.init()
         initRegistries(
             Abadoned_greatworkActions,
+            Abadoned_greatworkBlocks,
+            Abadoned_greatworkItems,
+            Abadoned_greatworkBlockEntities,
+            Abadoned_greatworkCreativeTabs,
         )
         Abadoned_greatworkNetworking.init()
     }

@@ -1,3 +1,13 @@
 {
-  "abandoned_greatwork.test.mishap": "Can not use the SPELL!"
+  "itemGroup.abadoned_greatwork.main": "Abadoned Greatwork",
+  "block.abadoned_greatwork.truth_crystal": "Truth Crystal",
+  "item.abadoned_greatwork.item_truth_crystal": "Truth Crystal Item",
+  "item.abadoned_greatwork.truth_crystal": "Truth Crystal",
+  "abandoned_greatwork.test.mishap": "Can not use the SPELL!",
+  "text.abadoned_greatwork.crystal.tooltip": "riddle",
+  "text.abadoned_greatwork.crystal.length_exceed": "Error: spell list length exceeds crystal limit (%s)!",
+  "text.abadoned_greatwork.crystal.no_input": "Error: crystal has no input data!",
+  "text.abadoned_greatwork.crystal.no_output": "Error: crystal has no output data!",
+  "text.abadoned_greatwork.crystal.wrong": "Verification failed: stack result does not match expected output!",
+  "text.abadoned_greatwork.crystal.success": "Congratulations! All verifications passed!"
 }

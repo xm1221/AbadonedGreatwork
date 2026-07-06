@@ -1,0 +1,148 @@
+package cn.xm1221.abadoned_greatwork.item;
+
+import at.petrak.hexcasting.api.casting.iota.Iota;
+import at.petrak.hexcasting.api.casting.iota.IotaType;
+import at.petrak.hexcasting.api.casting.iota.ListIota;
+import at.petrak.hexcasting.api.utils.NBTHelper;
+import at.petrak.hexcasting.common.items.storage.ItemFocus;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+public class ItemTruthCrystal extends ItemFocus {
+
+    public static final String LENGTH_LIMIT = "length_limit";
+
+    public static final String INPUT = "input";
+
+    public static final String OUTPUT = "output";
+
+    public static final String TOOLTIP = "tooltip";
+
+    public static final String MODE = "mode";
+
+    public static final String CAN_WRITE = "can_write";
+    public ItemTruthCrystal(Properties pProperties) {
+        super(pProperties);
+    }
+
+    public static int getLengthLimit(ItemStack itemStack) {
+        return NBTHelper.getInt(itemStack, LENGTH_LIMIT);
+    }
+
+    public static void setLengthLimit(ItemStack itemStack, int lengthLimit) {
+        NBTHelper.putInt(itemStack, LENGTH_LIMIT, lengthLimit);
+    }
+
+    public static Iterable<Iota> getInput(ItemStack itemStack, ServerLevel level, Boolean bl) {
+        var inputs = NBTHelper.get(itemStack, INPUT);
+        if (!(inputs instanceof CompoundTag tag)) return null;
+        var list0 = NBTHelper.get(tag, "0");
+        var list1 = NBTHelper.get(tag, "1");
+        if (!(list0 instanceof CompoundTag tag0) || !(list1 instanceof CompoundTag tag1)) return null;
+        var iota0 = IotaType.deserialize(tag0, level);
+        var iota1 = IotaType.deserialize(tag1, level);
+        if (iota0 instanceof ListIota li0 && iota1 instanceof ListIota li1) {
+            return bl ? li0.getList() : li1.getList();
+        }
+        return null;
+    }
+
+    public static void setInput(ItemStack itemStack, ListIota list0, ListIota list1) {
+        var inputs = new CompoundTag();
+        NBTHelper.put(inputs, "0", list0.serialize());
+        NBTHelper.put(inputs, "1", list1.serialize());
+        NBTHelper.put(itemStack, INPUT, inputs);
+    }
+
+    public static void setOutput(ItemStack itemStack, ListIota list0, ListIota list1) {
+        var output = new CompoundTag();
+        NBTHelper.put(output, "0", list0.serialize());
+        NBTHelper.put(output, "1", list1.serialize());
+        NBTHelper.put(itemStack, OUTPUT, output);
+    }
+
+    public static Iterable<Iota> getOutput(ItemStack itemStack, ServerLevel level, Boolean bl) {
+        var outputs = NBTHelper.get(itemStack, OUTPUT);
+        if (!(outputs instanceof CompoundTag tag)) return null;
+        var list0 = NBTHelper.get(tag, "0");
+        var list1 = NBTHelper.get(tag, "1");
+        if (!(list0 instanceof CompoundTag tag0) || !(list1 instanceof CompoundTag tag1)) return null;
+        var iota0 = IotaType.deserialize(tag0, level);
+        var iota1 = IotaType.deserialize(tag1, level);
+        if (iota0 instanceof ListIota li0 && iota1 instanceof ListIota li1) {
+            return bl ? li0.getList() : li1.getList();
+        }
+        return null;
+    }
+
+    public static void setTooltip(ItemStack itemStack, String tooltip) {
+        NBTHelper.putString(itemStack, TOOLTIP, tooltip);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack pStack, @Nullable Level pLevel, List<Component> pTooltipComponents,
+                                TooltipFlag pIsAdvanced) {
+        //super.appendHoverText(pStack, pLevel, pTooltipComponents, pIsAdvanced);
+        pTooltipComponents.add(Component.translatable("text.abadoned_greatwork.crystal.tooltip"));
+        var text = NBTHelper.getString(pStack, TOOLTIP);
+        if (text != null && !text.isEmpty()) {
+            pTooltipComponents.add(Component.translatable(text));
+        }
+    }
+
+    public static ItemTruthCrystal getNew() {
+        return new ItemTruthCrystal(new Properties().stacksTo(1));
+    }
+
+
+    @Override
+    public boolean canWrite(ItemStack stack, Iota datum) {
+        return NBTHelper.getBoolean(stack,CAN_WRITE);
+    }
+
+   /* @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        /*if(entity instanceof ServerPlayer player) {
+            if(player.isCreative()) {
+                NBTHelper.putBoolean(stack, "visible", true);
+            }
+            else {
+                NBTHelper.putBoolean(stack, "visible", false);
+            }
+        }
+    }*/
+
+    public static void setMode(ItemStack itemStack,String mode) {
+        NBTHelper.putString(itemStack, MODE, mode);
+
+    }
+
+    public static String getMode(ItemStack itemStack) {
+        return NBTHelper.getString(itemStack, MODE);
+    }
+
+    @Override
+    public void writeDatum(ItemStack stack, @Nullable Iota iota){
+        setMode(stack, "eval");
+        super.writeDatum(stack, iota);
+    }
+
+    @Override
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        NBTHelper.putBoolean(stack, CAN_WRITE,true);
+    }
+
+
+
+
+}
