@@ -3,7 +3,6 @@ package cn.xm1221.abadoned_greatwork.item;
 import at.petrak.hexcasting.api.casting.iota.Iota;
 import at.petrak.hexcasting.api.casting.iota.IotaType;
 import at.petrak.hexcasting.api.casting.iota.ListIota;
-import at.petrak.hexcasting.api.item.IotaHolderItem;
 import at.petrak.hexcasting.api.utils.NBTHelper;
 import at.petrak.hexcasting.common.items.storage.ItemFocus;
 import net.minecraft.ChatFormatting;
@@ -158,64 +157,20 @@ public class ItemTruthCrystal extends ItemFocus {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> components,
                                 TooltipFlag flag) {
-        // 1. 存储的 iota（仿照 IotaHolderItem.appendHoverText）
-        IotaHolderItem.appendHoverText(this, stack, components, flag);
-
-        // 2. 长度限制
         int limit = getLengthLimit(stack);
         if (limit > 0) {
             components.add(Component.translatable("text.abadoned_greatwork.crystal.length", limit)
                     .withStyle(ChatFormatting.GRAY));
         }
-
-        // 3. 谜题提示
+        components.add(Component.translatable("text.abadoned_greatwork.crystal.tooltip"));
         var text = NBTHelper.getString(stack, TOOLTIP);
         if (text != null && !text.isEmpty()) {
             components.add(Component.translatable(text).withStyle(ChatFormatting.GOLD));
         }
 
-        // 4. 合成标记
         if (isCrafted(stack)) {
             components.add(Component.translatable("text.abadoned_greatwork.crystal.crafted")
                     .withStyle(ChatFormatting.DARK_GRAY));
-        }
-
-        // 5. 创造/高级模式：显示 input / output
-        var tag = stack.getOrCreateTag();
-        if (flag.isCreative() || flag.isAdvanced()) {
-            if (level instanceof ServerLevel serverLevel) {
-                if (tag.contains(INPUT)) {
-                    components.add(Component.translatable("text.abadoned_greatwork.crystal.input_0")
-                            .withStyle(ChatFormatting.AQUA));
-                    showIotaList(getInput(stack, serverLevel, true), components);
-
-                    components.add(Component.translatable("text.abadoned_greatwork.crystal.input_1")
-                            .withStyle(ChatFormatting.AQUA));
-                    showIotaList(getInput(stack, serverLevel, false), components);
-                }
-                if (tag.contains(OUTPUT)) {
-                    components.add(Component.translatable("text.abadoned_greatwork.crystal.output_0")
-                            .withStyle(ChatFormatting.GOLD));
-                    showIotaList(getOutput(stack, serverLevel, true), components);
-
-                    components.add(Component.translatable("text.abadoned_greatwork.crystal.output_1")
-                            .withStyle(ChatFormatting.GOLD));
-                    showIotaList(getOutput(stack, serverLevel, false), components);
-                }
-            }
-        }
-    }
-
-    /** 使用 IotaType.getDisplay 格式化列表（仿照 IotaHolderItem 风格） */
-    private static void showIotaList(@Nullable Iterable<Iota> iotas, List<Component> components) {
-        if (iotas == null) return;
-        int i = 0;
-        for (Iota iota : iotas) {
-            var tag = IotaType.serialize(iota);
-            var display = IotaType.getDisplay(tag);
-            components.add(Component.literal("  #" + i + ": ").append(display)
-                    .withStyle(ChatFormatting.GRAY));
-            i++;
         }
     }
 

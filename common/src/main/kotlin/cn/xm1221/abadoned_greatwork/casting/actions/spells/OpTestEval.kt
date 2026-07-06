@@ -19,6 +19,7 @@ import at.petrak.hexcasting.api.utils.serializeToNBT
 import cn.xm1221.abadoned_greatwork.casting.TestCastingEnv
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.world.entity.player.Player
 
 class OpTestEval(): SpellAction {
     override val argc: Int
@@ -29,6 +30,9 @@ class OpTestEval(): SpellAction {
         env: CastingEnvironment
     ): SpellAction.Result {
         val caster  = env.castingEntity
+        if(caster !is Player || !caster.isCreative) {
+            throw MishapBadCaster()
+        }
         if(caster == null){
             throw MishapBadCaster()
         }
