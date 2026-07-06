@@ -1,6 +1,16 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "abadoned_greatwork:block/truth_crystal"
-  }
+    "layer0": "abadoned_greatwork:item/truth_crystal_0"
+  },
+  "overrides": [
+    {
+      "predicate": { "variants": 1.0 },
+      "model": "abadoned_greatwork:item/item_truth_crystal_1"
+    },
+    {
+      "predicate": { "variants": 2.0 },
+      "model": "abadoned_greatwork:item/item_truth_crystal_2"
+    }
+  ]
 }

@@ -1,13 +1,21 @@
 {
   "itemGroup.abadoned_greatwork.main": "Abadoned Greatwork",
-  "block.abadoned_greatwork.truth_crystal": "Truth Crystal",
-  "item.abadoned_greatwork.item_truth_crystal": "Truth Crystal Item",
-  "item.abadoned_greatwork.truth_crystal": "Truth Crystal",
+  "block.abadoned_greatwork.truth_crystal": "Truth Crystal Base",
+  "item.abadoned_greatwork.item_truth_crystal": "Truth Crystal",
+  "item.abadoned_greatwork.truth_crystal": "Truth Crystal Base",
   "abandoned_greatwork.test.mishap": "Can not use the SPELL!",
-  "text.abadoned_greatwork.crystal.tooltip": "riddle",
+  "text.abadoned_greatwork.crystal.tooltip": "Riddle",
+  "text.abadoned_greatwork.crystal.variant": "Variant %s",
+  "text.abadoned_greatwork.crystal.crafted": "(Practice)",
+  "text.abadoned_greatwork.crystal.input_0": "> Input 0:",
+  "text.abadoned_greatwork.crystal.input_1": "> Input 1:",
+  "text.abadoned_greatwork.crystal.output_0": "> Expected Output 0:",
+  "text.abadoned_greatwork.crystal.output_1": "> Expected Output 1:",
+  "text.abadoned_greatwork.crystal.stored_iota": "> Stored Spell:",
   "text.abadoned_greatwork.crystal.length_exceed": "Error: spell list length exceeds crystal limit (%s)!",
   "text.abadoned_greatwork.crystal.no_input": "Error: crystal has no input data!",
   "text.abadoned_greatwork.crystal.no_output": "Error: crystal has no output data!",
   "text.abadoned_greatwork.crystal.wrong": "Verification failed: stack result does not match expected output!",
-  "text.abadoned_greatwork.crystal.success": "Congratulations! All verifications passed!"
+  "text.abadoned_greatwork.crystal.success_crafted": "Practice verification passed! (not consumed)",
+  "text.abadoned_greatwork.crystal.success_reward": "Congratulations! Verification passed! Reward granted!"
 }

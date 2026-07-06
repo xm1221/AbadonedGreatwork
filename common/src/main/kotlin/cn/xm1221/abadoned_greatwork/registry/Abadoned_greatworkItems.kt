@@ -45,7 +45,14 @@ object Abadoned_greatworkItems : Abadoned_greatworkRegistrar<Item>(
     /** 真理水晶的 BlockItem */
     val TRUTH_CRYSTAL = registerBlockItem(Abadoned_greatworkBlocks.TRUTH_CRYSTAL)
 
-   val ITEM_TRUTH_CRYSTAL = registerItem("item_truth_crystal", ItemTruthCrystal::getNew)
+    /** 真理水晶（变体 0） */
+    val TRUTH_CRYSTAL_0 = registerItem("truth_crystal_0", ItemTruthCrystal::create0)
+
+    /** 真理水晶（变体 1） */
+    val TRUTH_CRYSTAL_1 = registerItem("truth_crystal_1", ItemTruthCrystal::create1)
+
+    /** 真理水晶（变体 2） */
+    val TRUTH_CRYSTAL_2 = registerItem("truth_crystal_2", ItemTruthCrystal::create2)
 
     /**
      * 注册一个普通物品。
