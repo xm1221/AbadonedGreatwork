@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "abadoned_greatwork:item_truth_crystal_0"
+    },
+    "title": {
+      "translate": "advancements.abadoned_greatwork.root.title"
+    },
+    "description": {
+      "translate": "advancements.abadoned_greatwork.root.description"
+    },
+    "background": "minecraft:textures/block/amethyst_block.png",
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "tick": {
+      "trigger": "minecraft:tick"
+    }
+  }
+}

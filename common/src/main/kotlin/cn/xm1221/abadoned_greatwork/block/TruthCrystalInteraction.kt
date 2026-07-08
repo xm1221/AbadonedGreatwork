@@ -9,7 +9,9 @@ import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
 import cn.xm1221.abadoned_greatwork.casting.TestCastingEnv
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
@@ -30,6 +32,13 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams
  */
 object TruthCrystalInteraction {
 
+    private fun grant(player: Player, name: String) {
+        val sp = player as? ServerPlayer ?: return
+        val id = ResourceLocation("abadoned_greatwork", name)
+        val adv = sp.server.advancements.getAdvancement(id) ?: return
+        sp.advancements.award(adv, "impossible")
+    }
+
     fun handle(
         be: TruthCrystalBlockEntity,
         player: Player,
@@ -40,6 +49,9 @@ object TruthCrystalInteraction {
         if (crystalStack.item !is ItemTruthCrystal) return InteractionResult.PASS
 
         val heldItem = heldStack.item as? IotaHolderItem ?: return InteractionResult.PASS
+
+        // 进度：首次尝试
+        grant(player, "attempt_puzzle")
 
         // 读取手持物品中的 iota
         val heldIota = heldItem.readIota(heldStack, level) ?: return InteractionResult.PASS
@@ -86,6 +98,7 @@ object TruthCrystalInteraction {
         player: Player,
         level: ServerLevel,
     ): InteractionResult {
+        grant(player, "solve_puzzle")
         if (ItemTruthCrystal.isCrafted(crystalStack)) {
             // 合成品：练习模式，不消耗
             player.sendSystemMessage(

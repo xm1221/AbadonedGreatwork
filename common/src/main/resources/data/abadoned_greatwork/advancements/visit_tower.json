@@ -1,0 +1,36 @@
+{
+  "parent": "abadoned_greatwork:root",
+  "display": {
+    "icon": {
+      "item": "minecraft:stone_bricks"
+    },
+    "title": {
+      "translate": "advancements.abadoned_greatwork.visit_tower.title"
+    },
+    "description": {
+      "translate": "advancements.abadoned_greatwork.visit_tower.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "in_structure": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "structure": "abadoned_greatwork:tower"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

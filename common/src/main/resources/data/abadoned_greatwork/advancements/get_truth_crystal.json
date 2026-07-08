@@ -1,0 +1,30 @@
+{
+  "parent": "abadoned_greatwork:root",
+  "display": {
+    "icon": {
+      "item": "abadoned_greatwork:item_truth_crystal_0"
+    },
+    "title": {
+      "translate": "advancements.abadoned_greatwork.get_truth_crystal.title"
+    },
+    "description": {
+      "translate": "advancements.abadoned_greatwork.get_truth_crystal.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_crystal": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": ["abadoned_greatwork:item_truth_crystal_0"] },
+          { "items": ["abadoned_greatwork:item_truth_crystal_1"] },
+          { "items": ["abadoned_greatwork:item_truth_crystal_2"] }
+        ]
+      }
+    }
+  }
+}

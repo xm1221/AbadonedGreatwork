@@ -1,0 +1,23 @@
+{
+  "parent": "abadoned_greatwork:root",
+  "display": {
+    "icon": {
+      "item": "abadoned_greatwork:truth_crystal"
+    },
+    "title": {
+      "translate": "advancements.abadoned_greatwork.attempt_puzzle.title"
+    },
+    "description": {
+      "translate": "advancements.abadoned_greatwork.attempt_puzzle.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "impossible": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
