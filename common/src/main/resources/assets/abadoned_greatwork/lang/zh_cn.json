@@ -48,6 +48,11 @@
   "advancements.abadoned_greatwork.visit_ruined_circles_shulk.title": "幽暗深处",
   "advancements.abadoned_greatwork.visit_ruined_circles_shulk.description": "发现深暗废弃法术环结构",
   "advancements.abadoned_greatwork.visit_tower.title": "高塔遗迹",
-  "advancements.abadoned_greatwork.visit_tower.description": "发现奇怪的高塔"
+  "advancements.abadoned_greatwork.visit_tower.description": "发现奇怪的高塔",
+  "hexcasting.entry.truth_crystal": "真理水晶",
+  "hexcasting.page.truth_crystal.1": "古代咒法师遗留下的的遗物之一，便是这$(l)真理水晶$()。这些神秘的晶体似乎曾被用作测试工具——通过要求学徒生成特定的法术图案来评估其技艺水准。$(br2)一枚真理水晶蕴含一个谜题,以及一个描述，还有限制提交图案列表的长度。有志的咒法师必须破解谜题，得到正确的图案列表",
+  "hexcasting.page.truth_crystal.3": "要尝试解谜，请将真理水晶放入$(l)真理水晶基座$()，然后手持含有Iota的物品右键基座。水晶将评估你的法术并裁定结果。$(br2)若验证通过，水晶将被消耗，并从该水晶对应的战利品表中发放奖励。",
+  "hexcasting.page.truth_crystal.crafting": "知识被埋藏在历史里，智慧被抛弃在尘世间",
+  "hexcasting.entry.abadoned_greatwork_loot": "战利品与奖励"
 
 }

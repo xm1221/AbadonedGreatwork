@@ -48,6 +48,14 @@
   "advancements.abadoned_greatwork.visit_ruined_circles_shulk.title": "Dark Ruined Circles",
   "advancements.abadoned_greatwork.visit_ruined_circles_shulk.description": "Discover Ruined Circles in the Deep Dark",
   "advancements.abadoned_greatwork.visit_tower.title": "Tower Ruins",
-  "advancements.abadoned_greatwork.visit_tower.description": "Discover a Tower structure"
+  "advancements.abadoned_greatwork.visit_tower.description": "Discover a Tower structure",
+  "hexcasting.entry.truth_crystal": "Truth Crystal",
+  "hexcasting.page.truth_crystal.1": "One of the most fascinating relics left behind by ancient hexcasters is the $(l)Truth Crystal$(). These mysterious crystals appear to have been used as testing tools — designed to evaluate the skill of an apprentice by challenging them to produce specific spell patterns.",
+  "hexcasting.page.truth_crystal.2": "A Truth Crystal contains a riddle: two sets of input lists, and two sets of expected output lists. The aspiring hexcaster must cast a spell that, when applied to the inputs, produces the correct outputs.$(br2)Each crystal also has a length limit that restricts how long the submitted pattern list may be.",
+  "hexcasting.page.truth_crystal.3": "To attempt a riddle, place the Truth Crystal into a $(l)Truth Crystal Base$(), then right-click the base while holding an item containing a spell (such as a Cypher or Focus). The crystal will evaluate your spell and judge the result.",
+  "hexcasting.page.truth_crystal.4": "If successful, the crystal will be consumed and a reward will be granted from a loot table specific to that crystal.$(br2)Crystals that were crafted by the player are marked as $(o)practice$() items — they can be tested without being consumed, but yield no reward upon success.",
+  "hexcasting.page.truth_crystal.crafting": "The Truth Crystal Base is crafted by combining charged amethyst, slate, and amethyst dust.",
+  "hexcasting.entry.abadoned_greatwork_loot": "Loot and Rewards"
+
 
 }

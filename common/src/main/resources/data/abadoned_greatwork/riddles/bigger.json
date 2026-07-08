@@ -1,0 +1,9 @@
+{
+  "name_key": "text.abadoned_greatwork.riddles.bigger",
+  "input0": "{hexcasting:type:\"hexcasting:list\",hexcasting:data:[{hexcasting:type:\"hexcasting:double\",hexcasting:data:0.0d},{hexcasting:type:\"hexcasting:double\",hexcasting:data:1.0d}]}",
+  "input1": "{hexcasting:type:\"hexcasting:list\",hexcasting:data:[{hexcasting:type:\"hexcasting:double\",hexcasting:data:3.0d},{hexcasting:type:\"hexcasting:double\",hexcasting:data:2.0d}]}",
+  "output0": "{hexcasting:type:\"hexcasting:list\",hexcasting:data:[{hexcasting:type:\"hexcasting:double\",hexcasting:data:1.0d}]}",
+  "output1": "{hexcasting:type:\"hexcasting:list\",hexcasting:data:[{hexcasting:type:\"hexcasting:double\",hexcasting:data:3.0d}]}",
+  "length_limit": 5,
+  "variant": 0
+}

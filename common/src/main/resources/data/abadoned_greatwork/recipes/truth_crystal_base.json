@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ASA",
+    "SCS",
+    "ASA"
+  ],
+  "key": {
+    "A": { "item": "hexcasting:amethyst_dust" },
+    "S": { "item": "hexcasting:slate" },
+    "C": { "item": "hexcasting:charged_amethyst" }
+  },
+  "result": {
+    "item": "abadoned_greatwork:truth_crystal"
+  }
+}

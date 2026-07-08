@@ -1,0 +1,22 @@
+{
+  "name": "hexcasting.entry.truth_crystal",
+  "icon": "abadoned_greatwork:item_truth_crystal_0",
+  "category": "hexcasting:items",
+  "sortnum": 7,
+  "advancement": "hexcasting:root",
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.truth_crystal.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.truth_crystal.3"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "abadoned_greatwork:truth_crystal_base",
+      "text": "hexcasting.page.truth_crystal.crafting"
+    }
+  ]
+}

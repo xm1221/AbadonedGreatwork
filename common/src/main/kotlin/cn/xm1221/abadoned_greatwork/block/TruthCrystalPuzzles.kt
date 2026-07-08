@@ -1,56 +1,15 @@
 package cn.xm1221.abadoned_greatwork.block
 
-import at.petrak.hexcasting.api.casting.iota.BooleanIota
-import at.petrak.hexcasting.api.casting.iota.DoubleIota
-import at.petrak.hexcasting.api.casting.iota.ListIota
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkItems
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.ItemStack
 
 /**
  * 预定义谜题库。每个谜题自动生成 3 个变体（对应 3 种真理水晶）。
+ * 谜题数据来自 [Abadoned_greatworkRiddleLoader]（`data/<ns>/riddles/`）。
  */
 object TruthCrystalPuzzles {
-
-    data class Puzzle(
-        val name: String,
-        val input0: ListIota,
-        val input1: ListIota,
-        val output0: ListIota,
-        val output1: ListIota,
-        val lengthLimit: Int,
-    )
-
-    val Add = Puzzle(
-        createLangKey("add"),
-        ListIota(listOf(DoubleIota(0.0), DoubleIota(1.0))),
-        ListIota(listOf(DoubleIota(2.0), DoubleIota(4.0))),
-        ListIota(listOf(DoubleIota(1.0))),
-        ListIota(listOf(DoubleIota(6.0))),
-        3,
-    )
-
-    val Bigger = Puzzle(
-        createLangKey("bigger"),
-        ListIota(listOf(DoubleIota(0.0), DoubleIota(1.0))),
-        ListIota(listOf(DoubleIota(3.0),DoubleIota(2.0))),
-        ListIota(listOf(DoubleIota(1.0))),
-        ListIota(listOf(DoubleIota(3.0))),
-        5
-    )
-
-
-
-    /** 所有预定义谜题 × 3 变体的 ItemStack */
-    val ALL: List<ItemStack> by lazy {
-        listOf(Add, Bigger).flatMap { puzzle ->
-            listOf(
-                createStack(puzzle, 0),
-                createStack(puzzle, 1),
-                createStack(puzzle, 2),
-            )
-        }
-    }
 
     private val ITEMS by lazy {
         listOf(
@@ -60,16 +19,41 @@ object TruthCrystalPuzzles {
         )
     }
 
-    fun createStack(puzzle: Puzzle, variant: Int): ItemStack {
-        val stack = ItemStack(ITEMS[variant % 3].value)
-        ItemTruthCrystal.setInput(stack, puzzle.input0, puzzle.input1)
-        ItemTruthCrystal.setOutput(stack, puzzle.output0, puzzle.output1)
-        ItemTruthCrystal.setLengthLimit(stack, puzzle.lengthLimit)
-        ItemTruthCrystal.setTooltip(stack, puzzle.name)
-        ItemTruthCrystal.setMode(stack, "normal")
-        return stack
+    val ALL: List<ItemStack> by lazy {
+        Abadoned_greatworkRiddleLoader.riddles.flatMap { riddle ->
+            listOf(
+                createStack(riddle, 0),
+                createStack(riddle, 1),
+                createStack(riddle, 2),
+            )
+        }.ifEmpty {
+            // fallback: 资源未加载时返回空
+            emptyList()
+        }
     }
 
-    private fun createLangKey(name: String): String =
-        "text.abadoned_greatwork.riddles.$name"
+    fun createStack(riddle: Abadoned_greatworkRiddleLoader.RawRiddle, variant: Int): ItemStack {
+        val stack = ItemStack(ITEMS[variant % 3].value)
+        val tag = stack.orCreateTag
+
+        // input
+        val inputTag = CompoundTag()
+        riddle.input0Tag()?.let { inputTag.put("0", it) }
+        riddle.input1Tag()?.let { inputTag.put("1", it) }
+        tag.put(ItemTruthCrystal.INPUT, inputTag)
+
+        // output
+        val outputTag = CompoundTag()
+        riddle.output0Tag()?.let { outputTag.put("0", it) }
+        riddle.output1Tag()?.let { outputTag.put("1", it) }
+        tag.put(ItemTruthCrystal.OUTPUT, outputTag)
+
+        tag.putInt(ItemTruthCrystal.LENGTH_LIMIT, riddle.length_limit)
+        tag.putString(ItemTruthCrystal.TOOLTIP, riddle.name_key)
+        tag.putString(ItemTruthCrystal.MODE, "normal")
+        tag.putBoolean(ItemTruthCrystal.IS_CRAFTED, false)
+        tag.putBoolean(ItemTruthCrystal.CAN_WRITE, false)
+
+        return stack
+    }
 }
