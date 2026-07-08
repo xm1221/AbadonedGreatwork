@@ -2,6 +2,7 @@ package cn.xm1221.abadoned_greatwork.registry
 
 import at.petrak.hexcasting.common.lib.HexItems
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.block.TruthCrystalPuzzles
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
@@ -54,6 +55,10 @@ object Abadoned_greatworkCreativeTabs : Abadoned_greatworkRegistrar<CreativeMode
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_0.value)
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_1.value)
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_2.value)
+        // 预定义谜题（每谜题 × 3 变体）
+        for (stack in TruthCrystalPuzzles.ALL) {
+            output.accept(stack)
+        }
     }
 
     /**

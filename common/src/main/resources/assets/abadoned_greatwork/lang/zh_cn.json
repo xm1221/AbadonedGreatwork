@@ -21,5 +21,13 @@
   "text.abadoned_greatwork.crystal.wrong": "验证失败：栈结果与期望输出不一致！",
   "text.abadoned_greatwork.crystal.success_crafted": "练习品验证通过！（不消耗）",
   "text.abadoned_greatwork.crystal.success_reward": "祝贺！验证通过！获得奖励！",
-  "item.abadoned_greatwork.item_truth_crystal": "真理水晶"
+  "item.abadoned_greatwork.item_truth_crystal": "真理水晶",
+  "text.abadoned_greatwork.riddles.add": "先易后难，当省加减之理",
+  "text.abadoned_greatwork.riddles.bigger": "已知二数，欲得其较大者",
+  "text.abadoned_greatwork.riddles.add.long": "提交一个可以起到加法作用的图案列表",
+  "text.abadoned_greatwork.riddles.bigger.long": "提交一个接受两个数，比较两个数大小，并且返回其中较大的数的图案列表",
+  "hexcasting.entry.abandoned_greatwork": "被遗弃的卓伟之作",
+  "hexcasting.page.abandoned_greatwork.1": "前人有遗，后有来者。我既不是最初的咒法师，也不会是最后一个。($br2)在世界各地，分布着古老的咒法师们留下的遗迹。这些结构虽然被遗弃，被抛在凡世间，但仍旧折射出它们曾经被称为卓伟之作时的光辉与荣耀。",
+  "hexcasting.page.abandoned_greatwork.2": "古时候的咒法师似乎还会创造一种特殊的材料，用来测试学徒咒法的水平，如果能够通过考验，还能获得一定的奖赏。($br2)可惜我的资料对此记载还不够详尽，有机会的话，我应该进行一些更深入的研究。"
+
 }

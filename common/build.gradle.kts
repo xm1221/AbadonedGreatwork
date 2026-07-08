@@ -20,6 +20,8 @@ dependencies {
 
     modApi(libs.clothConfig.common)
 
+    //modImplementation(libs.moreiotas)
+
     libs.mixinExtras.common.also {
         implementation(it)
         annotationProcessor(it)

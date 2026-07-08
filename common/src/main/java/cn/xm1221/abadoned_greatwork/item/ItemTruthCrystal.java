@@ -89,19 +89,19 @@ public class ItemTruthCrystal extends ItemFocus {
         return null;
     }
 
-    public static void setInput(ItemStack itemStack, ServerLevel level, ListIota list0, ListIota list1) {
+    public static void setInput(ItemStack itemStack, ListIota list0, ListIota list1) {
         var inputs = new CompoundTag();
-        NBTHelper.put(inputs, "0", list0.serialize());
-        NBTHelper.put(inputs, "1", list1.serialize());
+        NBTHelper.put(inputs, "0", IotaType.serialize(list0));
+        NBTHelper.put(inputs, "1", IotaType.serialize(list1));
         NBTHelper.put(itemStack, INPUT, inputs);
     }
 
     // ==================== Output ====================
 
-    public static void setOutput(ItemStack itemStack, ServerLevel level, ListIota list0, ListIota list1) {
+    public static void setOutput(ItemStack itemStack, ListIota list0, ListIota list1) {
         var output = new CompoundTag();
-        NBTHelper.put(output, "0", list0.serialize());
-        NBTHelper.put(output, "1", list1.serialize());
+        NBTHelper.put(output, "0", IotaType.serialize(list0));
+        NBTHelper.put(output, "1", IotaType.serialize(list1));
         NBTHelper.put(itemStack, OUTPUT, output);
     }
 
@@ -123,6 +123,11 @@ public class ItemTruthCrystal extends ItemFocus {
 
     public static void setTooltip(ItemStack itemStack, String tooltip) {
         NBTHelper.putString(itemStack, TOOLTIP, tooltip);
+    }
+
+
+    public static String getTooltip(ItemStack itemStack) {
+        return NBTHelper.getString(itemStack, TOOLTIP);
     }
 
     public static void setMode(ItemStack itemStack, String mode) {

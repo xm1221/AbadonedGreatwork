@@ -16,8 +16,12 @@ import at.petrak.hexcasting.api.utils.putInt
 import at.petrak.hexcasting.api.utils.putList
 import at.petrak.hexcasting.api.utils.putTag
 import at.petrak.hexcasting.api.utils.serializeToNBT
+import at.petrak.hexcasting.xplat.IXplatAbstractions
 import cn.xm1221.abadoned_greatwork.casting.TestCastingEnv
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
+import dev.architectury.event.events.common.ChatEvent
+import net.minecraft.client.gui.components.ChatComponent
+import net.minecraft.client.multiplayer.chat.ChatListener
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
 
@@ -33,9 +37,6 @@ class OpTestEval(): SpellAction {
         if(caster !is Player || !caster.isCreative) {
             throw MishapBadCaster()
         }
-        if(caster == null){
-            throw MishapBadCaster()
-        }
         val hand = env.otherHand
         val stack = caster.getItemInHand(hand)
         if(stack.item !is ItemTruthCrystal){
@@ -49,15 +50,9 @@ class OpTestEval(): SpellAction {
         return SpellAction.Result(
             object : RenderedSpell {
                 override fun cast(env: CastingEnvironment) {
-                    stack.putInt(ItemTruthCrystal.LENGTH_LIMIT,length)
-                    val inputs = CompoundTag()
-                    inputs.put("0", IotaType.serialize(ListIota(list0)))
-                    inputs.put("1",IotaType.serialize(ListIota(list1)))
-                    val outputs = CompoundTag()
-                    outputs.put("0",IotaType.serialize(ListIota(list2)))
-                    outputs.put("1",IotaType.serialize(ListIota(list3)))
-                    stack.putTag(ItemTruthCrystal.INPUT, inputs)
-                    stack.putTag(ItemTruthCrystal.OUTPUT, outputs)
+                    ItemTruthCrystal.setInput(stack,ListIota(list0),ListIota(list1))
+                    ItemTruthCrystal.setOutput(stack,ListIota(list2),ListIota(list3))
+                    ItemTruthCrystal.setLengthLimit(stack,length)
                 }
             },
             0,

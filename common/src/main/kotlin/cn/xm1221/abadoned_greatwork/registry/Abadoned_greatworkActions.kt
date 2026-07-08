@@ -6,6 +6,7 @@ import at.petrak.hexcasting.api.casting.math.HexDir
 import at.petrak.hexcasting.api.casting.math.HexPattern
 import at.petrak.hexcasting.common.lib.HexRegistries
 import at.petrak.hexcasting.common.lib.hex.HexActions
+import cn.xm1221.abadoned_greatwork.casting.actions.spells.OpCheck
 import cn.xm1221.abadoned_greatwork.casting.actions.spells.OpTestEval
 
 
@@ -14,6 +15,7 @@ object Abadoned_greatworkActions : Abadoned_greatworkRegistrar<ActionRegistryEnt
     { HexActions.REGISTRY },
 ) {
     val TEST = make("test", HexDir.SOUTH_EAST,"qaqw", OpTestEval())
+    val CHECK = make("check", HexDir.SOUTH_EAST,"qqqaqw", OpCheck())
 
     private fun make(name: String, startDir: HexDir, signature: String, action: Action) =
         make(name, startDir, signature) { action }

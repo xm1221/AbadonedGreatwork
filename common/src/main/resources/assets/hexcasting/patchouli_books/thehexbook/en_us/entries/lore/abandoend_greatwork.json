@@ -1,0 +1,16 @@
+{
+  "name": "hexcasting.entry.abandoned_greatwork",
+  "icon": "hexcasting:slate",
+  "category": "hexcasting:lore",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.abandoned_greatwork.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.abandoned_greatwork.2"
+    }
+  ]
+}

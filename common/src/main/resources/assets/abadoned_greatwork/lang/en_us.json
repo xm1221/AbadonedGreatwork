@@ -21,5 +21,13 @@
   "text.abadoned_greatwork.crystal.no_output": "Error: crystal has no output data!",
   "text.abadoned_greatwork.crystal.wrong": "Verification failed: stack result does not match expected output!",
   "text.abadoned_greatwork.crystal.success_crafted": "Practice verification passed! (not consumed)",
-  "text.abadoned_greatwork.crystal.success_reward": "Congratulations! Verification passed! Reward granted!"
+  "text.abadoned_greatwork.crystal.success_reward": "Congratulations! Verification passed! Reward granted!",
+  "text.abadoned_greatwork.riddles.add": "",
+  "text.abadoned_greatwork.riddles.add.long": "",
+  "text.abadoned_greatwork.riddles.bigger": "",
+  "text.abadoned_greatwork.riddles.bigger.long": "",
+  "hexcasting.entry.abandoned_greatwork": "",
+  "hexcasting.page.abandoned_greatwork.1": "",
+  "hexcasting.page.abandoned_greatwork.2": ""
+
 }
