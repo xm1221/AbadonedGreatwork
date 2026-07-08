@@ -19,7 +19,13 @@ object Abadoned_greatworkRiddleLoader {
         val output1: String = "",
         val length_limit: Int = 0,
         val variant: Int = 0,
+        /** 完整 ItemStack NBT（SNBT 字符串）。若不为空，优先使用此字段，忽略其他结构化字段。 */
+        val nbt: String = "",
     ) {
+        /** 是否使用完整 NBT 模式 */
+        val isRawNbt: Boolean get() = nbt.isNotBlank()
+
+        fun nbtTag(): CompoundTag? = parseTag(nbt)
         fun input0Tag(): CompoundTag? = parseTag(input0)
         fun input1Tag(): CompoundTag? = parseTag(input1)
         fun output0Tag(): CompoundTag? = parseTag(output0)
