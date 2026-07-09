@@ -22,9 +22,10 @@ import net.minecraft.world.phys.BlockHitResult
  * 真理水晶方块 — 带单格容器的无GUI方块
  *
  * ## 交互逻辑（右键）
- * 1. 查 [TruthCrystalBlockEntity.interactions] 是否注册了手持物品的回调
- * 2. 若命中回调 → 直接返回回调结果
- * 3. 若未命中 → 返回 [InteractionResult.PASS]（不做任何操作）
+ * 1. 空手 → 弹出内部水晶
+ * 2. 手持真理水晶 → 放入（槽为空时）
+ * 3. 手持 IotaHolderItem 且槽内有真理水晶 → 运行验证
+ * 4. 查找自定义回调 → 若命中则执行
  *
  * ## 破坏掉落
  * 方块被破坏时会以掉落物形式弹出内部存储的物品。
@@ -60,12 +61,30 @@ class TruthCrystalBlock(
         val be = level.getBlockEntity(pos) as? TruthCrystalBlockEntity ?: return InteractionResult.PASS
         val heldStack = player.getItemInHand(hand)
 
-        // 优先处理：IotaHolderItem + ItemTruthCrystal → 运行验证
+        // 1. 空手 → 弹出内部水晶
+        if (heldStack.isEmpty) {
+            if (!be.isEmpty) {
+                player.setItemInHand(hand, be.removeItemNoUpdate(0))
+                return InteractionResult.SUCCESS
+            }
+            return InteractionResult.PASS
+        }
+
+        // 2. 手持真理水晶 → 放入（槽为空时）
+        if (heldStack.item is ItemTruthCrystal) {
+            if (be.isEmpty) {
+                be.setItem(0, heldStack.split(1))
+                return InteractionResult.SUCCESS
+            }
+            return InteractionResult.PASS
+        }
+
+        // 3. 手持 IotaHolderItem 且槽内有真理水晶 → 验证
         if (heldStack.item is IotaHolderItem && be.item.item is ItemTruthCrystal && level is ServerLevel) {
             return TruthCrystalInteraction.handle(be, player, level, heldStack)
         }
 
-        // 查找手持物品对应的自定义回调，若命中则执行
+        // 4. 自定义回调
         val callback = TruthCrystalBlockEntity.interactions[heldStack.item]
         return callback?.onInteract(be, player, hand, heldStack) ?: InteractionResult.PASS
     }
