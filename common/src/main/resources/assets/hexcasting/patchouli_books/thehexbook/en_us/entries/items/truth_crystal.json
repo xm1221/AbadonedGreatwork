@@ -1,6 +1,6 @@
 {
   "name": "hexcasting.entry.truth_crystal",
-  "icon": "abadoned_greatwork:item_truth_crystal_0",
+  "icon": "abadoned_greatwork:item_truth_crystal_2",
   "category": "hexcasting:items",
   "sortnum": 7,
   "advancement": "hexcasting:root",

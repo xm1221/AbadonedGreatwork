@@ -2,6 +2,7 @@
   "name": "hexcasting.entry.abandoned_greatwork",
   "icon": "hexcasting:slate",
   "category": "hexcasting:lore",
+  "advancement": "abadoned_greatwork:get_truth_crystal",
   "sortnum": 10,
   "pages": [
     {

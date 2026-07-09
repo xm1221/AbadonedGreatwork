@@ -2,6 +2,7 @@
   "name": "hexcasting.entry.truth_crystal_patterns",
   "category": "hexcasting:patterns",
   "icon": "abadoned_greatwork:item_truth_crystal_0",
+  "advancement": "abadoned_greatwork:get_truth_crystal",
   "sortnum": 15,
   "pages": [
     {
