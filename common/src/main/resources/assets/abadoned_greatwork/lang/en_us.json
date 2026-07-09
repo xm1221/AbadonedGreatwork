@@ -21,7 +21,7 @@
   "text.abadoned_greatwork.crystal.no_output": "Error: crystal has no output data!",
   "text.abadoned_greatwork.crystal.wrong": "Verification failed: stack result does not match expected output!",
   "text.abadoned_greatwork.crystal.success_crafted": "Practice verification passed! (not consumed)",
-  "text.abadoned_greatwork.crystal.success_reward": "Congratulations! Verification passed! Reward granted!",
+  "text.abadoned_greatwork.crystal.success_reward": "Phew, looks like I've gotten quite good at this.",
   "text.abadoned_greatwork.riddles.add": "Start with the simple, master addition and subtraction.",
   "text.abadoned_greatwork.riddles.add.long": "Submit a list of patterns that performs addition.",
   "text.abadoned_greatwork.riddles.bigger": "Given two numbers, find the larger.",
@@ -53,7 +53,12 @@
   "hexcasting.page.truth_crystal.1": "One of the relics left by ancient hexcasters is the $(l)Truth Crystal$(). These mysterious crystals appear to have been used as testing tools — designed to evaluate the skill of an apprentice by challenging them to produce specific spell patterns.$(br2)A Truth Crystal contains a riddle with a description, and a length limit for submitted patterns. The aspiring hexcaster must solve the riddle to discover the correct pattern list.",
   "hexcasting.page.truth_crystal.3": "To attempt a riddle, place the Truth Crystal into a $(l)Truth Crystal Base$(), then right-click the base while holding an Iota-containing item. The crystal will evaluate your spell and judge the result.$(br2)If successful, the crystal will be consumed and a reward will be granted from a loot table specific to that crystal.",
   "hexcasting.page.truth_crystal.crafting": "Knowledge lies buried in history, wisdom cast aside in the dust of ages.",
-  "hexcasting.entry.abadoned_greatwork_loot": "Loot and Rewards"
+  "hexcasting.entry.abadoned_greatwork_loot": "Loot and Rewards",
+  "hexcasting.entry.truth_crystal_patterns": "Truth Crystal Patterns",
+  "hexcasting.page.truth_crystal_patterns.check": "Crystal Gazing requires a $(l)Truth Crystal$() held in the offhand. It consumes no media and displays the detailed information stored within the crystal in chat. Takes no input and produces no output.",
+  "hexcasting.page.truth_crystal_patterns.sort": "Truth Crystals demand strict output ordering. This pattern takes a list, rearranges its elements according to an intrinsic ordering, and returns the sorted list.",
+  "hexcasting.action.abadoned_greatwork:check": "Crystal Analysis",
+  "hexcasting.action.abadoned_greatwork:sort": "Themistian Purification"
 
 
 }

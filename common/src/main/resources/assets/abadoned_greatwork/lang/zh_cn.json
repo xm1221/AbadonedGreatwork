@@ -20,7 +20,7 @@
   "text.abadoned_greatwork.crystal.no_output": "错误：水晶未设置输出数据！",
   "text.abadoned_greatwork.crystal.wrong": "验证失败：栈结果与期望输出不一致！",
   "text.abadoned_greatwork.crystal.success_crafted": "练习品验证通过！（不消耗）",
-  "text.abadoned_greatwork.crystal.success_reward": "祝贺！验证通过！获得奖励！",
+  "text.abadoned_greatwork.crystal.success_reward": "呼，看来我已经很熟练了",
   "item.abadoned_greatwork.item_truth_crystal": "真理水晶",
   "text.abadoned_greatwork.riddles.add": "先易后难，当省加减之理",
   "text.abadoned_greatwork.riddles.bigger": "已知二数，欲得其较大者",
@@ -53,6 +53,11 @@
   "hexcasting.page.truth_crystal.1": "古代咒法师遗留下的的遗物之一，便是这$(l)真理水晶$()。这些神秘的晶体似乎曾被用作测试工具——通过要求学徒生成特定的法术图案来评估其技艺水准。$(br2)一枚真理水晶蕴含一个谜题,以及一个描述，还有限制提交图案列表的长度。有志的咒法师必须破解谜题，得到正确的图案列表",
   "hexcasting.page.truth_crystal.3": "要尝试解谜，请将真理水晶放入$(l)真理水晶基座$()，然后手持含有Iota的物品右键基座。水晶将评估你的法术并裁定结果。$(br2)若验证通过，水晶将被消耗，并从该水晶对应的战利品表中发放奖励。",
   "hexcasting.page.truth_crystal.crafting": "知识被埋藏在历史里，智慧被抛弃在尘世间",
-  "hexcasting.entry.abadoned_greatwork_loot": "战利品与奖励"
+  "hexcasting.entry.abadoned_greatwork_loot": "战利品与奖励",
+  "hexcasting.entry.truth_crystal_patterns": "真理水晶相关图案",
+  "hexcasting.page.truth_crystal_patterns.check": "检视水晶，需要将$(l)真理水晶$()持有在副手。使用后，会在聊天栏将真理水晶中存储的详细题目描述展示出来。",
+  "hexcasting.page.truth_crystal_patterns.sort": "真理水晶自身要求输出顺序严格。此图案接受一个列表，将其内部元素按某种内在顺序重排并返回排序后的列表。",
+  "hexcasting.action.abadoned_greatwork:check": "解析水晶",
+  "hexcasting.action.abadoned_greatwork:sort": "忒弥斯之纯化"
 
 }

@@ -1,9 +1,3 @@
 {
-  "name_key": "text.abadoned_greatwork.riddles.bigger",
-  "input0": "{hexcasting:type:\"hexcasting:list\",hexcasting:data:[{hexcasting:type:\"hexcasting:double\",hexcasting:data:0.0d},{hexcasting:type:\"hexcasting:double\",hexcasting:data:1.0d}]}",
-  "input1": "{hexcasting:type:\"hexcasting:list\",hexcasting:data:[{hexcasting:type:\"hexcasting:double\",hexcasting:data:3.0d},{hexcasting:type:\"hexcasting:double\",hexcasting:data:2.0d}]}",
-  "output0": "{hexcasting:type:\"hexcasting:list\",hexcasting:data:[{hexcasting:type:\"hexcasting:double\",hexcasting:data:1.0d}]}",
-  "output1": "{hexcasting:type:\"hexcasting:list\",hexcasting:data:[{hexcasting:type:\"hexcasting:double\",hexcasting:data:3.0d}]}",
-  "length_limit": 5,
-  "variant": 0
+ "nbt": "{can_write:0b,input:{0:{\"hexcasting:data\":[{\"hexcasting:data\":0.0d,\"hexcasting:type\":\"hexcasting:double\"},{\"hexcasting:data\":1.0d,\"hexcasting:type\":\"hexcasting:double\"}],\"hexcasting:type\":\"hexcasting:list\"},1:{\"hexcasting:data\":[{\"hexcasting:data\":1.0d,\"hexcasting:type\":\"hexcasting:double\"},{\"hexcasting:data\":0.0d,\"hexcasting:type\":\"hexcasting:double\"}],\"hexcasting:type\":\"hexcasting:list\"}},is_crafted:0b,length_limit:8,mode:\"normal\",output:{0:{\"hexcasting:data\":[{\"hexcasting:data\":1.0d,\"hexcasting:type\":\"hexcasting:double\"}],\"hexcasting:type\":\"hexcasting:list\"},1:{\"hexcasting:data\":[{\"hexcasting:data\":0.0d,\"hexcasting:type\":\"hexcasting:double\"}],\"hexcasting:type\":\"hexcasting:list\"}},tooltip:\"text.abadoned_greatwork.riddles.bigger\"}"
 }

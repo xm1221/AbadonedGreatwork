@@ -1,0 +1,24 @@
+{
+  "name": "hexcasting.entry.truth_crystal_patterns",
+  "category": "hexcasting:patterns",
+  "icon": "abadoned_greatwork:item_truth_crystal_0",
+  "sortnum": 15,
+  "pages": [
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:check",
+      "anchor": "abadoned_greatwork:check",
+      "input": "",
+      "output": "",
+      "text": "hexcasting.page.truth_crystal_patterns.check"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:sort",
+      "anchor": "abadoned_greatwork:sort",
+      "input": "list",
+      "output": "list",
+      "text": "hexcasting.page.truth_crystal_patterns.sort"
+    }
+  ]
+}

@@ -26,10 +26,7 @@ object TruthCrystalPuzzles {
                 createStack(riddle, 1),
                 createStack(riddle, 2),
             )
-        }.ifEmpty {
-            // fallback: 资源未加载时返回空
-            emptyList()
-        }
+        }.distinctBy { "${it.item}${it.tag}" }
     }
 
     fun createStack(riddle: Abadoned_greatworkRiddleLoader.RawRiddle, variant: Int): ItemStack {
