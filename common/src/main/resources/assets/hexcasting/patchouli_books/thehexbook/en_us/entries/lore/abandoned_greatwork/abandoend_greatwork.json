@@ -1,8 +1,8 @@
 {
   "name": "hexcasting.entry.abandoned_greatwork",
   "icon": "hexcasting:slate",
-  "category": "hexcasting:lore",
-  "advancement": "abadoned_greatwork:get_truth_crystal",
+  "category": "hexcasting:lore/abandoned_greatwork",
+  "advancement": "hexcasting:root",
   "sortnum": 10,
   "pages": [
     {

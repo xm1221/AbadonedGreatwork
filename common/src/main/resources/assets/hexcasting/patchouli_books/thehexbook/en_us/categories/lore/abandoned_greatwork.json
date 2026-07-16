@@ -1,0 +1,7 @@
+{
+  "name": "abadoned_greatwork.category.text",
+  "icon": "hexcasting:slate_block",
+  "description": "abadoned_greatwork.category.text.desc",
+  "parent": "hexcasting:lore",
+  "sortnum": 98
+}
