@@ -38,6 +38,7 @@ object Abadoned_greatwork {
         )
         Abadoned_greatworkNetworking.init()
         Abadoned_greatworkLootInjector.register()
+        addEdifiedBiomeToOverworld()
     }
 
     fun initServer() {
