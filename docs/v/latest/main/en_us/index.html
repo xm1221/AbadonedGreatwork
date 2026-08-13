@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+      <title>Abadoned Greatwork Book</title>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta name="description" content="Abadoned Greatwork addon for Hex Casting" />
+      <meta name="author" content="xm1221" />
+        <link rel="None" type="image/ico" href="favicon.ico" />
+        <link rel="icon" type="image/png" href="favicon-16x16.png" />
+        <link rel="icon" type="image/png" href="favicon-32x32.png" />
+        <link rel="icon" type="image/png" href="favicon-64x64.png" />
+        <link rel="icon" type="image/png" href="favicon-96x96.png" />
+        <link rel="icon" type="image/png" href="favicon-180x180.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-57x57.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-60x60.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-72x72.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-76x76.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-114x114.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-120x120.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-144x144.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-152x152.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-167x167.png" />
+        <link rel="apple-touch-icon" type="image/png" href="apple-touch-icon-180x180.png" />
+        <link rel="None" type="image/png" href="mstile-70x70.png" />
+        <link rel="None" type="image/png" href="mstile-270x270.png" />
+        <link rel="None" type="image/png" href="mstile-310x310.png" />
+        <link rel="None" type="image/png" href="mstile-310x150.png" />
+        <link rel="shortcut icon" type="image/png" href="favicon-196x196.png" />
+      <link rel="mask-icon" href="https://raw.githubusercontent.com/hexdoc-dev/hexdoc/main/media/safari-pinned-tab.svg" color="#332233">
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Abadoned Greatwork Book" />
+<meta property="og:image" content="https://xm1221.github.io/AbadonedGreatwork/v/latest/main/en_us/icon.png" />
+<meta property="og:url" content="https://xm1221.github.io/AbadonedGreatwork/v/latest/main/en_us" />
+<meta property="og:description" content="Abadoned Greatwork addon for Hex Casting" />
+<meta property="og:site_name" content="Abadoned Greatwork (latest/main)" />
+      <script src="https://code.jquery.com/jquery-1.12.4.min.js"
+      integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css"
+        integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"
+        integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
+      <link rel="stylesheet" href="index.css">
+      <link rel="stylesheet" href="textures.css">
+      <noscript>
+        <style>
+          /* for accessibility */
+          .spoilered {
+            filter: none !important;
+          }
+        </style>
+      </noscript>
+        <script type="module" src="index.js"></script>
+  <script type="module" src="hexcasting.js"></script>
+  <script type="module" src="hexcasting_render.js"></script>
+  </head>
+  <body>
+<nav class="navbar navbar-default navbar-static-top">
+  <div class="container">
+    <div class="navbar-header">
+      <button
+        type="button"
+        class="navbar-toggle collapsed"
+        data-toggle="collapse"
+        data-target="#navbar-collapse"
+        aria-expanded="false"
+      >
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="../../../..">Abadoned Greatwork Book</a>
+    </div>
+    <div class="collapse navbar-collapse" id="navbar-collapse">
+      <ul class="nav navbar-nav navbar-right">
+            <li>
+    <a
+      href="https://github.com/xm1221/AbadonedGreatwork/tree/55dca73f23dd81ef3baa1bc9e1bef23c4d512fab"
+        target="_blank"
+      class="navbar-link"
+      role="button"
+      aria-haspopup="true"
+      aria-expanded="false"
+    >GitHub <i class="bi bi-box-arrow-up-right external-link-icon"></i></a>
+  </li>
+        <li class="dropdown">
+          <a
+            href=""
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >latest/main <span class="caret"></span></a>
+          <ul class="dropdown-menu" id="version-dropdown"></ul>
+        </li>
+        <li class="dropdown">
+          <a
+            href=""
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >English (United States) <span class="caret"></span></a>
+          <ul class="dropdown-menu dropdown-menu-left" id="lang-dropdown"></ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container" style="margin-top: 3em;">
+  <blockquote>
+      <h1><p>This is the online version of the Abadoned Greatwork documentation.</p></h1>
+        <p>This page is built from the latest code on GitHub. It may describe <strong>newer</strong> features that you may not necessarily have, even on the latest Modrinth/CurseForge version!</p>
+      <p><strong>Entries which are blurred are spoilers</strong>. Click to reveal them, but be aware that they may spoil endgame progression. Alternatively, click <a href="?nospoiler">here</a> to get a version with all spoilers showing.</p>
+      <span id="old-version-notice" class="hidden">
+        <br />
+        <p><i>The past is a foreign country; they do things differently there.</i></p>
+      </span>
+  </blockquote>
+</div>
+<div class="container">
+<div id="table-of-contents"></div>
+<nav class="toc-container">
+  <h2 class="page-header">
+    Table of <span class="nobr">Contents<a
+      href="javascript:void(0)"
+      class="permalink toggle-link small"
+      data-target="toc-category"
+      title="Toggle all"
+    ><i class="bi bi-list-nested"></i></a><a
+    href="#table-of-contents"
+    class="permalink small toc-permalink"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></span>
+  </h2>
+    <details class="toc-category">
+      <summary><a href="#items" class="toc-elem "><img
+      title="Focus"
+      alt="Focus"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/cad/0_focus_empty.png"
+      loading="lazy"
+      class="item-texture  texture pixelated"
+    > Items</a></summary>
+      <ul>
+          <li><a href="#items/truth_crystal" class="toc-elem "><img
+      title="Truth Crystal"
+      alt="Truth Crystal"
+      src="https://raw.githubusercontent.com/xm1221/AbadonedGreatwork/55dca73f23dd81ef3baa1bc9e1bef23c4d512fab/common/src/main/resources/assets/abadoned_greatwork/textures/item/truth_crystal_2.png"
+      loading="lazy"
+      class="item-texture  texture pixelated"
+    > Truth Crystal</a></li>
+      </ul>
+    </details>
+    <details class="toc-category">
+      <summary><a href="#lore/abandoned_greatwork" class="toc-elem "><img
+      title="Block of Slate"
+      alt="Block of Slate"
+      src="https://hexcasting.hexxy.media/v/0.11.3/1.0/assets/hexcasting/textures/block/slate_block.png"
+      loading="lazy"
+      class="item-texture  texture "
+    > Abadoned Greatwork</a></summary>
+      <ul>
+          <li><a href="#lore/abandoned_greatwork/abandoend_greatwork" class="toc-elem "><img
+      title="Blank Slate"
+      alt="Blank Slate"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/slate_blank.png"
+      loading="lazy"
+      class="item-texture  texture pixelated"
+    > Abandoned Greatwork</a></li>
+      </ul>
+    </details>
+    <details class="toc-category">
+      <summary><a href="#patterns" class="toc-elem "><img
+      title="Bookshelf"
+      alt="Bookshelf"
+      src="https://hexdoc-dev.github.io/hexdoc-minecraft/v/1.20.1/1.0.dev1/assets/minecraft/textures/block/bookshelf.png"
+      loading="lazy"
+      class="item-texture  texture "
+    > Patterns</a></summary>
+      <ul>
+          <li><a href="#patterns/truth_crystal_patterns" class="toc-elem "><img
+      title="Truth Crystal"
+      alt="Truth Crystal"
+      src="https://raw.githubusercontent.com/xm1221/AbadonedGreatwork/55dca73f23dd81ef3baa1bc9e1bef23c4d512fab/common/src/main/resources/assets/abadoned_greatwork/textures/item/truth_crystal_0.png"
+      loading="lazy"
+      class="item-texture  texture pixelated"
+    > Truth Crystal Patterns</a></li>
+      </ul>
+    </details>
+</nav>
+  <main class="book-body">
+<section id="items">
+    <h2 class="category-title page-header">
+    <img
+      title="Focus"
+      alt="Focus"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/cad/0_focus_empty.png"
+      loading="lazy"
+      class="item-texture  texture pixelated"
+    >Items<a
+    href="#table-of-contents"
+    class="permalink small"
+    title="Jump to top"
+  ><i class="bi bi-box-arrow-up"></i></a><a
+    href="#items"
+    class="permalink small"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></h2>
+    <p>I devote this section to the magical and mysterious items I might encounter in my studies.</p>
+<div id="items/truth_crystal" class="entry">
+    <h3 class="entry-title page-header">
+    <img
+      title="Truth Crystal"
+      alt="Truth Crystal"
+      src="https://raw.githubusercontent.com/xm1221/AbadonedGreatwork/55dca73f23dd81ef3baa1bc9e1bef23c4d512fab/common/src/main/resources/assets/abadoned_greatwork/textures/item/truth_crystal_2.png"
+      loading="lazy"
+      class="item-texture  texture pixelated"
+    >Truth Crystal<a
+    href="#table-of-contents"
+    class="permalink small"
+    title="Jump to top"
+  ><i class="bi bi-box-arrow-up"></i></a><a
+    href="#items/truth_crystal"
+    class="permalink small"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></h3>
+    <p>One of the relics left by ancient hexcasters is the <strong>Truth Crystal</strong>. These mysterious crystals appear to have been used as testing tools — designed to evaluate the skill of an apprentice by challenging them to produce specific spell patterns.</p><p>A Truth Crystal contains a riddle with a description, and a length limit for submitted patterns. The aspiring hexcaster must solve the riddle to discover the correct pattern list.</p>
+<br />
+    <p>To attempt a riddle, place the Truth Crystal into a <strong>Truth Crystal Base</strong>, then right-click the base while holding an Iota-containing item. The crystal will evaluate your spell and judge the result.</p><p>If successful, the crystal will be consumed and a reward will be granted from a loot table specific to that crystal.</p>
+<br />
+  <details class="details-collapsible recipe-details">
+      <summary class="collapse-details">
+    <span class="collapse-recipe-show">Click to show recipes</span>
+    <span class="collapse-recipe-hide">Click to hide recipes</span>
+  </summary>
+    <div class="crafting-tables">
+<div>
+    <h5>Truth Crystal Base</h5>
+    <div class="crafting-table">
+        <img
+      title="Crafting Table"
+      alt="Crafting Table"
+      src="https://raw.githubusercontent.com/hexdoc-dev/hexdoc/e37c5d449995dd1f84b43079b91dfcca78a6fdde/src/hexdoc/_export/resources/assets/minecraft/textures/gui/hexdoc/crafting_table.png"
+      class="texture pixelated"
+    >
+  <div class="crafting-table-grid">
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Amethyst Dust"
+      alt="Amethyst Dust"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/amethyst_dust.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Blank Slate"
+      alt="Blank Slate"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/slate_blank.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Amethyst Dust"
+      alt="Amethyst Dust"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/amethyst_dust.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Blank Slate"
+      alt="Blank Slate"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/slate_blank.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Charged Amethyst"
+      alt="Charged Amethyst"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/charged_amethyst.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Blank Slate"
+      alt="Blank Slate"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/slate_blank.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Amethyst Dust"
+      alt="Amethyst Dust"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/amethyst_dust.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Blank Slate"
+      alt="Blank Slate"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/slate_blank.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+        <div class="texture item-texture multi-textures cycle-textures">
+                <img
+      title="Amethyst Dust"
+      alt="Amethyst Dust"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/amethyst_dust.png"
+      loading="lazy"
+      class="item-texture multi-texture-active texture pixelated"
+    >
+        </div>
+  </div>
+  <div class="crafting-table-result recipe-item-slot">
+    <img
+      title="Truth Crystal Base"
+      alt="Truth Crystal Base"
+      src="https://xm1221.github.io/AbadonedGreatwork/v/latest/main/assets/abadoned_greatwork/textures/block/truth_crystal.png"
+      loading="lazy"
+      class="item-texture  texture "
+    >
+  </div>
+    </div>
+</div>    </div>
+  </details>
+      <p>Knowledge lies buried in history, wisdom cast aside in the dust of ages.</p>
+<br />
+</div>
+</section>
+<section id="lore/abandoned_greatwork">
+    <h2 class="category-title page-header">
+    <img
+      title="Block of Slate"
+      alt="Block of Slate"
+      src="https://hexcasting.hexxy.media/v/0.11.3/1.0/assets/hexcasting/textures/block/slate_block.png"
+      loading="lazy"
+      class="item-texture  texture "
+    >Abadoned Greatwork<a
+    href="#table-of-contents"
+    class="permalink small"
+    title="Jump to top"
+  ><i class="bi bi-box-arrow-up"></i></a><a
+    href="#lore/abandoned_greatwork"
+    class="permalink small"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></h2>
+    <p>The glory of ages past now lies in ruin — today&#39;s works shall share this fate.</p>
+<div id="lore/abandoned_greatwork/abandoend_greatwork" class="entry">
+    <h3 class="entry-title page-header">
+    <img
+      title="Blank Slate"
+      alt="Blank Slate"
+      src="https://raw.githubusercontent.com/FallingColors/HexMod/eefaf2d411b6360519c9f56fbfe6b0dfba047425/Common/src/main/resources/assets/hexcasting/textures/item/slate_blank.png"
+      loading="lazy"
+      class="item-texture  texture pixelated"
+    >Abandoned Greatwork<a
+    href="#table-of-contents"
+    class="permalink small"
+    title="Jump to top"
+  ><i class="bi bi-box-arrow-up"></i></a><a
+    href="#lore/abandoned_greatwork/abandoend_greatwork"
+    class="permalink small"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></h3>
+    <p>The ancients left behind, and those who come after follow. I am neither the first Hex Caster, nor will I be the last.</p><p>Across the world, ruins left by ancient Hex Casters are scattered about. Though abandoned and cast into the mundane world, these structures still reflect the glory and brilliance they once held as Greatworks.</p>
+<br />
+    <p>It seems the Hex Casters of old also created a special material to test the skill of their apprentices. Those who passed the trial would receive a reward.</p><p>Unfortunately, my records on this are not yet detailed enough. I should conduct more in-depth research when the opportunity arises.</p>
+<br />
+</div>
+</section>
+<section id="patterns">
+    <h2 class="category-title page-header">
+    <img
+      title="Bookshelf"
+      alt="Bookshelf"
+      src="https://hexdoc-dev.github.io/hexdoc-minecraft/v/1.20.1/1.0.dev1/assets/minecraft/textures/block/bookshelf.png"
+      loading="lazy"
+      class="item-texture  texture "
+    >Patterns<a
+    href="#table-of-contents"
+    class="permalink small"
+    title="Jump to top"
+  ><i class="bi bi-box-arrow-up"></i></a><a
+    href="#patterns"
+    class="permalink small"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></h2>
+    <p>A list of all the patterns I&#39;ve discovered, as well as what they do.</p>
+<div id="patterns/truth_crystal_patterns" class="entry">
+    <h3 class="entry-title page-header">
+    <img
+      title="Truth Crystal"
+      alt="Truth Crystal"
+      src="https://raw.githubusercontent.com/xm1221/AbadonedGreatwork/55dca73f23dd81ef3baa1bc9e1bef23c4d512fab/common/src/main/resources/assets/abadoned_greatwork/textures/item/truth_crystal_0.png"
+      loading="lazy"
+      class="item-texture  texture pixelated"
+    >Truth Crystal Patterns<a
+    href="#table-of-contents"
+    class="permalink small"
+    title="Jump to top"
+  ><i class="bi bi-box-arrow-up"></i></a><a
+    href="#patterns/truth_crystal_patterns"
+    class="permalink small"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></h3>
+  <div id="patterns/truth_crystal_patterns@abadoned_greatwork:check" class="">
+<h4 class="pattern-title">Crystal Analysis<a
+    href="#patterns/truth_crystal_patterns@abadoned_greatwork:check"
+    class="permalink small"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></h4>
+  <details class="details-collapsible">
+    <summary class="collapse-details collapse-spell"></summary>
+    <div class="dropdown spell-settings-dropdown">
+      <span
+        href=""
+        class="dropdown-toggle spell-settings-toggle"
+        data-toggle="dropdown"
+        role="button"
+        aria-haspopup="true"
+        aria-expanded="false"
+      >
+        <i class="bi bi-gear-fill"></i>
+      </span>
+      <ul class="dropdown-menu">
+        <li class="dropdown-submenu">
+          <a
+            href=""
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >Renders</a>
+          <ul class="dropdown-menu dropdown-menu-left render-dropdowns"></ul>
+        </li>
+        <li class="dropdown-submenu">
+          <a
+            href=""
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >Palettes</a>
+          <ul class="dropdown-menu dropdown-menu-left palette-dropdowns"></ul>
+        </li>
+      </ul>
+    </div>
+      <canvas
+        class="spell-viz"
+        width="216"
+        height="216"
+        data-string="qqqaqw"
+        data-start="south_east"
+        data-per-world="False"
+      >Your browser does not support visualizing patterns. Pattern code: qqqaqw</canvas>
+  </details>
+      <p>Crystal Gazing requires a <strong>Truth Crystal</strong> held in the offhand. It consumes no media and displays the detailed information stored within the crystal in chat. Takes no input and produces no output.</p>
+  </div>
+<br />
+  <div id="patterns/truth_crystal_patterns@abadoned_greatwork:sort" class="">
+<h4 class="pattern-title">Themistian Purification (list → list)<a
+    href="#patterns/truth_crystal_patterns@abadoned_greatwork:sort"
+    class="permalink small"
+    title="Permalink"
+  ><i class="bi bi-link-45deg"></i></a></h4>
+  <details class="details-collapsible">
+    <summary class="collapse-details collapse-spell"></summary>
+    <div class="dropdown spell-settings-dropdown">
+      <span
+        href=""
+        class="dropdown-toggle spell-settings-toggle"
+        data-toggle="dropdown"
+        role="button"
+        aria-haspopup="true"
+        aria-expanded="false"
+      >
+        <i class="bi bi-gear-fill"></i>
+      </span>
+      <ul class="dropdown-menu">
+        <li class="dropdown-submenu">
+          <a
+            href=""
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >Renders</a>
+          <ul class="dropdown-menu dropdown-menu-left render-dropdowns"></ul>
+        </li>
+        <li class="dropdown-submenu">
+          <a
+            href=""
+            class="dropdown-toggle"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >Palettes</a>
+          <ul class="dropdown-menu dropdown-menu-left palette-dropdowns"></ul>
+        </li>
+      </ul>
+    </div>
+      <canvas
+        class="spell-viz"
+        width="216"
+        height="216"
+        data-string="awaq"
+        data-start="north_east"
+        data-per-world="False"
+      >Your browser does not support visualizing patterns. Pattern code: awaq</canvas>
+  </details>
+      <p>Truth Crystals demand strict output ordering. This pattern takes a list, rearranges its elements according to an intrinsic ordering, and returns the sorted list.</p>
+  </div>
+<br />
+</div>
+</section>
+  </main>
+</div>
+      <footer class="footer">
+        <div class="container text-muted">
+          <p>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</p><p>Minecraft content and materials are the intellectual property of their respective owners.</p><p>Made with ❤️ using <a href="https://pypi.org/project/hexdoc/" target="_blank">hexdoc</a>.</p>
+        </div>
+      </footer>
+  </body>
+</html>
