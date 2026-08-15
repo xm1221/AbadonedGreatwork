@@ -10,6 +10,8 @@ import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkActions
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlocks
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkCreativeTabs
+import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes
+import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkIotaTypes
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkItems
 import net.minecraft.core.registries.Registries
 import net.minecraft.server.MinecraftServer
@@ -31,14 +33,15 @@ object Abadoned_greatwork {
         Abadoned_greatworkServerConfig.init()
         initRegistries(
             Abadoned_greatworkActions,
+            Abadoned_greatworkIotaTypes,
             Abadoned_greatworkBlocks,
             Abadoned_greatworkItems,
             Abadoned_greatworkBlockEntities,
+            Abadoned_greatworkEntityTypes,
             Abadoned_greatworkCreativeTabs,
         )
         Abadoned_greatworkNetworking.init()
         Abadoned_greatworkLootInjector.register()
-        addEdifiedBiomeToOverworld()
     }
 
     fun initServer() {

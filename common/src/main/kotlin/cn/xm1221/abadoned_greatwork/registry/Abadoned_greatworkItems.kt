@@ -1,6 +1,7 @@
 package cn.xm1221.abadoned_greatwork.registry
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.item.ItemEyeOfLocating
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
@@ -53,6 +54,15 @@ object Abadoned_greatworkItems : Abadoned_greatworkRegistrar<Item>(
 
     /** 真理水晶（变体 2） */
     val TRUTH_CRYSTAL_2 = registerItem("item_truth_crystal_2", ItemTruthCrystal::create2)
+
+    /** 探古之眼（可抛出，召唤狩猎之眼） */
+    val EYE_OF_LOCATING = registerItem("eye_of_locating") { ItemEyeOfLocating(Item.Properties().stacksTo(16)) }
+
+    /** 追踪之眼（追踪实体） */
+    val EYE_OF_TRACKING = registerItem("eye_of_tracking") { Item(Item.Properties().stacksTo(16)) }
+
+    /** 路标之眼（追踪特定坐标） */
+    val EYE_OF_WAYPOINT = registerItem("eye_of_waypoint") { Item(Item.Properties().stacksTo(16)) }
 
     /**
      * 注册一个普通物品。

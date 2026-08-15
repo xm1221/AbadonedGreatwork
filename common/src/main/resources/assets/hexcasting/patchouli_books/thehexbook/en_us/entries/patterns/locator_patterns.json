@@ -1,0 +1,39 @@
+{
+  "name": "hexcasting.entry.locator_patterns",
+  "category": "hexcasting:patterns",
+  "icon": "minecraft:compass",
+  "advancement": "hexcasting:root",
+  "sortnum": 16,
+  "pages": [
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:locate",
+      "anchor": "abadoned_greatwork:locate",
+      "input": "vector, biome|structure",
+      "output": "",
+      "text": "hexcasting.page.locator_patterns.locate"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "abadoned_greatwork:eye_of_locating",
+      "anchor": "eye_of_locating",
+      "text": "hexcasting.page.locator_patterns.eye_of_locating"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:random_biome",
+      "anchor": "abadoned_greatwork:random_biome",
+      "input": "",
+      "output": "biome|structure",
+      "text": "hexcasting.page.locator_patterns.random_biome"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:current_biome",
+      "anchor": "abadoned_greatwork:current_biome",
+      "input": "",
+      "output": "biome",
+      "text": "hexcasting.page.locator_patterns.current_biome"
+    }
+  ]
+}

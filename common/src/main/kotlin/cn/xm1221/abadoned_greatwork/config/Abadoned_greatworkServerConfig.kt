@@ -55,16 +55,16 @@ object Abadoned_greatworkServerConfig {
 
     @Config(name = "server")
     class ServerConfig : ConfigData {
+        /** 调试：探古之眼找到目标并转向完成后，向玩家发送其朝向与找到的目标位置 */
         @Tooltip
-        var dummyServerConfigOption: Int = 64
-            private set
+        var debugEyeLocating: Boolean = false
 
         fun encode(buf: FriendlyByteBuf) {
-            buf.writeInt(dummyServerConfigOption)
+            buf.writeBoolean(debugEyeLocating)
         }
 
         fun decode(buf: FriendlyByteBuf): ServerConfig {
-            dummyServerConfigOption = buf.readInt()
+            debugEyeLocating = buf.readBoolean()
             return this
         }
     }

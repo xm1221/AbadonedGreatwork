@@ -1,5 +1,5 @@
 {
-  "parent": "abadoned_greatwork:root",
+  "parent": "hexcasting:root",
   "display": {
     "icon": {
       "item": "minecraft:sculk_catalyst"

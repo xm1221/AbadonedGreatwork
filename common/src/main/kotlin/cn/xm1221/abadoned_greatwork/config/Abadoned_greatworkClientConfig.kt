@@ -53,7 +53,5 @@ object Abadoned_greatworkClientConfig {
 
     @Config(name = "client")
     class ClientConfig : ConfigData {
-        @Tooltip
-        val dummyClientConfigOption: Boolean = true
     }
 }

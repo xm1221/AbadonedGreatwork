@@ -1,0 +1,39 @@
+{
+  "name": "hexcasting.entry.hex_eyes",
+  "category": "hexcasting:items",
+  "icon": "abadoned_greatwork:eye_of_tracking",
+  "advancement": "hexcasting:root",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "abadoned_greatwork:eye_of_tracking",
+      "anchor": "eye_of_tracking",
+      "link_recipe": true,
+      "text": "hexcasting.page.hex_eyes.tracking_item"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "abadoned_greatwork:eye_of_waypoint",
+      "anchor": "eye_of_waypoint",
+      "link_recipe": true,
+      "text": "hexcasting.page.hex_eyes.waypoint_item"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:tracking_eye",
+      "anchor": "abadoned_greatwork:tracking_eye",
+      "input": "vector, entity",
+      "output": "",
+      "text": "hexcasting.page.hex_eyes.tracking_eye"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:waypoint_eye",
+      "anchor": "abadoned_greatwork:waypoint_eye",
+      "input": "vector, vector",
+      "output": "",
+      "text": "hexcasting.page.hex_eyes.waypoint_eye"
+    }
+  ]
+}
