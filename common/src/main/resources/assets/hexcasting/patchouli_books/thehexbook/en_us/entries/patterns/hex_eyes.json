@@ -1,6 +1,6 @@
 {
   "name": "hexcasting.entry.hex_eyes",
-  "category": "hexcasting:items",
+  "category": "hexcasting:patterns",
   "icon": "abadoned_greatwork:eye_of_tracking",
   "advancement": "hexcasting:root",
   "sortnum": 8,
@@ -9,14 +9,12 @@
       "type": "patchouli:spotlight",
       "item": "abadoned_greatwork:eye_of_tracking",
       "anchor": "eye_of_tracking",
-      "link_recipe": true,
       "text": "hexcasting.page.hex_eyes.tracking_item"
     },
     {
       "type": "patchouli:spotlight",
       "item": "abadoned_greatwork:eye_of_waypoint",
       "anchor": "eye_of_waypoint",
-      "link_recipe": true,
       "text": "hexcasting.page.hex_eyes.waypoint_item"
     },
     {

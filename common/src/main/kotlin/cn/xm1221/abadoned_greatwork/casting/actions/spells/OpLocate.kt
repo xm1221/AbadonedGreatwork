@@ -11,14 +11,20 @@ import at.petrak.hexcasting.api.misc.MediaConstants
 import cn.xm1221.abadoned_greatwork.casting.iota.BiomeIota
 import cn.xm1221.abadoned_greatwork.entity.EyeOfLocating
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkItems
+import net.minecraft.core.BlockPos
+import net.minecraft.network.chat.Component
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.phys.Vec3
 
 /**
- * 探古寻迹：接受一个 [BiomeIota]（目标）与一个向量 Iota（坐标），
- * 在目标坐标处召唤一只对目标群系/结构狩猎的探古之眼。
+ * 探古寻迹：接受一个 [BiomeIota]（目标）与一个向量 Iota（召唤位置），
+ * 在指定坐标召唤一只飞向目标群系/结构的探古之眼。
  *
- * 栈序（从栈顶）：BiomeIota（目标）在下，向量（坐标）在顶。
+ * execute 只做参数校验（廉价）；同步搜索放到 cast 阶段（主线程）——
+ * 找到则在召唤位置生成眼睛并瞄准目标，找不到则不召唤（媒介已消耗，不抛 mishap）。
+ *
+ * 栈序（从栈顶）：向量（召唤位置）在下，BiomeIota（目标）在顶。
  */
 class OpLocate : SpellAction {
     override val argc: Int
@@ -28,7 +34,7 @@ class OpLocate : SpellAction {
         args: List<Iota>,
         env: CastingEnvironment
     ): SpellAction.Result {
-        // 栈顶：目标坐标（向量）
+        // 栈顶：召唤位置（向量）
         val spawnPos = args.getVec3(0, 2)
         // 栈次顶：目标（BiomeIota）
         val iota = args.getOrElse(1) { throw MishapNotEnoughArgs(2, args.size) }
@@ -43,19 +49,26 @@ class OpLocate : SpellAction {
         return SpellAction.Result(
             object : RenderedSpell {
                 override fun cast(env: CastingEnvironment) {
-                    val level = env.world
+                    val level = env.world as ServerLevel
+
+                    // 使用点同步搜索（cast 阶段，主线程）：找到才召唤
+                    val found = EyeOfLocating.searchTarget(
+                        level, BlockPos.containing(spawnPos), id, isStructure)
+                    if (found == null) {
+                        // 找不到：提示但不抛 mishap（媒介已在 cast 前消耗）
+                        if (env.castingEntity is ServerPlayer) {
+                            (env.castingEntity as ServerPlayer).sendSystemMessage(
+                                Component.translatable("hexcasting.mishap.not_found", id.toString()))
+                        }
+                        return
+                    }
 
                     val eye = EyeOfLocating(level, spawnPos.x, spawnPos.y, spawnPos.z)
                     eye.setItem(ItemStack(Abadoned_greatworkItems.EYE_OF_LOCATING.value))
                     eye.setTarget(id, isStructure)
                     env.castingEntity?.uuid?.let { eye.setOwner(it) }
-                    // 没有施法者视线，朝随机水平方向抛出（飞 12 格后悬停，靠大范围扫描确定方向）
-                    val dir = Vec3(
-                        level.random.nextDouble() * 2.0 - 1.0,
-                        0.0,
-                        level.random.nextDouble() * 2.0 - 1.0
-                    ).normalize().scale(50.0)
-                    eye.launchToward(dir)
+                    // 瞄准使用点搜索到的目标（完全原版：飞 12 格后悬停）
+                    eye.aimAt(found)
                     level.addFreshEntity(eye)
                 }
             },

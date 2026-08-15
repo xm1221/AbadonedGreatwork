@@ -52,7 +52,7 @@ class OpWaypointEye : SpellAction {
                     level.addFreshEntity(eye)
                 }
             },
-            MediaConstants.CRYSTAL_UNIT,
+            MediaConstants.DUST_UNIT,
             listOf()
         )
     }
