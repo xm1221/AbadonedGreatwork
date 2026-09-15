@@ -23,11 +23,11 @@
   "text.abadoned_greatwork.crystal.length": "Length Limit: %s",
   "text.abadoned_greatwork.crystal.variant": "Variant %s",
   "text.abadoned_greatwork.crystal.crafted": "(Practice)",
-  "text.abadoned_greatwork.crystal.input_0": "\u2192 Input 0:",
-  "text.abadoned_greatwork.crystal.input_1": "\u2192 Input 1:",
-  "text.abadoned_greatwork.crystal.output_0": "\u2192 Expected Output 0:",
-  "text.abadoned_greatwork.crystal.output_1": "\u2192 Expected Output 1:",
-  "text.abadoned_greatwork.crystal.stored_iota": "\u2192 Stored Spell:",
+  "text.abadoned_greatwork.crystal.input_0": "→ Input 0:",
+  "text.abadoned_greatwork.crystal.input_1": "→ Input 1:",
+  "text.abadoned_greatwork.crystal.output_0": "→ Expected Output 0:",
+  "text.abadoned_greatwork.crystal.output_1": "→ Expected Output 1:",
+  "text.abadoned_greatwork.crystal.stored_iota": "→ Stored Spell:",
   "text.abadoned_greatwork.crystal.length_exceed": "Error: spell list length exceeds crystal limit (%s)!",
   "text.abadoned_greatwork.crystal.no_input": "Error: crystal has no input data!",
   "text.abadoned_greatwork.crystal.no_output": "Error: crystal has no output data!",
@@ -101,7 +101,7 @@
   "hexcasting.mishap.not_found": "No %s found nearby",
   "hexcasting.mishap.invalid_value.biome": "expected a biome or structure",
   "text.abadoned_greatwork.biome_iota.biome": "Biome: %s",
-  "text.abadoned_greatwork.biome_iota.structure": "Structure: %s"
-
-
+  "text.abadoned_greatwork.biome_iota.structure": "Structure: %s",
+  "hexdoc.abadoned_greatwork.title": "Abadoned Greatwork",
+  "hexdoc.abadoned_greatwork.description": "Abadoned Greatwork guide"
 }

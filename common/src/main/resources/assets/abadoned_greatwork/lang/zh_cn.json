@@ -101,6 +101,7 @@
   "hexcasting.mishap.not_found": "在附近找不到 %s",
   "hexcasting.mishap.invalid_value.biome": "需要一个生物群系或结构",
   "text.abadoned_greatwork.biome_iota.biome": "Biome: %s",
-  "text.abadoned_greatwork.biome_iota.structure": "Structure: %s"
-
+  "text.abadoned_greatwork.biome_iota.structure": "Structure: %s",
+  "hexdoc.abadoned_greatwork.title": "被遗弃的卓伟之作",
+  "hexdoc.abadoned_greatwork.description": "被遗弃的卓伟之作 网页书"
 }
