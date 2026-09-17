@@ -29,6 +29,7 @@ scheme = "gradle"
 source = "gradle-properties"
 py-path = "doc/src/hexdoc_abadoned_greatwork/__version__.py"
 key = "modVersion"
+gradle-version-regex = { regex='^([^+]+)(\+.+)?$', repl='\1.1.20.1' }
 
 # Python dependencies
 
@@ -49,7 +50,8 @@ dev = [
 [tool.hatch.build]
 only-include = [
     "doc/src/hexdoc_abadoned_greatwork",
-    "gradle.properties", ]
+    "gradle.properties",
+    "gradle/libs.versions.toml", ]
 artifacts = [
     "/doc/src/hexdoc_abadoned_greatwork/_export/generated",
     "/doc/src/hexdoc_abadoned_greatwork/__gradle_version__.py",
