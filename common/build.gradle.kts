@@ -1,3 +1,5 @@
+
+
 plugins {
     id("abadoned_greatwork.minecraft")
 }
@@ -19,6 +21,8 @@ dependencies {
     modApi(libs.hexcasting.common)
 
     modApi(libs.clothConfig.common)
+
+    modApi(libs.terraBlender.fabric)
 
     //modImplementation(libs.moreiotas)
 
