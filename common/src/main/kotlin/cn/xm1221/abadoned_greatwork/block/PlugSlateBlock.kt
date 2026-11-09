@@ -190,13 +190,13 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
     /**
      * 媒质波走到这一格：把镜像原样传下去，只负责转向。
      *
-     * 照 [BlockSlate] 的办法：每片只禁「离开自己暴露面」的那一向，波贴着的每片各给各的，
-     * 取**并集** —— 单片承载时禁掉薄轴两端，两片都贴时六向全在。
+     * 照 [BlockSlate] 的办法，每片只禁**自己暴露面法线**那一向（`allDirs.remove(normal)`），
+     * 波贴着的每片各给各的，取**并集**：单片承载时剩 5 向，两片都贴时两片的 5 向互不包含，
+     * 并集是 6 向 —— 转角在设定上就是两块板，波在棱上既可以继续沿这一块、也可以转上另一块。
      *
-     * 转角在设定上是两块板，波在棱上既可以继续沿这一块、也可以转上另一块，候选本来就不止
-     * 一条。这些候选里如果有多个下一格都愿意接，`CircleExecutionState.tick` 会自己报
-     * `many_exits` —— 那是引擎的权威判断（它真的逐格去问了），这里只负责把候选给全，
-     * 不替它收窄。
+     * 撞面方向（`normal.opposite`）不禁：石板也不禁，交给下一格的 `canEnterFromDirection`
+     * 挡。候选里若有多个下一格都愿意接，`CircleExecutionState.tick` 会自己报 `many_exits`
+     * —— 那是引擎的权威判断（它真的逐格去问了），这里只负责把候选给全，不替它收窄。
      */
     override fun acceptControlFlow(
         imageIn: CastingImage,
@@ -208,8 +208,8 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
     ): ICircleComponent.ControlFlow {
         val carrying = carryingSlabs(enterDir, pos, bs, world)
         val exits = EnumSet.allOf(Direction::class.java)
-        exits.removeIf { exit -> carrying.all { it.t == exit.axis } }   // 没有一片能承载
-        exits.remove(enterDir.opposite)                                 // 不许原路返回
+        exits.removeIf { exit -> carrying.all { it.g.opposite == exit } }   // 每片只禁离开自己的面
+        exits.remove(enterDir.opposite)                                      // 不许原路返回
         return ICircleComponent.ControlFlow.Continue(
             imageIn,
             exits.map { exitPositionFromDirection(pos, it) },
