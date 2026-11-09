@@ -192,15 +192,19 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
     }
 
     /**
-     * 媒质波走到这一格：把镜像原样传下去，只负责转向。
+     * 媒质波走到这一格：**转角必须转弯**。
      *
-     * 照 [BlockSlate] 的办法，每片只禁**自己暴露面法线**那一向（`allDirs.remove(normal)`），
-     * 波贴着的每片各给各的，取**并集**：单片承载时剩 5 向，两片都贴时两片的 5 向互不包含，
-     * 并集是 6 向 —— 转角在设定上就是两块板，波在棱上既可以继续沿这一块、也可以转上另一块。
+     * 转角在设定上是两块板拼成的 L：波贴着进来那一块（[carryingSlabs] 的单片），从这里
+     * 出去就只有一条合法的路 —— 沿薄轴离开这块板、转上另一块，也就是 `g.opposite`。
      *
-     * `many_exits` **由我们自己报**，不等引擎：转角件是两块板，波在棱上就该只有一条路，
-     * 一旦有两个出口的下一格都愿意接，说明这个摆法让波失去了唯一的去向，属于本件内部的
-     * 歧义，就地报掉并停下，而不是把候选原样抛回去让引擎替我们判。
+     * 候选先砍两向：来路（不许原路返回）和 `g`（往板里撞，物理上走不了）。剩下的逐个问
+     * 下一格，然后分三种情形：
+     * - 没人接 → 没有去向，交回空表，让引擎报 `no_exits`；
+     * - 恰好只有 `turn` 接 → 正常转弯；
+     * - 接的不止一条，或者接的不是 `turn` → 去路过多，本件自己报 `many_exits` 并停下。
+     *
+     * 波没骑在任何一片上（来源不认识，或同轴不同面、物理上走不到那种来向）时取宽，不在此
+     * 处判 —— 只有确定它骑在哪块板上，才谈得上「该不该转弯」。
      */
     override fun acceptControlFlow(
         imageIn: CastingImage,
@@ -210,58 +214,73 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
         bs: BlockState,
         world: ServerLevel,
     ): ICircleComponent.ControlFlow {
-        val carrying = carryingSlabs(enterDir, pos, bs, world)
-        val exits = EnumSet.allOf(Direction::class.java)
-        exits.removeIf { exit -> carrying.all { it.g.opposite == exit } }   // 每片只禁离开自己的面
-        exits.remove(enterDir.opposite)                                      // 不许原路返回
+        val slab = carryingSlabs(enterDir, pos, bs, world)?.singleOrNull()
 
-        // 自己判去路：两个以上的下一格都愿意接，就是本件的歧义
+        if (slab == null) {
+            val any = EnumSet.allOf(Direction::class.java)
+            any.remove(enterDir.opposite)
+            return ICircleComponent.ControlFlow.Continue(
+                imageIn,
+                any.map { exitPositionFromDirection(pos, it) },
+            )
+        }
+
+        val turn = slab.g.opposite
+        val exits = EnumSet.allOf(Direction::class.java)
+        exits.remove(enterDir.opposite)                                      // 不许原路返回
+        exits.remove(slab.g)                                                 // 往板里撞
+
         val accepting = exits.filter { exit ->
             val therePos = pos.relative(exit)
             val there = world.getBlockState(therePos)
             val next = there.block as? ICircleComponent
             next != null && next.canEnterFromDirection(exit, therePos, there, world)
         }
-        if (accepting.size > 1) {
-            val impetus = env.impetus
-            if (impetus != null) {
-                impetus.postDisplay(
-                    Component.translatable(
-                        "hexcasting.tooltip.circle.many_exits",
-                        Component.literal(pos.toShortString()).withStyle(ChatFormatting.RED),
-                    ),
-                    ItemStack(Items.COMPASS),
-                )
-                ICircleComponent.sfx(pos, bs, world, impetus, false)
-            }
-            return ICircleComponent.ControlFlow.Stop()
+
+        if (accepting.isEmpty()) {
+            return ICircleComponent.ControlFlow.Continue(imageIn, emptyList())
         }
 
-        return ICircleComponent.ControlFlow.Continue(
-            imageIn,
-            exits.map { exitPositionFromDirection(pos, it) },
-        )
+        if (accepting.size == 1 && accepting[0] == turn) {
+            return ICircleComponent.ControlFlow.Continue(
+                imageIn,
+                listOf(exitPositionFromDirection(pos, turn)),
+            )
+        }
+
+        val impetus = env.impetus
+        if (impetus != null) {
+            impetus.postDisplay(
+                Component.translatable(
+                    "hexcasting.tooltip.circle.many_exits",
+                    Component.literal(pos.toShortString()).withStyle(ChatFormatting.RED),
+                ),
+                ItemStack(Items.COMPASS),
+            )
+            ICircleComponent.sfx(pos, bs, world, impetus, false)
+        }
+        return ICircleComponent.ControlFlow.Stop()
     }
 
     /**
-     * 波此刻贴着本件的哪几片：来源片里够到共享面的那些，配上本件里与之相交的片。
+     * 波此刻贴着本件的哪一片 —— 也就是它在转角里骑在哪块板上。
      *
-     * 来源不认识（促动石、导向石、别的环件）时返回本件两片（取宽）；一片都对不上时也返回
-     * 两片，因为那种来向已经被 [canEnterFromDirection] 拒在门外，这里只是不该崩。
+     * 只认「与来源承载片共面继续」的那片（同轴同贴合面）。`null` = 来源不认识（促动石、
+     * 导向石、别的环件），不知道波骑在哪，调用方取宽；空列表 = 认识但对不上，那种来向
+     * 已经被 [canEnterFromDirection] 拒在门外，走到这里说明摆法本身有问题。
      */
     fun carryingSlabs(
         enterDir: Direction,
         pos: BlockPos,
         bs: BlockState,
         level: Level,
-    ): List<Slab> {
-        val mine = slabsOf(bs)
-        val src = slabsAt(level.getBlockState(pos.relative(enterDir.opposite))) ?: return mine
+    ): List<Slab>? {
+        val src = slabsAt(level.getBlockState(pos.relative(enterDir.opposite))) ?: return null
         val axis = enterDir.axis
-        val hit = src
+        return src
             .filter { s -> s.t != axis }
-            .flatMap { s -> mine.filter { m -> meets(s, m, axis) } }
-        return hit.distinct().ifEmpty { mine }
+            .flatMap { s -> slabsOf(bs).filter { m -> m.t == s.t && m.g == s.g } }
+            .distinct()
     }
 
     companion object {
