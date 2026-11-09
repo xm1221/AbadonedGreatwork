@@ -42,6 +42,12 @@ object Abadoned_greatwork {
         )
         Abadoned_greatworkNetworking.init()
         Abadoned_greatworkLootInjector.register()
+        dev.architectury.registry.ReloadListenerRegistry.register(
+            net.minecraft.server.packs.PackType.SERVER_DATA,
+            net.minecraft.server.packs.resources.ResourceManagerReloadListener { rm ->
+                cn.xm1221.abadoned_greatwork.block.Abadoned_greatworkRiddleLoader.reload(rm)
+            }
+        )
     }
 
     fun initServer() {

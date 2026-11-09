@@ -63,7 +63,7 @@ public class ItemTruthCrystal extends ItemFocus {
         NBTHelper.putBoolean(stack, IS_CRAFTED, true);
     }
 
-    // ==================== Length Limit ====================
+    // ==================== Length Limit & Counter ====================
 
     public static int getLengthLimit(ItemStack itemStack) {
         return NBTHelper.getInt(itemStack, LENGTH_LIMIT);
@@ -73,26 +73,61 @@ public class ItemTruthCrystal extends ItemFocus {
         NBTHelper.putInt(itemStack, LENGTH_LIMIT, lengthLimit);
     }
 
+    /**
+     * 递归统计所有 Iota 的数量（含嵌套列表内部的元素），防止通过嵌套列表绕过长度上限。
+     */
+    public static int countTotalIotas(Iterable<Iota> iotas) {
+        if (iotas == null) return 0;
+        int count = 0;
+        for (Iota iota : iotas) {
+            count++;
+            if (iota instanceof ListIota listIota) {
+                count += countTotalIotas(listIota.getList());
+            }
+        }
+        return count;
+    }
+
     // ==================== Input ====================
 
-    public static Iterable<Iota> getInput(ItemStack itemStack, ServerLevel level, Boolean bl) {
+    public static int getTestCount(ItemStack itemStack) {
+        var inputs = NBTHelper.get(itemStack, INPUT);
+        if (!(inputs instanceof CompoundTag tag)) return 0;
+        int count = 0;
+        while (tag.contains(String.valueOf(count))) {
+            count++;
+        }
+        return count;
+    }
+
+    public static Iterable<Iota> getInputAt(ItemStack itemStack, ServerLevel level, int index) {
         var inputs = NBTHelper.get(itemStack, INPUT);
         if (!(inputs instanceof CompoundTag tag)) return null;
-        var list0 = NBTHelper.get(tag, "0");
-        var list1 = NBTHelper.get(tag, "1");
-        if (!(list0 instanceof CompoundTag tag0) || !(list1 instanceof CompoundTag tag1)) return null;
-        var iota0 = IotaType.deserialize(tag0, level);
-        var iota1 = IotaType.deserialize(tag1, level);
-        if (iota0 instanceof ListIota li0 && iota1 instanceof ListIota li1) {
-            return bl ? li0.getList() : li1.getList();
+        var listTag = NBTHelper.get(tag, String.valueOf(index));
+        if (!(listTag instanceof CompoundTag cTag)) return null;
+        var iota = IotaType.deserialize(cTag, level);
+        if (iota instanceof ListIota li) {
+            return li.getList();
         }
         return null;
+    }
+
+    public static Iterable<Iota> getInput(ItemStack itemStack, ServerLevel level, Boolean bl) {
+        return getInputAt(itemStack, level, bl ? 0 : 1);
     }
 
     public static void setInput(ItemStack itemStack, ListIota list0, ListIota list1) {
         var inputs = new CompoundTag();
         NBTHelper.put(inputs, "0", IotaType.serialize(list0));
         NBTHelper.put(inputs, "1", IotaType.serialize(list1));
+        NBTHelper.put(itemStack, INPUT, inputs);
+    }
+
+    public static void setInputs(ItemStack itemStack, List<ListIota> lists) {
+        var inputs = new CompoundTag();
+        for (int i = 0; i < lists.size(); i++) {
+            NBTHelper.put(inputs, String.valueOf(i), IotaType.serialize(lists.get(i)));
+        }
         NBTHelper.put(itemStack, INPUT, inputs);
     }
 
@@ -105,18 +140,28 @@ public class ItemTruthCrystal extends ItemFocus {
         NBTHelper.put(itemStack, OUTPUT, output);
     }
 
-    public static Iterable<Iota> getOutput(ItemStack itemStack, ServerLevel level, Boolean bl) {
+    public static void setOutputs(ItemStack itemStack, List<ListIota> lists) {
+        var output = new CompoundTag();
+        for (int i = 0; i < lists.size(); i++) {
+            NBTHelper.put(output, String.valueOf(i), IotaType.serialize(lists.get(i)));
+        }
+        NBTHelper.put(itemStack, OUTPUT, output);
+    }
+
+    public static Iterable<Iota> getOutputAt(ItemStack itemStack, ServerLevel level, int index) {
         var outputs = NBTHelper.get(itemStack, OUTPUT);
         if (!(outputs instanceof CompoundTag tag)) return null;
-        var list0 = NBTHelper.get(tag, "0");
-        var list1 = NBTHelper.get(tag, "1");
-        if (!(list0 instanceof CompoundTag tag0) || !(list1 instanceof CompoundTag tag1)) return null;
-        var iota0 = IotaType.deserialize(tag0, level);
-        var iota1 = IotaType.deserialize(tag1, level);
-        if (iota0 instanceof ListIota li0 && iota1 instanceof ListIota li1) {
-            return bl ? li0.getList() : li1.getList();
+        var listTag = NBTHelper.get(tag, String.valueOf(index));
+        if (!(listTag instanceof CompoundTag cTag)) return null;
+        var iota = IotaType.deserialize(cTag, level);
+        if (iota instanceof ListIota li) {
+            return li.getList();
         }
         return null;
+    }
+
+    public static Iterable<Iota> getOutput(ItemStack itemStack, ServerLevel level, Boolean bl) {
+        return getOutputAt(itemStack, level, bl ? 0 : 1);
     }
 
     // ==================== Tooltip / Mode ====================
@@ -124,7 +169,6 @@ public class ItemTruthCrystal extends ItemFocus {
     public static void setTooltip(ItemStack itemStack, String tooltip) {
         NBTHelper.putString(itemStack, TOOLTIP, tooltip);
     }
-
 
     public static String getTooltip(ItemStack itemStack) {
         return NBTHelper.getString(itemStack, TOOLTIP);
@@ -162,20 +206,27 @@ public class ItemTruthCrystal extends ItemFocus {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> components,
                                 TooltipFlag flag) {
+        ChatFormatting variantColor = lootTableIndex == 0 ? ChatFormatting.AQUA :
+                (lootTableIndex == 1 ? ChatFormatting.GOLD : ChatFormatting.LIGHT_PURPLE);
+        components.add(Component.translatable("text.abadoned_greatwork.crystal.variant", lootTableIndex)
+                .withStyle(variantColor));
+
         int limit = getLengthLimit(stack);
         if (limit > 0) {
             components.add(Component.translatable("text.abadoned_greatwork.crystal.length", limit)
                     .withStyle(ChatFormatting.GRAY));
         }
-        components.add(Component.translatable("text.abadoned_greatwork.crystal.tooltip"));
+
         var text = NBTHelper.getString(stack, TOOLTIP);
         if (text != null && !text.isEmpty()) {
-            components.add(Component.translatable(text).withStyle(ChatFormatting.GOLD));
+            components.add(Component.translatable(text).withStyle(ChatFormatting.YELLOW));
+        } else {
+            components.add(Component.translatable("text.abadoned_greatwork.crystal.tooltip"));
         }
 
         if (isCrafted(stack)) {
             components.add(Component.translatable("text.abadoned_greatwork.crystal.crafted")
-                    .withStyle(ChatFormatting.DARK_GRAY));
+                    .withStyle(ChatFormatting.DARK_GREEN));
         }
     }
 

@@ -85,18 +85,41 @@ class TruthCrystalBlockEntity(
 
     override fun removeItem(slot: Int, amount: Int): ItemStack {
         val result = ContainerHelper.removeItem(items, slot, amount)
-        if (!result.isEmpty) setChanged()
+        if (!result.isEmpty) {
+            setChanged()
+            sync()
+        }
         return result
     }
 
-    override fun removeItemNoUpdate(slot: Int): ItemStack =
-        ContainerHelper.takeItem(items, slot)
+    override fun removeItemNoUpdate(slot: Int): ItemStack {
+        val result = ContainerHelper.takeItem(items, slot)
+        if (!result.isEmpty) {
+            setChanged()
+            sync()
+        }
+        return result
+    }
 
     override fun setItem(slot: Int, stack: ItemStack) {
         items[slot] = stack
         if (stack.count > maxStackSize) stack.count = maxStackSize
         setChanged()
+        sync()
     }
+
+    private fun sync() {
+        val l = level ?: return
+        if (!l.isClientSide) {
+            l.sendBlockUpdated(worldPosition, blockState, blockState, 3)
+        }
+    }
+
+    override fun getUpdatePacket(): net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket? =
+        net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this)
+
+    override fun getUpdateTag(): CompoundTag =
+        saveWithoutMetadata()
 
     override fun getMaxStackSize(): Int = 1
 

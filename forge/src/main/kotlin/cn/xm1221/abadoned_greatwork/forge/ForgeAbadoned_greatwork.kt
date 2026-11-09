@@ -27,6 +27,10 @@ class ForgeAbadoned_greatwork {
             )) {
                 e.registerEntityRenderer(type.value) { ctx -> ThrownItemRenderer(ctx) }
             }
+            e.registerBlockEntityRenderer(
+                cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities.TRUTH_CRYSTAL.value,
+                cn.xm1221.abadoned_greatwork.client.renderer::TruthCrystalBlockEntityRenderer
+            )
         }
         Abadoned_greatwork.init()
     }

@@ -33,14 +33,17 @@ class OpTestEval(): SpellAction {
         args: List<Iota>,
         env: CastingEnvironment
     ): SpellAction.Result {
-        val caster  = env.castingEntity
-        if(caster !is Player || !caster.isCreative) {
+        val caster = env.castingEntity
+        if (caster !is Player) {
             throw MishapBadCaster()
         }
         val hand = env.otherHand
         val stack = caster.getItemInHand(hand)
-        if(stack.item !is ItemTruthCrystal){
-            throw MishapBadOffhandItem.of(stack,"truth_crystal")
+        if (stack.item !is ItemTruthCrystal) {
+            throw MishapBadOffhandItem.of(stack, "truth_crystal")
+        }
+        if (!caster.isCreative && !ItemTruthCrystal.isCrafted(stack)) {
+            throw MishapBadCaster()
         }
         val list0 = args.getList(0,argc)
         val list1 = args.getList(1,argc)
