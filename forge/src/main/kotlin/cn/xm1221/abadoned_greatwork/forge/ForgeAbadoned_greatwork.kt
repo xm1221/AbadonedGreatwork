@@ -2,9 +2,13 @@ package cn.xm1221.abadoned_greatwork.forge
 
 import dev.architectury.platform.forge.EventBuses
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
+import cn.xm1221.abadoned_greatwork.client.renderer.TruthCrystalBlockEntityRenderer
 import cn.xm1221.abadoned_greatwork.forge.datagen.ForgeAbadoned_greatworkDatagen
+import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes
 import net.minecraft.client.renderer.entity.ThrownItemRenderer
+import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraftforge.client.event.EntityRenderersEvent
 import net.minecraftforge.fml.common.Mod
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
@@ -27,10 +31,10 @@ class ForgeAbadoned_greatwork {
             )) {
                 e.registerEntityRenderer(type.value) { ctx -> ThrownItemRenderer(ctx) }
             }
+            @Suppress("UNCHECKED_CAST")
             e.registerBlockEntityRenderer(
-                cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities.TRUTH_CRYSTAL.value,
-                cn.xm1221.abadoned_greatwork.client.renderer::TruthCrystalBlockEntityRenderer
-            )
+                Abadoned_greatworkBlockEntities.TRUTH_CRYSTAL.value as BlockEntityType<TruthCrystalBlockEntity>
+            ) { ctx -> TruthCrystalBlockEntityRenderer(ctx) }
         }
         Abadoned_greatwork.init()
     }

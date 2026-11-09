@@ -9,7 +9,7 @@ Comprehensive validation script for Truth Crystal system:
 import json, os, re
 from PIL import Image
 
-BASE_DIR = "/home/antigravity/xm1221/AbadonedGreatwork"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RIDDLES_DIR = os.path.join(BASE_DIR, "common/src/main/resources/data/abadoned_greatwork/riddles")
 LANG_DIR = os.path.join(BASE_DIR, "common/src/main/resources/assets/abadoned_greatwork/lang")
 TEXTURES_DIR = os.path.join(BASE_DIR, "common/src/main/resources/assets/abadoned_greatwork/textures")

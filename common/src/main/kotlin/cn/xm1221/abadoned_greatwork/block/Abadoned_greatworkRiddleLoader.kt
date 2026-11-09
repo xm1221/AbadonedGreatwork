@@ -28,19 +28,21 @@ object Abadoned_greatworkRiddleLoader {
         val nbt: String = "",
     ) {
         /** 是否使用完整 NBT 模式 */
-        val isRawNbt: Boolean get() = nbt.isNotBlank()
+        // 兜底按可空处理：目前 Gson 会走 Kotlin 生成的全默认无参构造，缺失字段会取默认值；
+        // 但若以后新增「无默认值」的字段，Gson 会写入 null，这里保持判空以免触发 NPE。
+        val isRawNbt: Boolean get() = !nbt.isNullOrBlank()
 
         fun nbtTag(): CompoundTag? = parseTag(nbt)
 
         fun getAllInputTags(): List<CompoundTag> {
-            if (inputs.isNotEmpty()) {
+            if (!inputs.isNullOrEmpty()) {
                 return inputs.mapNotNull(::parseTag)
             }
             return listOfNotNull(parseTag(input0), parseTag(input1), parseTag(input2))
         }
 
         fun getAllOutputTags(): List<CompoundTag> {
-            if (outputs.isNotEmpty()) {
+            if (!outputs.isNullOrEmpty()) {
                 return outputs.mapNotNull(::parseTag)
             }
             return listOfNotNull(parseTag(output0), parseTag(output1), parseTag(output2))
@@ -51,8 +53,8 @@ object Abadoned_greatworkRiddleLoader {
         fun output0Tag(): CompoundTag? = parseTag(output0)
         fun output1Tag(): CompoundTag? = parseTag(output1)
 
-        private fun parseTag(snbt: String): CompoundTag? {
-            if (snbt.isBlank()) return null
+        private fun parseTag(snbt: String?): CompoundTag? {
+            if (snbt.isNullOrBlank()) return null
             return try {
                 TagParser.parseTag(snbt) as? CompoundTag
             } catch (_: Exception) {

@@ -1,6 +1,7 @@
 package cn.xm1221.abadoned_greatwork.fabric
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatworkClient
+import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
 import cn.xm1221.abadoned_greatwork.client.renderer.TruthCrystalBlockEntityRenderer
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes
@@ -8,6 +9,7 @@ import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
 import net.minecraft.client.renderer.entity.ThrownItemRenderer
+import net.minecraft.world.level.block.entity.BlockEntityType
 
 object FabricAbadoned_greatworkClient : ClientModInitializer {
     override fun onInitializeClient() {
@@ -21,9 +23,9 @@ object FabricAbadoned_greatworkClient : ClientModInitializer {
             EntityRendererRegistry.register(type.value) { ctx -> ThrownItemRenderer(ctx) }
         }
 
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
         BlockEntityRendererRegistry.register(
-            Abadoned_greatworkBlockEntities.TRUTH_CRYSTAL.value,
-            ::TruthCrystalBlockEntityRenderer
-        )
+            Abadoned_greatworkBlockEntities.TRUTH_CRYSTAL.value as BlockEntityType<TruthCrystalBlockEntity>,
+        ) { ctx -> TruthCrystalBlockEntityRenderer(ctx) }
     }
 }
