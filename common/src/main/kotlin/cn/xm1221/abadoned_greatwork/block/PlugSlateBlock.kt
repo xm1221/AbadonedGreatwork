@@ -5,13 +5,8 @@ import at.petrak.hexcasting.api.casting.circles.ICircleComponent
 import at.petrak.hexcasting.common.blocks.circles.BlockSlate
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
-import cn.xm1221.abadoned_greatwork.util.isParallel
 import net.minecraft.core.BlockPos
-import net.minecraft.ChatFormatting
 import net.minecraft.core.Direction
-import net.minecraft.network.chat.Component
-import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.Items
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
@@ -107,37 +102,33 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
     override fun normalDir(pos: BlockPos, bs: BlockState, level: Level, recursionLeft: Int): Direction =
         if (bs.getValue(HALF) == Half.BOTTOM) Direction.UP else Direction.DOWN
 
-    fun faceDir(pos: BlockPos,bs: BlockState,level: Level):Direction {
-        return bs.getValue(FACING)
-    }
-
     override fun particleHeight(pos: BlockPos, bs: BlockState, level: Level): Float = 0.5f - 15f / 16f
 
     /**
      * 建环洪泛时扩散的候选方向：**全部 6 个**。
      *
-     * 单块石板只有一片，出口只能取「法线以外」；这块是两片（横片 + 竖片），
-     * 两片各自禁掉自己暴露面的法线之后取并集，剩下的正好是 6 个方向全通 ——
-     * 横片禁 UP（贴地时）、竖片禁朝格内的那一面，但任一方向总有一片能走。
+     * 洪泛时还不知道波会贴哪一片（取决于来向），所以取两片面内方向的并集 ——
+     * 横片给 `x/z` 四向，竖片给 `y` 两向加折线两向，合起来就是 6 个。
+     * 真正的收窄在 [acceptControlFlow] 里按「波贴着哪一轴」做。
      */
     override fun possibleExitDirections(pos: BlockPos, bs: BlockState, level: Level): EnumSet<Direction> =
         EnumSet.allOf(Direction::class.java)
 
     /**
-     * **来向能贴上本格某一片的暴露面就放行，只有完全不接触才拒。**
+     * **一片 = 薄轴 + 贴合面。**
      *
-     * 波走的是片的**暴露面**，但片本身有厚度：它占 `[offset-1, offset]` 这 1px。
-     * 所以判据不是「平面坐标相等」，而是「两片贴得上」——同一法线轴，暴露面相差不超过 1px。
+     * 上游石板一行 `enterDir != normal.opposite` 就够，是因为它一片只有一个法线，`enterDir`
+     * 和法线的关系就能定「波在片的哪一侧」。本件两片法线垂直，同一个 `enterDir` 可能是撞板、
+     * 也可能是沿墙 —— 差的那半个自由度是**片贴在哪一面**，用一个轴集合表达不出来。
      *
-     * 第一步定**来源片**：波在来源格里只能贴着「不被 [enterDir] 穿过」的那一片
-     * （`enterDir.axis != 片法线轴`）。本件两片法线垂直（`Y` 与水平 `FACING` 轴），
-     * 所以竖直来向只剩竖墙片、沿 `FACING` 轴的来向只剩底板片 —— 除折线方向外唯一；
-     * 折线方向两片都成立，刻意保留宽，歧义交给 [acceptControlFlow] 报 `many_exits`。
+     * 判据两条，全部只看状态量，不算坐标：
+     * 1. 薄轴 == `enterDir.axis` 的片两边都不参与。波只贴在**暴露面**上走，沿薄轴方向它
+     *    离不开那个面，也就到不了共享面；`BlockSlate` 靠「入口禁撞面 + 出口禁离面」把这件
+     *    事拆给两格各判一半，我们这里是单侧完整判断，所以两侧都要排掉。
+     * 2. 剩下的片比贴合面：薄轴不同则必相交（各自满格的那一轴覆盖对方的 1px 带）；
+     *    薄轴相同则要求贴同一面（`g` 相同）。
      *
-     * 第二步定**本格片**：来源片与本格某片贴得上就放行。
-     *
-     * 来源不是本件也不是上游 [BlockSlate] 时（促动石、导向石、别的环件）取宽 ——
-     * 那些件的片怎么摆不在本件知识范围内，猜它会误拒合法环。
+     * 来源不是本件也不是上游 [BlockSlate]（促动石、导向石、别的环件）时取宽。
      */
     override fun canEnterFromDirection(
         enterDir: Direction,
@@ -145,26 +136,67 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
         bs: BlockState,
         level: ServerLevel,
     ): Boolean {
-        val srcPos = pos.relative(enterDir.opposite)
-        //val srcBs = level.getBlockState(srcPos)
-        val srcNormal = normalDirOfOther(srcPos, level, 16)
-        val localNormal = normalDir(pos, bs, level)
-        val localFace = faceDir(pos, bs, level)
-        if(!enterDir.isParallel(localFace) && !enterDir.isParallel(localNormal)) {
-            return true
-        }
-        if(enterDir.isParallel(localFace)) {
-            return srcNormal != localNormal.opposite
-        }
-        return false
+        val src = slabsAt(level.getBlockState(pos.relative(enterDir.opposite))) ?: return true
+        val axis = enterDir.axis
+        val mine = slabsOf(bs)
+        return src.any { s -> s.t != axis && mine.any { m -> meets(s, m, axis) } }
     }
 
+    // ==================== 片 ====================
+
+    /**
+     * 一片：薄轴 [t] + 贴合面朝向 [g]（片贴住的那一面，`g.axis == t`）。
+     *
+     * 暴露面朝 `g.opposite`，所以「贴在哪一面」是一个方向而不是一根轴 —— 轴集合丢掉的
+     * 正是这半个自由度：同样含 `Y` 轴的两片，可能一个贴地、一个贴天花板。
+     */
+    data class Slab(val t: Direction.Axis, val g: Direction)
+
+    /** 本件两片：底板（贴地 / 贴顶）+ 竖墙（贴 `FACING` 那一侧）。 */
+    fun slabsOf(bs: BlockState): List<Slab> = listOf(
+        Slab(Direction.Axis.Y, if (bs.getValue(HALF) == Half.BOTTOM) Direction.DOWN else Direction.UP),
+        Slab(bs.getValue(FACING).axis, bs.getValue(FACING)),
+    )
+
+    /**
+     * 某格环件的片；`null` = 不认识的方块，调用方取宽。
+     *
+     * 上游 [BlockSlate] 只有一片，而且它的 `FACING` 是**暴露面朝向**（`AABB_EAST_WALL` 是
+     * `x 0..1`，板贴西侧、面朝东），所以贴合面要取 `FACING.opposite` —— 与本件 `FACING`
+     * 语义相反：同一个摆位本件写 `WEST`、上游写 `EAST`。
+     */
+    fun slabsAt(state: BlockState): List<Slab>? =
+        when (state.block) {
+            is PlugSlateBlock -> slabsOf(state)
+            is BlockSlate -> when (state.getValue(BlockSlate.ATTACH_FACE)) {
+                AttachFace.FLOOR -> listOf(Slab(Direction.Axis.Y, Direction.DOWN))
+                AttachFace.CEILING -> listOf(Slab(Direction.Axis.Y, Direction.UP))
+                AttachFace.WALL -> {
+                    val facing = state.getValue(BlockSlate.FACING)
+                    listOf(Slab(facing.axis, facing.opposite))
+                }
+                // ATTACH_FACE 三值已穷尽，给个不可达兜底消 Java 枚举可空警告
+                else -> null
+            }
+            else -> null
+        }
+
+    /** 来源片 [s] 与本件片 [m] 在同一面格边界上是否相通。 */
+    private fun meets(s: Slab, m: Slab, axis: Direction.Axis): Boolean {
+        if (m.t == axis) return false                 // 本件片被波沿薄轴穿过，接不住
+        return s.t != m.t || s.g == m.g               // 薄轴不同必相交；同轴要比贴合面
+    }
 
     /**
      * 媒质波走到这一格：把镜像原样传下去，只负责转向。
      *
-     * 出口 = `possibleExitDirections` 去掉来路。返回多个候选是安全的：引擎会挑出
-     * 「下一格愿意接」的那一个，多于一个才报去路过多。
+     * 照 [BlockSlate] 的办法：每片只禁「离开自己暴露面」的那一向，波贴着的每片各给各的，
+     * 取**并集** —— 单片承载时禁掉薄轴两端，两片都贴时六向全在。
+     *
+     * 转角在设定上是两块板，波在棱上既可以继续沿这一块、也可以转上另一块，候选本来就不止
+     * 一条。这些候选里如果有多个下一格都愿意接，`CircleExecutionState.tick` 会自己报
+     * `many_exits` —— 那是引擎的权威判断（它真的逐格去问了），这里只负责把候选给全，
+     * 不替它收窄。
      */
     override fun acceptControlFlow(
         imageIn: CastingImage,
@@ -174,22 +206,10 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
         bs: BlockState,
         world: ServerLevel,
     ): ICircleComponent.ControlFlow {
-        val localFace = faceDir(pos, bs, world)
-        val localNormal = normalDir(pos, bs, world)
-        val srcPos = pos.relative(enterDir.opposite)
-        val srcNormal = normalDirOfOther(srcPos, world, 16)
-        val exits = possibleExitDirections(pos, bs, world)
-        if(srcNormal == localNormal.opposite) {
-            for (exit in exits) {
-                if(world.getBlockState(pos.relative(exit)).block !is ICircleComponent) exits.remove(exit)
-                if (exit == localFace.opposite) continue
-                exits.remove(exit)
-            }
-        }
-        if(exits.size>1){
-            reportManyExits(env,pos,bs,world)
-            return ICircleComponent.ControlFlow.Stop()
-        }
+        val carrying = carryingSlabs(enterDir, pos, bs, world)
+        val exits = EnumSet.allOf(Direction::class.java)
+        exits.removeIf { exit -> carrying.all { it.t == exit.axis } }   // 没有一片能承载
+        exits.remove(enterDir.opposite)                                 // 不许原路返回
         return ICircleComponent.ControlFlow.Continue(
             imageIn,
             exits.map { exitPositionFromDirection(pos, it) },
@@ -197,31 +217,27 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
     }
 
     /**
-     * 原样复刻 `CircleExecutionState.tick` 里 `many_exits` 的那几行：
-     * 给促动石挂一条「红字坐标 + 指南针」的显示，再放失败音效；随后由调用方返回 `Stop`。
-     * （引擎源码注释：走到 `Stop` 时错误应当已经由 `acceptControlFlow` 自己发过了。）
+     * 波此刻贴着本件的哪几片：来源片里够到共享面的那些，配上本件里与之相交的片。
+     *
+     * 来源不认识（促动石、导向石、别的环件）时返回本件两片（取宽）；一片都对不上时也返回
+     * 两片，因为那种来向已经被 [canEnterFromDirection] 拒在门外，这里只是不该崩。
      */
-    private fun reportManyExits(env: CircleCastEnv, pos: BlockPos, bs: BlockState, world: ServerLevel) {
-        val impetus = env.impetus ?: return
-        impetus.postDisplay(
-            Component.translatable(
-                "hexcasting.tooltip.circle.many_exits",
-                Component.literal(pos.toShortString()).withStyle(ChatFormatting.RED),
-            ),
-            ItemStack(Items.COMPASS),
-        )
-        ICircleComponent.sfx(pos, bs, world, impetus, false)
+    fun carryingSlabs(
+        enterDir: Direction,
+        pos: BlockPos,
+        bs: BlockState,
+        level: Level,
+    ): List<Slab> {
+        val mine = slabsOf(bs)
+        val src = slabsAt(level.getBlockState(pos.relative(enterDir.opposite))) ?: return mine
+        val axis = enterDir.axis
+        val hit = src
+            .filter { s -> s.t != axis }
+            .flatMap { s -> mine.filter { m -> meets(s, m, axis) } }
+        return hit.distinct().ifEmpty { mine }
     }
 
     companion object {
-        /**
-         * 是否把「来向平行于折线」判为去路过多（此时横片与竖片都认这条波）。
-         *
-         * `true`  = 转角只用来「转」，不接受沿着墙走直路；
-         * `false` = 退化成两片并集的万能接头，任何方向都能过。
-         */
-
-
         /** 水平朝向：竖墙贴住的那一面。 */
         @JvmField
         val FACING: DirectionProperty = BlockStateProperties.HORIZONTAL_FACING
