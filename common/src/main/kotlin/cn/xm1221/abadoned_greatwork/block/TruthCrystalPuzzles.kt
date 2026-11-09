@@ -6,7 +6,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.item.ItemStack
 
 /**
- * 预定义谜题库。每个谜题自动生成 3 个变体（对应 3 种真理水晶）。
+ * 预定义谜题库。根据谜题的 variant 字段生成对应变体的水晶（若未指定则生成全部 3 种变体）。
  * 谜题数据来自 [Abadoned_greatworkRiddleLoader]（`data/<ns>/riddles/`）。
  */
 object TruthCrystalPuzzles {
@@ -19,14 +19,29 @@ object TruthCrystalPuzzles {
         )
     }
 
-    val ALL: List<ItemStack> by lazy {
-        Abadoned_greatworkRiddleLoader.riddles.flatMap { riddle ->
-            listOf(
-                createStack(riddle, 0),
-                createStack(riddle, 1),
-                createStack(riddle, 2),
-            )
-        }.distinctBy { "${it.item}${it.tag}" }
+    private var cachedStacks: List<ItemStack>? = null
+
+    val ALL: List<ItemStack>
+        get() {
+            cachedStacks?.let { return it }
+            val list = Abadoned_greatworkRiddleLoader.riddles.flatMap { riddle ->
+                when (riddle.variant) {
+                    0 -> listOf(createStack(riddle, 0))
+                    1 -> listOf(createStack(riddle, 1))
+                    2 -> listOf(createStack(riddle, 2))
+                    else -> listOf(
+                        createStack(riddle, 0),
+                        createStack(riddle, 1),
+                        createStack(riddle, 2),
+                    )
+                }
+            }.distinctBy { "${it.item}${it.tag}" }
+            cachedStacks = list
+            return list
+        }
+
+    fun invalidateCache() {
+        cachedStacks = null
     }
 
     fun createStack(riddle: Abadoned_greatworkRiddleLoader.RawRiddle, variant: Int): ItemStack {
@@ -40,13 +55,13 @@ object TruthCrystalPuzzles {
             val tag = stack.orCreateTag
 
             val inputTag = CompoundTag()
-            riddle.input0Tag()?.let { inputTag.put("0", it) }
-            riddle.input1Tag()?.let { inputTag.put("1", it) }
+            val inputTags = riddle.getAllInputTags()
+            inputTags.forEachIndexed { idx, it -> inputTag.put(idx.toString(), it) }
             tag.put(ItemTruthCrystal.INPUT, inputTag)
 
             val outputTag = CompoundTag()
-            riddle.output0Tag()?.let { outputTag.put("0", it) }
-            riddle.output1Tag()?.let { outputTag.put("1", it) }
+            val outputTags = riddle.getAllOutputTags()
+            outputTags.forEachIndexed { idx, it -> outputTag.put(idx.toString(), it) }
             tag.put(ItemTruthCrystal.OUTPUT, outputTag)
 
             tag.putInt(ItemTruthCrystal.LENGTH_LIMIT, riddle.length_limit)

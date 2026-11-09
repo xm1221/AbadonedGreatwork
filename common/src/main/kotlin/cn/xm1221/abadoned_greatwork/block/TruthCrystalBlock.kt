@@ -5,18 +5,25 @@ import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.sounds.SoundEvents
+import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.BaseEntityBlock
+import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.RenderShape
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.BlockHitResult
+import net.minecraft.world.phys.shapes.CollisionContext
+import net.minecraft.world.phys.shapes.Shapes
+import net.minecraft.world.phys.shapes.VoxelShape
 
 /**
  * 真理水晶方块 — 带单格容器的无GUI方块
@@ -38,12 +45,28 @@ class TruthCrystalBlock(
     private val blockEntityTypeSupplier: () -> BlockEntityType<out BlockEntity>,
 ) : BaseEntityBlock(properties) {
 
+    companion object {
+        val SHAPE: VoxelShape = Shapes.or(
+            Block.box(1.0, 0.0, 1.0, 15.0, 3.0, 15.0),
+            Block.box(3.0, 3.0, 3.0, 13.0, 12.0, 13.0),
+            Block.box(1.0, 12.0, 1.0, 15.0, 15.0, 15.0),
+        )
+    }
+
     // ==================== BlockEntity ====================
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
         blockEntityTypeSupplier().create(pos, state)!!
 
     override fun getRenderShape(state: BlockState): RenderShape = RenderShape.MODEL
+
+    @Suppress("DEPRECATION")
+    override fun getShape(
+        state: BlockState,
+        level: BlockGetter,
+        pos: BlockPos,
+        context: CollisionContext,
+    ): VoxelShape = SHAPE
 
     // ==================== 右键交互 ====================
 
@@ -64,7 +87,9 @@ class TruthCrystalBlock(
         // 1. 空手 → 弹出内部水晶
         if (heldStack.isEmpty) {
             if (!be.isEmpty) {
-                player.setItemInHand(hand, be.removeItemNoUpdate(0))
+                val removed = be.removeItemNoUpdate(0)
+                player.setItemInHand(hand, removed)
+                level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.BLOCKS, 1.0f, 1.2f)
                 return InteractionResult.SUCCESS
             }
             return InteractionResult.PASS
@@ -74,6 +99,7 @@ class TruthCrystalBlock(
         if (heldStack.item is ItemTruthCrystal) {
             if (be.isEmpty) {
                 be.setItem(0, heldStack.split(1))
+                level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_PLACE, SoundSource.BLOCKS, 1.0f, 1.1f)
                 return InteractionResult.SUCCESS
             }
             return InteractionResult.PASS
@@ -87,6 +113,22 @@ class TruthCrystalBlock(
         // 4. 自定义回调
         val callback = TruthCrystalBlockEntity.interactions[heldStack.item]
         return callback?.onInteract(be, player, hand, heldStack) ?: InteractionResult.PASS
+    }
+
+    // ==================== 红石比较器信号 ====================
+
+    @Suppress("DEPRECATION")
+    override fun hasAnalogOutputSignal(state: BlockState): Boolean = true
+
+    @Suppress("DEPRECATION")
+    override fun getAnalogOutputSignal(state: BlockState, level: Level, pos: BlockPos): Int {
+        val be = level.getBlockEntity(pos) as? TruthCrystalBlockEntity ?: return 0
+        val stack = be.item
+        if (stack.item is ItemTruthCrystal) {
+            val crystal = stack.item as ItemTruthCrystal
+            return (crystal.lootTableIndex + 1) * 5
+        }
+        return if (!stack.isEmpty) 1 else 0
     }
 
     // ==================== 破坏掉落 ====================

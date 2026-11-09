@@ -3,6 +3,7 @@ package cn.xm1221.abadoned_greatwork.block
 import com.google.gson.Gson
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.TagParser
+import net.minecraft.server.packs.resources.ResourceManager
 import java.io.InputStreamReader
 
 /**
@@ -15,24 +16,45 @@ object Abadoned_greatworkRiddleLoader {
         val name_key: String = "",
         val input0: String = "",
         val input1: String = "",
+        val input2: String = "",
         val output0: String = "",
         val output1: String = "",
+        val output2: String = "",
+        val inputs: List<String> = emptyList(),
+        val outputs: List<String> = emptyList(),
         val length_limit: Int = 0,
-        val variant: Int = 0,
+        val variant: Int = -1,
         /** 完整 ItemStack NBT（SNBT 字符串）。若不为空，优先使用此字段，忽略其他结构化字段。 */
         val nbt: String = "",
     ) {
         /** 是否使用完整 NBT 模式 */
-        val isRawNbt: Boolean get() = nbt.isNotBlank()
+        // 兜底按可空处理：目前 Gson 会走 Kotlin 生成的全默认无参构造，缺失字段会取默认值；
+        // 但若以后新增「无默认值」的字段，Gson 会写入 null，这里保持判空以免触发 NPE。
+        val isRawNbt: Boolean get() = !nbt.isNullOrBlank()
 
         fun nbtTag(): CompoundTag? = parseTag(nbt)
+
+        fun getAllInputTags(): List<CompoundTag> {
+            if (!inputs.isNullOrEmpty()) {
+                return inputs.mapNotNull(::parseTag)
+            }
+            return listOfNotNull(parseTag(input0), parseTag(input1), parseTag(input2))
+        }
+
+        fun getAllOutputTags(): List<CompoundTag> {
+            if (!outputs.isNullOrEmpty()) {
+                return outputs.mapNotNull(::parseTag)
+            }
+            return listOfNotNull(parseTag(output0), parseTag(output1), parseTag(output2))
+        }
+
         fun input0Tag(): CompoundTag? = parseTag(input0)
         fun input1Tag(): CompoundTag? = parseTag(input1)
         fun output0Tag(): CompoundTag? = parseTag(output0)
         fun output1Tag(): CompoundTag? = parseTag(output1)
 
-        private fun parseTag(snbt: String): CompoundTag? {
-            if (snbt.isBlank()) return null
+        private fun parseTag(snbt: String?): CompoundTag? {
+            if (snbt.isNullOrBlank()) return null
             return try {
                 TagParser.parseTag(snbt) as? CompoundTag
             } catch (_: Exception) {
@@ -48,6 +70,24 @@ object Abadoned_greatworkRiddleLoader {
         cached?.let { return it }
         cached = load()
         return cached ?: emptyList()
+    }
+
+    fun reload(resourceManager: ResourceManager) {
+        val result = mutableListOf<RawRiddle>()
+        val resources = resourceManager.listResources("riddles") { it.path.endsWith(".json") }
+        for ((_, resource) in resources) {
+            try {
+                resource.open().use { stream ->
+                    val riddle = gson.fromJson(InputStreamReader(stream), RawRiddle::class.java)
+                    if (riddle != null) result.add(riddle)
+                }
+            } catch (_: Exception) {
+            }
+        }
+        if (result.isNotEmpty()) {
+            cached = result
+            TruthCrystalPuzzles.invalidateCache()
+        }
     }
 
     private fun load(): List<RawRiddle> {
