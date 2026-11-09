@@ -5,9 +5,13 @@ import at.petrak.hexcasting.api.casting.circles.ICircleComponent
 import at.petrak.hexcasting.common.blocks.circles.BlockSlate
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
+import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
@@ -194,9 +198,9 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
      * 波贴着的每片各给各的，取**并集**：单片承载时剩 5 向，两片都贴时两片的 5 向互不包含，
      * 并集是 6 向 —— 转角在设定上就是两块板，波在棱上既可以继续沿这一块、也可以转上另一块。
      *
-     * 撞面方向（`normal.opposite`）不禁：石板也不禁，交给下一格的 `canEnterFromDirection`
-     * 挡。候选里若有多个下一格都愿意接，`CircleExecutionState.tick` 会自己报 `many_exits`
-     * —— 那是引擎的权威判断（它真的逐格去问了），这里只负责把候选给全，不替它收窄。
+     * `many_exits` **由我们自己报**，不等引擎：转角件是两块板，波在棱上就该只有一条路，
+     * 一旦有两个出口的下一格都愿意接，说明这个摆法让波失去了唯一的去向，属于本件内部的
+     * 歧义，就地报掉并停下，而不是把候选原样抛回去让引擎替我们判。
      */
     override fun acceptControlFlow(
         imageIn: CastingImage,
@@ -210,6 +214,29 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
         val exits = EnumSet.allOf(Direction::class.java)
         exits.removeIf { exit -> carrying.all { it.g.opposite == exit } }   // 每片只禁离开自己的面
         exits.remove(enterDir.opposite)                                      // 不许原路返回
+
+        // 自己判去路：两个以上的下一格都愿意接，就是本件的歧义
+        val accepting = exits.filter { exit ->
+            val therePos = pos.relative(exit)
+            val there = world.getBlockState(therePos)
+            val next = there.block as? ICircleComponent
+            next != null && next.canEnterFromDirection(exit, therePos, there, world)
+        }
+        if (accepting.size > 1) {
+            val impetus = env.impetus
+            if (impetus != null) {
+                impetus.postDisplay(
+                    Component.translatable(
+                        "hexcasting.tooltip.circle.many_exits",
+                        Component.literal(pos.toShortString()).withStyle(ChatFormatting.RED),
+                    ),
+                    ItemStack(Items.COMPASS),
+                )
+                ICircleComponent.sfx(pos, bs, world, impetus, false)
+            }
+            return ICircleComponent.ControlFlow.Stop()
+        }
+
         return ICircleComponent.ControlFlow.Continue(
             imageIn,
             exits.map { exitPositionFromDirection(pos, it) },
