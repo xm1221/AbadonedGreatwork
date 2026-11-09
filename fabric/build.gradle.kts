@@ -73,7 +73,6 @@ dependencies {
     modLocalRuntime(libs.serializationHooks)
     //modLocalRuntime(libs.trinkets)
     modLocalRuntime(libs.inline.fabric) { isTransitive = false }
-    modApi(libs.terraBlender.fabric)
 
     libs.mixinExtras.fabric.also {
         localRuntime(it)

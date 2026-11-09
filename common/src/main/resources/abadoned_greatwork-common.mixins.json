@@ -6,6 +6,7 @@
   "client": [
   ],
   "mixins": [
+    "ImpetusBranchMixin",
     "MixinDatagenMain",
     "PatternIotaMixin"
   ],

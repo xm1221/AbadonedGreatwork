@@ -22,8 +22,6 @@ dependencies {
 
     modApi(libs.clothConfig.common)
 
-    modApi(libs.terraBlender.fabric)
-
     //modImplementation(libs.moreiotas)
 
     libs.mixinExtras.common.also {

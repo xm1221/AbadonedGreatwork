@@ -1,6 +1,9 @@
 package cn.xm1221.abadoned_greatwork.registry
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.block.MultiDirectrixBlock
+import cn.xm1221.abadoned_greatwork.block.MultiDirectrixPBlock
+import cn.xm1221.abadoned_greatwork.block.PlugSlateBlock
 import cn.xm1221.abadoned_greatwork.block.TruthCrystalBlock
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
 import net.minecraft.core.registries.BuiltInRegistries
@@ -13,6 +16,7 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.material.MapColor
+import net.minecraft.world.level.material.PushReaction
 
 /**
  * 方块注册器
@@ -64,6 +68,58 @@ object Abadoned_greatworkBlocks : Abadoned_greatworkRegistrar<Block>(
                 .sound(SoundType.AMETHYST)
                 .noOcclusion(),
             beSupplier,
+        )
+    }
+
+    /**
+     * 多向导引石 — 实心本体（模型 `block/multi_directrix`），整格实心、无方块实体。
+     *
+     * 音效取 `DEEPSLATE`：上游的法术环件全部走 `HexBlocks.slateish()`
+     * = `Properties.copy(Blocks.DEEPSLATE_TILES).strength(4f, 4f)`，
+     * 也就是深板岩音效；本项目 `plug_slate` 早就是 DEEPSLATE，这里对齐同一套敲击声。
+     */
+    val MULTI_DIRECTRIX: RegistrarEntry<Block> = registerBlock("multi_directrix") {
+        MultiDirectrixBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(3.0f, 6.0f)
+                .sound(SoundType.DEEPSLATE)
+                // 法术环件：活塞不许推，免得把环推坏
+                .pushReaction(PushReaction.BLOCK),
+        )
+    }
+
+    /**
+     * 多向导引石·核心 — 八角骨架 + 暴露核心（模型 `block/multi_directrix_p`）。
+     *
+     * 骨架与核心之间留 4px 通缝，必须关掉遮挡剔除；贴图另有全透明区域，客户端走 cutout。
+     */
+    val MULTI_DIRECTRIX_P: RegistrarEntry<Block> = registerBlock("multi_directrix_p") {
+        MultiDirectrixPBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(3.0f, 6.0f)
+                .sound(SoundType.DEEPSLATE)
+                .pushReaction(PushReaction.BLOCK)
+                .noOcclusion(),
+        )
+    }
+
+    /**
+     * 插接石板 — 「底部 1px 平板 + 一侧 1px 竖墙」的 L 形角件（同一条板折 90°）。
+     *
+     * 共 16 个状态：4 个水平 `facing` × `half=bottom/top`（贴地 / 贴天花板）× `energized`。
+     * 它是法术环的转角环件（`ICircleComponent`），只传递媒质波、不做运算。
+     */
+    val PLUG_SLATE: RegistrarEntry<Block> = registerBlock("plug_slate") {
+        PlugSlateBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.DEEPSLATE)
+                .strength(2.0f, 6.0f)
+                .sound(SoundType.DEEPSLATE)
+                .pushReaction(PushReaction.BLOCK)
+                // L 形薄件：不参与整格遮挡，形状由 getShape 给出
+                .noOcclusion(),
         )
     }
 

@@ -48,6 +48,15 @@ object Abadoned_greatworkItems : Abadoned_greatworkRegistrar<Item>(
     /** 真理水晶的 BlockItem */
     val TRUTH_CRYSTAL = registerBlockItem(Abadoned_greatworkBlocks.TRUTH_CRYSTAL)
 
+    /** 多向导引石的 BlockItem */
+    val MULTI_DIRECTRIX = registerBlockItem(Abadoned_greatworkBlocks.MULTI_DIRECTRIX)
+
+    /** 多向导引石·核心的 BlockItem */
+    val MULTI_DIRECTRIX_P = registerBlockItem(Abadoned_greatworkBlocks.MULTI_DIRECTRIX_P)
+
+    /** 插接石板的 BlockItem */
+    val PLUG_SLATE = registerBlockItem(Abadoned_greatworkBlocks.PLUG_SLATE)
+
     /** 真理水晶（变体 0） */
     val TRUTH_CRYSTAL_0 = registerItem("item_truth_crystal_0", ItemTruthCrystal::create0)
 

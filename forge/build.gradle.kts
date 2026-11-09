@@ -78,7 +78,6 @@ dependencies {
     modLocalRuntime(libs.inline.forge) { isTransitive = false }
     modLocalRuntime(libs.serializationHooks)
     modApi(libs.clothConfig.forge)
-    modApi(libs.terraBlender.forge)
 
     libs.mixinExtras.common.also {
         compileOnly(it)

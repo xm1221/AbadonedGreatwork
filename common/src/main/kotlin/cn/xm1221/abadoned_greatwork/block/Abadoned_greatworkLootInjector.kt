@@ -18,6 +18,8 @@ object Abadoned_greatworkLootInjector {
         "ruined_circles_nether",
         "ruined_circles_overworld",
         "ruined_circles_shulk",
+        "ruined_circles_end",
+        "ruined_circles_desert",
     )
 
     fun register() {

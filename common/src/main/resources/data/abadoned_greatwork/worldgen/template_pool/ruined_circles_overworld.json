@@ -1,65 +1,96 @@
 {
     "name": "abadoned_greatwork:ruined_circles_overworld",
-    "fallback":"minecraft:empty",
+    "fallback": "minecraft:empty",
     "elements": [
         {
             "weight": 1,
             "element": {
-                "projection":"rigid",
+                "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
-                "processors":"minecraft:empty",
-                "location":"abadoned_greatwork:ruined_circle_1"
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_1"
             }
         },
         {
             "weight": 1,
             "element": {
-                "projection":"rigid",
+                "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
-                "processors":"minecraft:empty",
-                "location":"abadoned_greatwork:ruined_circle_2"
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_2"
             }
         },
         {
             "weight": 1,
             "element": {
-                "projection":"rigid",
+                "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
-                "processors":"minecraft:empty",
-                "location":"abadoned_greatwork:ruined_circle_4"
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_3"
             }
         },
         {
             "weight": 1,
             "element": {
-                "projection":"rigid",
+                "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
-                "processors":"minecraft:empty",
-                "location":"abadoned_greatwork:ruined_circle_5"
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_4"
             }
         },
         {
             "weight": 1,
             "element": {
-                "projection":"rigid",
+                "projection": "rigid",
                 "element_type": "minecraft:single_pool_element",
-                "processors":"minecraft:empty",
-                "location":"abadoned_greatwork:ruined_circle_6"
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_5"
+            }
+        },
+        {
+            "weight": 1,
+            "element": {
+                "projection": "rigid",
+                "element_type": "minecraft:single_pool_element",
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_6"
+            }
+        },
+        {
+            "weight": 1,
+            "element": {
+                "projection": "rigid",
+                "element_type": "minecraft:single_pool_element",
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_7"
+            }
+        },
+        {
+            "weight": 1,
+            "element": {
+                "projection": "rigid",
+                "element_type": "minecraft:single_pool_element",
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_8"
+            }
+        },
+        {
+            "weight": 1,
+            "element": {
+                "projection": "rigid",
+                "element_type": "minecraft:single_pool_element",
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_9"
+            }
+        },
+        {
+            "weight": 1,
+            "element": {
+                "projection": "rigid",
+                "element_type": "minecraft:single_pool_element",
+                "processors": "minecraft:empty",
+                "location": "abadoned_greatwork:ruined_circle_10"
             }
         }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-        ]    }
-    
+    ]
+}

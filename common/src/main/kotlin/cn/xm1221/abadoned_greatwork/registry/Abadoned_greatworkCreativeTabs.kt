@@ -52,6 +52,9 @@ object Abadoned_greatworkCreativeTabs : Abadoned_greatworkRegistrar<CreativeMode
         iconItem = { Abadoned_greatworkItems.TRUTH_CRYSTAL.value },
     ) { output ->
         output.accept(Abadoned_greatworkBlocks.TRUTH_CRYSTAL.value)
+        output.accept(Abadoned_greatworkBlocks.MULTI_DIRECTRIX.value)
+        output.accept(Abadoned_greatworkBlocks.MULTI_DIRECTRIX_P.value)
+        output.accept(Abadoned_greatworkBlocks.PLUG_SLATE.value)
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_0.value)
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_1.value)
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_2.value)

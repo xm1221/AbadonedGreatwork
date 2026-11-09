@@ -1,0 +1,388 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "north": "none",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none"
+      }
+    },
+    {
+      "when": {
+        "north": "none",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none_energized"
+      }
+    },
+    {
+      "when": {
+        "north": "in",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in"
+      }
+    },
+    {
+      "when": {
+        "north": "in",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in_energized"
+      }
+    },
+    {
+      "when": {
+        "north": "out",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out"
+      }
+    },
+    {
+      "when": {
+        "north": "out",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out_energized"
+      }
+    },
+    {
+      "when": {
+        "east": "none",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "east": "none",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none_energized",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "east": "in",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "east": "in",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in_energized",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "east": "out",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "east": "out",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out_energized",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "none",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "none",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none_energized",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "in",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "in",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in_energized",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "out",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "out",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out_energized",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "none",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "none",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none_energized",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "in",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "in",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in_energized",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "out",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "out",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out_energized",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "none",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "none",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none_energized",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "in",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "in",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in_energized",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "out",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "out",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out_energized",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "none",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none",
+        "x": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "none",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_none_energized",
+        "x": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "in",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in",
+        "x": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "in",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_in_energized",
+        "x": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "out",
+        "energized": "false"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out",
+        "x": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "out",
+        "energized": "true"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_face_out_energized",
+        "x": 90,
+        "uvlock": true
+      }
+    }
+  ]
+}
