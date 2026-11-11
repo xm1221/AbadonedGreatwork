@@ -60,6 +60,7 @@ abadoned_greatworkModDependencies {
     requires("cloth-config")
     requires(curseforge = "hexcasting", modrinth = "hex-casting")
     requires("kotlin-for-forge")
+    requires("ioticblocks")
 }
 
 dependencies {
@@ -69,6 +70,7 @@ dependencies {
     implementation(libs.kotlin.forge)
 
     modApi(libs.hexcasting.forge) { isTransitive = false }
+    modImplementation(libs.ioticblocks.forge)
     // Hex Casting dependencies
     // we use modLocalRuntime to add these to the development runtime, but not at compile time or for consumers of this project
     // but we use PAUCAL for datagen, so that's part of the actual implementation

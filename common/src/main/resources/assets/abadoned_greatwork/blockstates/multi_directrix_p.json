@@ -1,7 +1,125 @@
 {
-  "variants": {
-    "": {
-      "model": "abadoned_greatwork:block/multi_directrix_p"
+  "multipart": [
+    {
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p"
+      }
+    },
+    {
+      "when": {
+        "north": "out"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_out"
+      }
+    },
+    {
+      "when": {
+        "north": "none"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_none"
+      }
+    },
+    {
+      "when": {
+        "east": "out"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_out",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "east": "none"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_none",
+        "y": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "out"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_out",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "south": "none"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_none",
+        "y": 180,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "out"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_out",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "west": "none"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_none",
+        "y": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "out"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_out",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "up": "none"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_none",
+        "x": 270,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "out"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_out",
+        "x": 90,
+        "uvlock": true
+      }
+    },
+    {
+      "when": {
+        "down": "none"
+      },
+      "apply": {
+        "model": "abadoned_greatwork:block/multi_directrix_p_face_none",
+        "x": 90,
+        "uvlock": true
+      }
     }
-  }
+  ]
 }

@@ -26,6 +26,7 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
+        // 构建逻辑本身用 21（Loom 1.11 的 unpick 3.0 要求 21）；mod 产物仍是 libs.versions.java = 17
+        languageVersion = JavaLanguageVersion.of(libs.versions.jdk.get())
     }
 }

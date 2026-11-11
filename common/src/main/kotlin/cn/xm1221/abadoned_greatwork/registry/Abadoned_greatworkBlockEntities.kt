@@ -1,6 +1,7 @@
 package cn.xm1221.abadoned_greatwork.registry
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.block.entity.MultiDirectrixPBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
@@ -43,6 +44,13 @@ object Abadoned_greatworkBlockEntities : Abadoned_greatworkRegistrar<BlockEntity
         "truth_crystal",
         ::TruthCrystalBlockEntity,
         Abadoned_greatworkBlocks.TRUTH_CRYSTAL,
+    )
+
+    /** 可编程分流器的 BlockEntityType（存方块里写入的那条图案 + 染色） */
+    val MULTI_DIRECTRIX_P = registerBE(
+        "multi_directrix_p",
+        ::MultiDirectrixPBlockEntity,
+        Abadoned_greatworkBlocks.MULTI_DIRECTRIX_P,
     )
 
     /**

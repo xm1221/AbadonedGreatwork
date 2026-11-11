@@ -60,7 +60,7 @@ import java.util.Map;
  * 就一定会触发 —— 每条波都必然在有限时间内结束，这个状态必然出现，不会死锁。
  *
  * <h2>熄灯</h2>
- * 分支和主波**共用同一个 {@code reachedPositions} 列表**（见 ForkedExecutionState），
+ * 分支和主波**共用同一个 {@code reachedPositions} 集合**（见 ForkedExecutionState），
  * 所以主波结束时上游那次 {@code endExecution} 会顺手把分支点亮的格子熄掉。
  * 但栅栏放行出来的新波是主波死后才动的，它点亮的格子没人管，所以第 3 步要自己再补一次
  * （{@code endExecution} 只是遍历 {@code reachedPositions} 调 {@code endEnergized}，幂等）。
@@ -160,8 +160,9 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
 
     @Unique
     private static int abw$tickSpeed(CircleExecutionState any) {
-        // 照抄 CircleExecutionState.getTickSpeed()（它是 protected，这里只能自己算一遍）
-        return Math.max(2, 10 - (any.reachedPositions.size() - 1) / 3);
+        // 照抄 CircleExecutionState.getTickSpeed()（它是 protected，这里只能自己算一遍）。
+        // Hex 0.11.4 起改用 reachedSlate 这个计数，不再是 reachedPositions.size()。
+        return Math.max(2, (int) (10 - (any.reachedSlate - 1) / 3));
     }
 
     @Inject(method = "tickExecution", at = @At("RETURN"), remap = false)
@@ -191,12 +192,29 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
 
         // ① 推进分支。走快照：分支自己路过另一个分流器时会往这张表里加新分支，
         //    直接迭代会 CME。新加的分支这一 tick 不跑，下一 tick 开始跑 —— 和主波分流的时序一致。
-        if (branches != null && !branches.isEmpty()) {
-            for (var branch : new ArrayList<>(branches)) {
-                this.abw$last = branch;
-                if (!branch.tick(self)) {
-                    branches.remove(branch);
+        //
+        // 这里必须临时挂一条「代表波」到促动石的 executionState 上，原因见下面的注释。
+        var hadState = this.executionState;
+        if (hadState == null && branches != null && !branches.isEmpty()) {
+            // 上游 ICircleComponent.sfx 在 success 且 impetus != null 时**不判空**就读
+            // `impetus.getExecutionState().reachedSlate`（拿它算音高），
+            // 而「主波已经结束、分支还在飞」正是 executionState == null 的时刻（见 ④）。
+            // 不挂的话分支一走通出口就 NPE 崩服：Cannot read field "reachedSlate" because "state" is null。
+            // 挂的是分支自己，跑完立刻摘掉 —— 别让上游以为主波还活着。
+            this.executionState = branches.get(0);
+        }
+        try {
+            if (branches != null && !branches.isEmpty()) {
+                for (var branch : new ArrayList<>(branches)) {
+                    this.abw$last = branch;
+                    if (!branch.tick(self)) {
+                        branches.remove(branch);
+                    }
                 }
+            }
+        } finally {
+            if (hadState == null) {
+                this.executionState = null;
             }
         }
 

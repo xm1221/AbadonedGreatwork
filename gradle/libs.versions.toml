@@ -4,10 +4,13 @@
 
 [versions]
 java = "17" # must be an integer
+# buildSrc / 构建工具链自己跑在 21 上：Architectury Loom 1.11 的依赖（unpick 3.0）要求 21
+# 不能叫 java-build / javaBuild —— 会和上面的 `java` 形成前缀冲突，`libs.versions.java.get()` 就废了
+jdk = "21"
 
-kotlin = "1.9.22"
-kotlin-fabric = "1.10.18+kotlin.1.9.22"
-kotlin-forge = "4.10.0"
+kotlin = "2.2.21"
+kotlin-fabric = "1.13.7+kotlin.2.2.21"
+kotlin-forge = "4.12.0"
 
 # Minecraft
 
@@ -16,17 +19,18 @@ parchment = "2023.09.03"
 
 architectury = "9.2.14"
 architectury-plugin = { require="[3.4, 3.5[" }
-architectury-loom = { require="[1.7, 1.8[" }
+architectury-loom = "1.11.454"
 
-fabric-loader = "0.14.25"
-fabric-api = "0.87.0+1.20.1"
+fabric-loader = "0.19.2"
+fabric-api = "0.92.8+1.20.1"
 
 forge = "1.20.1-47.2.0"
 forge-dependency = "47" # for mods.toml
 
 # mods
 
-hexcasting = "0.11.3"
+hexcasting = "0.11.4"
+ioticblocks = "1.0.2"
 paucal = "0.6.0-pre-118"
 pkpcpbp = "0.2.0-pre-95"
 
@@ -41,7 +45,7 @@ serializationHooks = "0.4.99999"
 mixinExtras = "0.5.0"
 clothConfig = "11.1.106"
 modMenu = "7.1.0"
-inline = "1.20.1-1.0.1"
+inline = "1.20.1-1.2.2" # Hex 0.11.4 起 fabric.mod.json 要求 >= 1.20.1-1.2.2（旧值 1.0.1 会直接让 fabric 端解析失败）
 
 caelus = "3.1.0+1.20"
 
@@ -50,7 +54,7 @@ terraBlender = "3.0.1.10"
 # other dependencies
 
 asm = "9.5"
-shadow = "7.1.2"
+shadow = "8.1.1"
 modPublish = "1.0.0"
 
 [bundles]
@@ -80,6 +84,11 @@ forge = { module="net.minecraftforge:forge", version.ref="forge" }
 hexcasting-common = { module="at.petra-k.hexcasting:hexcasting-common-1.20.1", version.ref="hexcasting" }
 hexcasting-fabric = { module="at.petra-k.hexcasting:hexcasting-fabric-1.20.1", version.ref="hexcasting" }
 hexcasting-forge  = { module="at.petra-k.hexcasting:hexcasting-forge-1.20.1", version.ref="hexcasting" }
+
+# 放在 libs/ 下的本地 jar：Modrinth 的 maven 对同一个版本号只发一个 loader 的文件，
+# 多 loader 项目拿不到另一个，所以按本项目既有的 libs: flatDir 约定走本地 jar。
+ioticblocks-fabric = { module="libs:IoticBlocks-fabric-1.20.1", version.ref="ioticblocks" }
+ioticblocks-forge  = { module="libs:IoticBlocks-forge-1.20.1", version.ref="ioticblocks" }
 
 paucal-common = { module="at.petra-k.paucal:paucal-common-1.20.1", version.ref="paucal" }
 paucal-fabric = { module="at.petra-k.paucal:paucal-fabric-1.20.1", version.ref="paucal" }

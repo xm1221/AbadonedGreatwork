@@ -46,6 +46,7 @@ abadoned_greatworkModDependencies {
     requires(curseforge = "hexcasting", modrinth = "hex-casting")
     requires("fabric-api")
     requires("fabric-language-kotlin")
+    requires("ioticblocks")
     optional("modmenu")
 }
 
@@ -64,6 +65,8 @@ dependencies {
         // If not excluded here, calls a nonexistent method and crashes the dev client
         exclude(module = "phosphor")
     }
+
+    modImplementation(libs.ioticblocks.fabric)
 
     // Hex Casting dependencies
     // we use modLocalRuntime to add these to the development runtime, but not at compile time or for consumers of this project

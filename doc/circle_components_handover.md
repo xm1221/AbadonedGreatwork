@@ -383,21 +383,68 @@ halt = true;
 - 施法中把促动石拆掉：上游 `onRemove` 里的 `endExecution()` 会因为 `executionState == null`
   直接返回，分支不会被清，那些格子会一直亮着。
 
-**数据语义仍是占位**：`CircleImageMerge.merge` 现在是「以第一份为底，其余栈按顺序接在下面」。
-栈长度一变，后面图案取到的 iota 就全错位，所以真要用起来多半得换成「每份栈各打成一个
-`ListIota`」。三种备选见 `CircleImageMerge.kt` 的注释。
+**数据语义（咩咩拍板）**：栈按**到达顺序**从下往上摞（先到的先入栈，后到的压在上面）；
+**渡鸦之思后到的覆盖先到的**，也就是最终取最后一个到达的那份。渡鸦之思存在
+`image.userData` 的 `hexcasting:ravenmind` 键下（`HexAPI.RAVENMIND_USERDATA`，
+读写见 `OpPushLocal` / `OpPeekLocal`），所以合并时直接换 `userData` 即可。
 
-### 6.3 `_p` 额外需要
+### 6.3 `_p`（可编程分流器）—— 已落地
 
-- 一个 `BlockEntity`，照 `BlockEntitySlate` 的 NBT 存 `HexPattern`（键名 `pattern`）
-- 放置时从物品的 `BlockEntityTag.pattern` 读（HexCasting 的石板就是这么拿图案的）
-- 运算用 `CastingVM(image, env).queueExecuteAndWrapIota(PatternIota(p), level)`，
-  看 `ExecutionClientView.resolutionType == ResolvedPatternType.success`、栈顶 iota 决定出口
-- **已知风险**：一个 `PatternIota` = 一个算子；多步运算要靠同一个 VM 连续调用，未实测
-- **真正的卡点**：`_p` 算完之后的结果怎么落到"出口唯一"上（引擎只认恰好 1 个能进的邻格）
+`_p` = 普通分流器 + 「跑一条写在方块里的图案」。端口三档的贴图命名和普通件**不一样**：
 
-分流已经按 L3 真并行落地（§6.2），所以 `_p` 的活不是「打通链路」，而是在这之上加一层
-「先算一算，再决定从哪个口出去」—— 每个 `out` 面各跑一次运算，或者算一次再用结果挑口。
+| 档位 | 贴图 | 渲染 |
+|---|---|---|
+| 输入（「原本」那张，非默认档） | `multi_directrix_p` | 骨架本体，**不贴附加层** |
+| 输出 | `multi_directrix_p_1`（**纯灰阶**） | 本体 + 面片附加层，`tintindex 0` 染色 |
+| 关闭 | `multi_directrix_p_2`（自带暗紫） | 本体 + 面片附加层，不染色 |
+
+放置默认仍是六面 `none`（关闭）—— 和普通件一致，「这个块有几个输入面」才数得出来（合并靠它）。
+
+#### 「附加层」怎么落地（咩咩选的 2.b 的可行解）
+骨架的 8 个角块每个都同时贴着三个面，**一整块几何没法表达「北面输入、东面输出」**。
+所以附加层落成**每个面一片 16×16 的附加面片**：`multi_directrix_p_face_out` / `_face_none`，
+由 multipart 按面状态挂到对应朝向，`y`/`x` + `uvlock` 复用同一张模型
+（旋转表和本体那套完全一致：east=y90 south=y180 west=y270 up=x270 down=x90）。
+面片贴在 `z = 0.01`（略内缩）—— 平齐会与角块的 `z = 0` 面 z-fighting。
+
+#### 图案怎么存 / 怎么写
+- `MultiDirectrixPBlockEntity` 继承上游 `HexBlockEntity`（存盘 + `getUpdateTag` 同步白送），
+  存 `pattern: HexPattern?` + `tint: Int`。
+- 实现 `ADIotaHolder`，**只收 `PatternIota`**（写数字/列表没东西可执行，返回 `false`）。
+- 写入口交给 **IoticBlocks**：`Abadoned_greatworkIotaHolders.init()` 里
+  `IoticBlocksAPI.INSTANCE.registerIotaHolderProvider(id("multi_directrix_p"), ...)`。
+  它的包名 `gay.object.ioticblocks.api` 里 `object` 是 Kotlin 关键字，所以这段写成 **Java**。
+
+#### 染色
+按**栈顶 iota 的类型**，直接借 Hex 自己的类型配色表 `IotaType.color()`
+（就是施法 GUI 堆栈列表上那些颜色），不另造映射。服务端在 `setTint()` 里落进方块实体并 `sync()`；
+客户端用 Architectury 的 `ColorHandlerRegistry.registerBlockColors` 读它，乘到 `_p_1` 上。
+空栈给白色 = 灰阶贴图原样。
+
+#### 时序（`MultiDirectrixPBlock.acceptControlFlow`）
+1. **过滤出口**：只留「下一格当拍真肯接」的。
+2. **合并**（输入面 ≥ 2 且拿得到促动石）：每条到达的波 `Stop()` 自己、镜像留在 `MergeBuffer`；
+   凑够「输入面个数」后按到达顺序各压**一个**列表：
+
+   `[ ListIota(那一支原本的整个栈), 渡鸦之思 或 null, 来自方向 ]`
+
+   三者都在同一个列表里，所以 N 条进来 = 出栈 N 个列表。然后**跑一次**图案。
+3. **分流**（每个出口各一遍）：记录镜像 → 压出口方向 → 跑图案 → 这就是该出口的分支镜像 →
+   调回记录的镜像 → 下一个出口。第一个出口交回引擎（主波），其余做成 `ForkedExecutionState` 分支波。
+4. **多进 + 多出** = 先合并跑一次，再对每个出口各跑一次。
+5. 图案执行失败（莫邪 / 停机）→ 那条路断掉；一条不剩就 `Stop()`。
+6. **没写图案**时退化成普通 `multi_directrix`（合并走 `CircleImageMerge`，且**不压方向**，
+   免得把普通环的栈弄脏）。
+
+执行写法照抄 `BlockSlate.acceptControlFlow`：
+
+```java
+var vm = new CastingVM(image, env);
+var result = vm.queueExecuteAndWrapIota(new PatternIota(pattern), world);
+if (!result.getResolutionType().getSuccess()) return null;   // 断这条
+return vm.getImage().withOverriddenUsedOps(0);               // 算子计数归零
+```
+
 
 ---
 
@@ -413,6 +460,14 @@ halt = true;
 5. **模型与形状表脱钩**：改了模型厚度但没改 8 个 `VoxelShape` → 看得见却撞不到 / 撞到看不见。
 6. **`facing` 的 y 旋转映射**记住基模型是"西墙"：north=90、east=180、south=270。
 7. **`RenderType` 加多了**：`plug_slate` 不需要 cutout；`multi_directrix_p` 才需要。
+8. **上游 `ICircleComponent.sfx` 不判空**：走通出口时它读
+   `impetus.getExecutionState().reachedSlate` 算音高（`ICircleComponent.java:138`），
+   而「主波已经结束、分支还在飞」正是 `executionState == null` 的时刻 ——
+   分支一走通出口就 `NullPointerException: Cannot read field "reachedSlate" because "state" is null`
+   崩服。`ImpetusBranchMixin` 的解法是在推进分支期间把**某条分支临时挂成促动石的
+   `executionState`**，跑完立刻摘掉（`try/finally`）。注意 `CircleCastEnv` 是在
+   `CircleExecutionState.tick` 里用 `this` 新建的，所以 `env.circleState()` 拿到的仍是
+   真正在跑的那条波，这个「临时替身」只骗 `sfx` / `getPigment`，不影响分流数据。
 
 ---
 
@@ -420,7 +475,8 @@ halt = true;
 
 ```powershell
 # 1) 编译 + 产物里方法是否真的存在
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
+#    Gradle 必须跑在 JDK 21 上（Loom 1.11 的依赖要求 21）；产物仍是 Java 17
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-21.0.10"
 .\gradlew.bat :common:classes --console=plain
 & "C:\Program Files\Java\jdk-17\bin\javap.exe" -p -classpath common\build\classes\kotlin\main `
     cn.xm1221.abadoned_greatwork.block.PlugSlateBlock
@@ -450,29 +506,36 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
 
 ```
 common/src/main/kotlin/cn/xm1221/abadoned_greatwork/
-├── Abadoned_greatworkClient.kt                 # 只给 multi_directrix_p 注册 cutout
+├── Abadoned_greatworkClient.kt                 # multi_directrix_p 的 cutout 层 + 附加层染色
 ├── block/
 │   ├── PlugSlateBlock.kt                       # 本文主体，含环件逻辑
-│   └── MultiDirectrixBlock.kt                  # 两个方块类（MultiDirectrixBlock / MultiDirectrixPBlock）
+│   ├── MultiDirectrixBlock.kt                  # 普通分流/合并件（+ PortMode 枚举、PORTS 表）
+│   └── MultiDirectrixPBlock.kt                 # 可编程分流器（六面端口 + 跑图案 + 合并/分流）
+├── block/entity/
+│   └── MultiDirectrixPBlockEntity.kt           # 存 HexPattern + 染色，实现 ADIotaHolder
 ├── casting/circles/
 │   ├── ForkedExecutionState.kt                 # 分支波子类（只为暴露 protected 构造器）+ forkImage()
 │   ├── MergeBuffer.kt                          # 合并点到达登记表 + 栅栏兜底放行
-│   ├── CircleImageMerge.kt                     # 合并镜像（语义仍是占位：栈拼接）
+│   ├── CircleImageMerge.kt                     # 合并镜像（栈按到达顺序摞，渡鸦之思取最后一个到达的）
 │   └── ImpetusBranchHost.java                  # 促动石「分支表」鸭子接口
 └── registry/
     ├── Abadoned_greatworkBlocks.kt             # 方块注册
     ├── Abadoned_greatworkItems.kt              # BlockItem
     └── Abadoned_greatworkCreativeTabs.kt       # 创造栏
 
-common/src/main/java/cn/xm1221/abadoned_greatwork/mixin/
+common/src/main/java/cn/xm1221/abadoned_greatwork/
+├── registry/Abadoned_greatworkIotaHolders.java  # IoticBlocks 写入口注册（包名里有 Kotlin 关键字，故用 Java）
+└── mixin/
 ├── ImpetusBranchMixin.java                     # 往促动石织入分支表（4 条注入，全部 remap = false）
 ├── PatternIotaMixin.java                       # 已有：测试环境禁 SpellAction
 ├── MixinDatagenMain.java                       # 已有：仅 datagen 时启用
 └── Abadoned_greatworkMixinConfigPlugin.java    # 已有：按系统属性开关 MixinDatagenMain
 
 common/src/main/resources/assets/abadoned_greatwork/
-├── blockstates/{plug_slate,multi_directrix,multi_directrix_p}.json   # multi_directrix 是 multipart，24 条
+├── blockstates/{plug_slate,multi_directrix,multi_directrix_p}.json   # multi_directrix 是 multipart，24 条；
+│                                                                     # _p 是本体 + 6 面 × (out/none) 附加面片，共 13 条
 ├── models/block/{plug_slate,multi_directrix,multi_directrix_p}.json
+├── models/block/multi_directrix_p_face_{out,none}.json   # 16×16 附加面片（out 带 tintindex 0，none 不染色）
 ├── models/block/multi_directrix_face_{none,in,out,in_energized,out_energized,none_energized}.json   # 6 张朝北面片
 ├── models/item/{plug_slate,multi_directrix,multi_directrix_p}.json
 ├── textures/block/{plug_slate,multi_directrix_p}.png
@@ -487,3 +550,69 @@ common/src/main/resources/abadoned_greatwork-common.mixins.json   # mixins 里�
 common/src/main/resources/data/abadoned_greatwork/loot_tables/blocks/
 └── {plug_slate,multi_directrix,multi_directrix_p}.json
 ```
+
+---
+
+## 10. 构建环境（Hex 0.11.4 那一轮升级）
+
+为了吃下 Hex Casting 0.11.4（它是 Kotlin 2.2.21 编的），整条工具链一起抬了：
+
+| 项 | 之前 | 现在 | 为什么 |
+|---|---|---|---|
+| Hex Casting | 0.11.3 | **0.11.4** | 目标版本 |
+| Kotlin | 1.9.22 | **2.2.21** | 0.11.4 的元数据是 2.2.0，1.9 的编译器读不进去 |
+| Architectury Loom | `[1.7, 1.8[`（1.7.435） | **1.11.454** | Loom 1.7 自带的 `kotlinx-metadata-jvm` 最高只认 2.0.0，重映射 Kotlin 2.2 的模组直接报 `cannot write metadata for future compiler versions` |
+| Gradle | 8.10 | **8.14** | Loom 1.11 的要求 |
+| shadow | 7.1.2 | **8.1.1** | 跟 Gradle 8.14 搭配 |
+| fabric-loader | 0.14.25 | **0.19.2** | 跟 FLK 1.13.7 搭配（照抄上游 HexMod） |
+| fabric-api | 0.87.0+1.20.1 | **0.92.8+1.20.1** | 同上 |
+| fabric-language-kotlin | 1.10.18+kotlin.1.9.22 | **1.13.7+kotlin.2.2.21** | 运行时 stdlib 必须和编译器同版 |
+| KotlinForForge | 4.10.0 | **4.12.0** | 同上 |
+
+### 三条会咬人的
+
+1. **Gradle 必须跑在 JDK 21 上。**
+   `$env:JAVA_HOME = "C:\Program Files\Java\jdk-21.0.10"`。
+   不然 buildSrc 解析 Loom 1.11 的依赖时直接
+   `unpick:3.0.0-beta.9 ... requires at least JVM runtime version 21` 收工。
+   mod 产物仍是 Java 17（catalog 的 `java = "17"`），`buildSrc` 里单独用 `jdk = "21"`。
+   **两个别名不能叫 `java-build` / `javaBuild`** —— 版本目录里它俩会和 `java` 形成前缀冲突，
+   `libs.versions.java.get()` 当场变成「receiver type mismatch」，一口气带崩 buildSrc。
+
+2. **Hex 0.11.4 改了 `CircleExecutionState` 的 protected 构造器**（我们的分流全靠它）：
+   - `knownPositions`（环上所有格）**没了**，并进了 `reachedPositions`
+   - `reachedPositions` 从 `List<BlockPos>` 变成 `HashSet<BlockPos>`
+   - 新增 `reachedSlate: Long`，`getTickSpeed()` 改成按它算（`max(2, (10 - (reachedSlate-1)/3))`），
+     所以 `ImpetusBranchMixin.abw$tickSpeed` 也跟着改了
+   - 新增 `greaterCorner` / `lesserCorner`，构造器要显式传给 `final AABB bounds`
+
+3. **IoticBlocks 走本地 jar，不走 Modrinth maven。**
+   Modrinth 对同一版本号只发一个文件，实测 `maven.modrinth:ioticblocks:1.0.2+1.20.1` 拿到的是
+   **forge** 那个 jar，fabric 那边就是 404。所以按本仓库既有的 `libs:` flatDir 约定：
+   `libs/IoticBlocks-fabric-1.20.1-1.0.2.jar`、`libs/IoticBlocks-forge-1.20.1-1.0.2.jar`。
+
+### IoticBlocks 的 API（`_p` 要用）
+
+包名 `gay.object.ioticblocks.api`：
+
+```java
+public interface IoticBlocksAPI {
+    IoticBlocksAPI INSTANCE;
+    ADIotaHolder findIotaHolder(ServerLevel level, BlockPos pos);
+    boolean registerIotaHolderProvider(ResourceLocation blockId, IotaHolderProvider provider);
+}
+
+public interface IotaHolderProvider {
+    ADIotaHolder getIotaHolder(ServerLevel level, BlockPos pos);
+}
+
+public interface ADIotaHolderReadOnly extends ADIotaHolder { // 只读目标用这个，写操作自动返回 false
+    default boolean writeIota(Iota, boolean simulate);
+    default boolean writeable();
+    static ADIotaHolder ofStatic(Iota);
+}
+```
+
+也就是：给方块 id 登记一个 provider，返回自己的 `ADIotaHolder` 即可，
+玩家就能用它的读写图案往方块里写 iota 了 —— 不用自己搓存 iota 的那套 NBT/同步。
+

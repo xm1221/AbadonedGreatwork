@@ -15,13 +15,21 @@ import java.util.UUID
  * 但同一个包里之外的地方只能靠继承拿到构造器。这个类**唯一的作用**就是把那个构造器
  * 暴露成一个 [fork] 工厂，本身不加任何字段、不改任何行为。
  *
+ * ## Hex 0.11.4 的构造器（比 0.11.3 长了三截）
+ * 0.11.3 的 `knownPositions`（环上所有格）**没了**，并进了 `reachedPositions`；
+ * 反过来 `reachedPositions` 从 `List` 变成 `HashSet`。多出来的是：
+ * - `reachedSlate: Long` —— 波访问过几块砖，`getTickSpeed()` 按它算
+ *   （`max(2, (10 - (reachedSlate - 1) / 3))`），不再是 `reachedPositions.size()`
+ * - `greaterCorner` / `lesserCorner` —— 建构造器时拿去算那个 `final AABB bounds`
+ *
  * ## 和母波共享什么
  * | 字段 | 共享? | 原因 |
  * |---|---|---|
- * | `knownPositions` | 共享（同一个 `Set`） | 环已经定死了，分支走不出环；`bounds` 也因此一致 |
- * | `reachedPositions` | **共享（同一个 `List`）** | 主波结束时 `endExecution` 只遍历这一张表，共享才能把分支点亮的格子一起熄掉 |
+ * | `reachedPositions` | **共享（同一个 `HashSet`）** | 主波结束时 `endExecution` 只遍历这一张表，共享才能把分支点亮的格子一起熄掉；`bounds` 也因此一致 |
+ * | `bounds` | 由 `greaterCorner`/`lesserCorner` 算，跟着母波 | 分支走不出环，范围不会更大 |
  * | `currentImage` | **各自一份**（见 [forkImage]） | 分流 = 镜像分家，各走各的栈 |
  * | `currentPos` / `enteredFrom` | 各自 | 每条波在环上的位置不同 |
+ * | `reachedSlate` | 拷贝一份起步 | 之后两条波各数各的 |
  *
  * ## 生命周期
  * 由 [ImpetusBranchHost] 持有的列表在促动石上一 tick 一推进（见 `ImpetusBranchMixin`）：
@@ -31,23 +39,27 @@ import java.util.UUID
 class ForkedExecutionState(
     impetusPos: BlockPos,
     impetusDir: Direction,
-    knownPositions: Set<BlockPos>,
-    reachedPositions: List<BlockPos>,
+    reachedPositions: HashSet<BlockPos>,
     currentPos: BlockPos,
     enteredFrom: Direction,
     currentImage: CastingImage,
     caster: UUID?,
     casterPigment: FrozenPigment?,
+    reachedSlate: Long,
+    greaterCorner: BlockPos,
+    lesserCorner: BlockPos,
 ) : CircleExecutionState(
     impetusPos,
     impetusDir,
-    knownPositions,
     reachedPositions,
     currentPos,
     enteredFrom,
     currentImage,
     caster,
     casterPigment,
+    reachedSlate,
+    greaterCorner,
+    lesserCorner,
 ) {
     companion object {
         /**
@@ -64,13 +76,15 @@ class ForkedExecutionState(
         ): ForkedExecutionState = ForkedExecutionState(
             impetusPos = parent.impetusPos,
             impetusDir = parent.impetusDir,
-            knownPositions = parent.knownPositions,
             reachedPositions = parent.reachedPositions,
             currentPos = currentPos,
             enteredFrom = enteredFrom,
             currentImage = image,
             caster = parent.caster,
             casterPigment = parent.casterPigment,
+            reachedSlate = parent.reachedSlate,
+            greaterCorner = parent.greaterCorner,
+            lesserCorner = parent.lesserCorner,
         )
     }
 }
