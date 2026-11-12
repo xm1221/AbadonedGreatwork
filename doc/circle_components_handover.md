@@ -1,274 +1,198 @@
-# 法术环件（三个方块）实现交接
+# 法术环件三件套 — 交接文档
 
 > 交接对象：`plug_slate`（插接石板）、`multi_directrix`（多向导向石）、`multi_directrix_p`（多向导向石·核心）。
-> 前两个只是注册+资产，`plug_slate` 已可当 HexCasting 环件使用，后两个**环件逻辑未实现**。
-> 本文写于 2026-11-09，代码状态以当时磁盘为准（`git status` 里三个方块文件都还是未跟踪的新文件）。
+> 本文对应仓库状态 **`225066b`（2026-11-11）**，工作区干净，三端 `classes` 全绿。
+> 上一版（2026-11-09）写的「后两个环件逻辑未实现」**已经作废** —— 三个方块现在都是完整的环件。
 
 ---
 
-## 1. 一句话现状
+## 0. 现在的状态
 
-| 方块 | 环件逻辑 | 说明 |
+| 方块 | 环件逻辑 | 一句话 |
 |---|---|---|
-| `abadoned_greatwork:plug_slate` | ✅ 完整 | 「底部 1px 平板 + 一侧 1px 竖墙」的 L 形转角件，16 个状态，能传导媒质波、能被点亮 |
-| `abadoned_greatwork:multi_directrix` | ✅ 完整 | 六面各自「未连接 / 输入 / 输出」的实心方块，继承 `BlockCircleComponent`；**分流是真并行、合并已接**（见 §6.2 / §6.2.5） |
-| `abadoned_greatwork:multi_directrix_p` | ❌ 未做 | 同上，只是外壳模型（8 角块 + 核心） |
+| `abadoned_greatwork:plug_slate` | ✅ 完整 | 「1px 底板 + 1px 竖墙」的 L 形转角件，只传波、不做运算 |
+| `abadoned_greatwork:multi_directrix` | ✅ 完整 | 六面各「未连接 / 输入 / 输出」；**分流是真并行**，**合并已接** |
+| `abadoned_greatwork:multi_directrix_p` | ✅ 完整 | 同上 + 方块里存一条图案，用它在分流/合并时做运算，并按栈顶 iota 染色 |
 
-`truth_crystal` 是更早完成的另一套东西，不在本文范围。
+**还没做的一件事：跑通过一次完整施法。** 最近一次启动是 11-10 13:14，崩在
+`ICircleComponent.sfx` 的空指针上（§7-8），修复已进 HEAD 但**尚未再次进游戏验证**。
+下面的 §8 给了手测清单，接手时先按它跑一遍。
 
 ---
 
-## 2. 环境与构建（必读，否则第一步就卡）
+## 1. 环境与构建
 
-- MC **1.20.1** / Architectury（common + fabric + forge）/ Kotlin 1.9.22 / Java 17 / Loom 1.17
-- 依赖 Hex Casting **0.11.3**、Architectury API 9.2.14
-- mod id `abadoned_greatwork`，包 `cn.xm1221.abadoned_greatwork`
+MC **1.20.1** / Architectury（common + fabric + forge）/ 包 `cn.xm1221.abadoned_greatwork` / mod id `abadoned_greatwork`。
+产物 **Java 17**，但 **Gradle 必须跑在 JDK 21 上**。
 
 ```powershell
-# 机器 PATH 上是 JDK 25，直接跑 gradlew 会因为版本不对失败，必须先指定
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
-.\gradlew.bat :common:classes --console=plain      # 日常验证就够
-.\gradlew.bat :common:jar :fabric:classes :forge:classes
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-21.0.10"     # 不设这个，buildSrc 解析 Loom 依赖直接失败
+.\gradlew.bat :common:classes :fabric:classes :forge:classes --console=plain
 ```
 
-**不要用 `:common:build`**：它挂在 `:common:javadoc`，`common/src/main/java/cn/xm1221/abadoned_greatwork/entity/EyeOfWaypoint.java` 第 45 行有中文注释，GBK 下解码失败报 `unmappable character`。这是既有问题，和环件无关；要根治就改那句注释或给 javadoc 加编码参数。
+| 项 | 版本 | 备注 |
+|---|---|---|
+| Gradle | 8.14 | Loom 1.11 要求 |
+| Architectury Loom | 1.11.454 | 旧版 remap Kotlin 2.2 模组会报 `cannot write metadata for future compiler versions` |
+| Kotlin | 2.2.21 | 跟 Hex 0.11.4 的元数据版本对齐 |
+| Hex Casting | **0.11.4** | 本轮目标版本 |
+| IoticBlocks | **1.0.2** | `_p` 的图案写入口；**硬前置** |
+| fabric-loader / fabric-api | 0.19.2 / 0.92.8+1.20.1 | 跟 FLK 1.13.7 配套 |
+| fabric-language-kotlin / KFF | 1.13.7+kotlin.2.2.21 / 4.12.0 | 运行时 stdlib 必须和编译器同版 |
+| inline | **1.20.1-1.2.2** | Hex 0.11.4 的硬前置，见 §7-9 |
 
-编译产物位置：`common/build/classes/kotlin/main/cn/xm1221/abadoned_greatwork/...`
+**不要跑 `:common:build`**：它挂在 `:common:javadoc`，`common/src/main/java/cn/xm1221/abadoned_greatwork/entity/EyeOfWaypoint.java:45`
+有中文注释，GBK 下解码失败报 `unmappable character`。这是既有问题，与环件无关。
+
+运行日志：`fabric/run/logs/latest.log`、崩溃报告在 `fabric/run/crash-reports/`。
 
 ---
 
-## 3. 已注册的方块与资产
+## 2. 三个方块一览
 
-全部在 `common/src/main/kotlin/cn/xm1221/abadoned_greatwork/registry/Abadoned_greatworkBlocks.kt`，
-物品在 `Abadoned_greatworkItems.kt`（`registerBlockItem`），创造栏在 `Abadoned_greatworkCreativeTabs.kt`。
+注册在 `registry/Abadoned_greatworkBlocks.kt`，物品走 `registerBlockItem`，创造栏在 `Abadoned_greatworkCreativeTabs.kt`，
+战利品表 `data/abadoned_greatwork/loot_tables/blocks/*.json`（掉落自身），三个都设了 `pushReaction(BLOCK)`（活塞推不动）。
 
-| id | 方块类 | 状态 | blockstate 变体 | 备注 |
+| id | 方块状态数 | blockstate 条目 | 属性 | 渲染层 |
 |---|---|---|---|---|
-| `plug_slate` | `block/PlugSlateBlock.kt` | 16（`energized`×`facing`×`half`） | 16 | 继承 `BlockCircleComponent` |
-| `multi_directrix` | `block/MultiDirectrixBlock.kt` 的 `MultiDirectrixBlock` | 1458 | 36（multipart） | 继承 `BlockCircleComponent`，六面各自 未连接/输入/输出 |
-| `multi_directrix_p` | 同文件 `MultiDirectrixPBlock` | 1 | 1 | `noOcclusion()`，需要 cutout |
+| `plug_slate` | 4 facing × 2 half × 2 energized = **16** | **16**（`energized` 两档指向同一模型，**不会发光**） | `noOcclusion`、`strength(2.0, 6.0)`、DEEPSLATE | solid |
+| `multi_directrix` | 3⁶ × 2 = **1458** | **36** multipart（6 面 × 3 档 × 2 激活） | 整格实心、`strength(3.0, 6.0)`、DEEPSLATE | solid |
+| `multi_directrix_p` | 3⁶ × 2 = **1458** | **13** multipart（本体 + 6 面 × out/none） | `noOcclusion` + 方块实体、`strength(3.0, 6.0)`、DEEPSLATE | **cutout** |
 
-三个方块都设了 `pushReaction(PushReaction.BLOCK)`（活塞推不动，和 HexCasting 环件一致）。
-战利品表：`data/abadoned_greatwork/loot_tables/blocks/{plug_slate,multi_directrix,multi_directrix_p}.json`，掉落自身。
+**只有 `_p` 需要 cutout**：它把框架内侧面的 UV 映射到贴图的全透明区域，留在 solid 层会画成黑块；
+`plug_slate` 和 `multi_directrix` 的贴图全不透明，加 cutout 纯掉性能。
 
-**渲染层**：`Abadoned_greatworkClient.kt` 里只给 `MULTI_DIRECTRIX_P` 注册了 `RenderType.cutout()`。
-原因：那个模型把框架内侧面的 UV 映射到贴图的全透明区域，只有 cutout 才会真的"消失"，留在 solid 层会画成黑块。
-`plug_slate` 的贴图不透明，走默认 solid 层即可（**加 cutout 会掉性能，也没有必要**）。
-
-命名（中英已在 `lang/zh_cn.json` / `en_us.json`）：
-- `plug_slate` = 插接石板 / Plug Slate
-- `multi_directrix` = 多向导向石 / Multi-Directrix
-- `multi_directrix_p` = 多向导向石·核心 / Multi-Directrix Core
-
-> 译名参照 HexCasting 官方中文：directrix = 导向石、impetus = 促动石、slate = 石板、media = 媒质。
+译名（`lang/zh_cn.json`）：插接石板 / 多向导向石 / 多向导向石·核心。
+术语沿用 HexCasting 官方中文：directrix = 导向石、impetus = 促动石、slate = 石板、media = 媒质。
 
 ---
 
-## 4. `plug_slate` 实现细节
-
-### 4.1 状态与放置
-
-```kotlin
-FACING : DirectionProperty = BlockStateProperties.HORIZONTAL_FACING   // 竖墙贴住的那一面
-HALF   : EnumProperty<Half> = BlockStateProperties.HALF               // bottom=贴地 / top=贴天花板
-ENERGIZED : BooleanProperty                                            // 父类 BlockCircleComponent 提供
-```
-
-`getStateForPlacement`：
-- 点方块**侧面** → `facing = clicked.opposite`（竖墙靠住被点的那一格）
-- 点**顶面/底面** → `facing = context.horizontalDirection`（玩家视线方向）
-- `half = if (clicked == DOWN) TOP else BOTTOM`
-
-`createBlockStateDefinition` **必须先 `super`**（父类在那里注册 `ENERGIZED`）；漏了不会立刻报错，
-等媒质波第一次点亮这一格才炸（`setValue` 未注册属性）。
-
-### 4.2 形状：全部 1px，没有任何整格兜底
-
-板厚 **1px（0.0625）**，因为「同一条薄板折了 90°」，底板和竖墙同厚。
-
-```
-底板  贴地      ( 0, 0, 0)-(16, 1,16)
-底板  贴天花板  ( 0,15, 0)-(16,16,16)     ← 模型绕 X 翻 180°
-竖墙  贴地      y 1..16，x 0..1 或 z 0..16（随 facing 转）
-竖墙  贴天花板  y 0..15，同上
-```
-
-`getShape` 的兜底是 `SHAPES[half]?.get(facing) ?: PLATES.getValue(half)` —— **兜底只给底板**，
-所以碰撞箱不可能退化成整格方块（这个 bug 修过一次，根因就是某次编辑把 `getShape` 弄丢了）。
-
-模型 `assets/abadoned_greatwork/models/block/plug_slate.json` 与形状表逐坐标对应；
-改厚度/尺寸时**两边必须同时改**，否则渲染和碰撞对不上。
-
-### 4.3 blockstate 与模型旋转
-
-16 个变体，`facing` 映射（基模型是"西墙"）：
-
-| facing | `y` | 说明 |
-|---|---|---|
-| `west` | 0（省略） | 基模型 |
-| `north` | 90 | |
-| `east` | 180 | |
-| `south` | 270 | |
-
-`half=top` 额外加 `"x": 180`。旋转顺序是**先 x 后 y**（`BlockModelRotation` = `Ry·Rx`），两者正交，
-所以 4 个 y × 2 个 x 正好覆盖 8 种形态，不需要 roll。
-
-### 4.4 环件逻辑（**当前版本**：两片并集 + 折线歧义报错）
-
-这是被咩咩拍板的版本。曾有一版"精确板面接触"（用 `getShape` 求两个邻格的截面矩形是否正面积重叠），
-被咩咩判定「没什么道理」并要求回退，**不要再往回写**。
-
-```kotlin
-possibleExitDirections  = EnumSet.allOf(Direction::class.java)   // 全 6 向
-canEnterFromDirection   = true                                   // 任何方向都能进
-acceptControlFlow       = (来向平行折线) ? 报去路过多 + Stop
-                                        : Continue(全 6 向 - 来路)
-```
-
-**为什么出口是 6 个**：单块石板只有一片，出口只能取「法线以外」；这块是两片（横片 + 竖片），
-两片各自禁掉自己暴露面的法线后取并集，剩下的正好全通。
-
-**为什么入口恒 true**（这一段是踩坑记，别改回去）：
-原来的写法是 `enterDir != normal.opposite || enterDir != face.opposite`，它**恒为 true**。
-看着像写错，但其实是对的——一个方向不可能同时等于两个互不相同的方向。
-改成 `&&` 才是错的：那会把转角石板变成「只能从下方进」。
-
-根因是上游那个缺失的参数：`ICircleComponent` 只给方向、**不给带高**。
-波从东边朝墙过来时，可能走在横片的上边缘（合法），也可能垂直穿过竖片的暴露面（不合法），
-`enterDir` 区分不了。算不准就只能取宽：任一方向至少有**一片**能承载这条波。
-
-真正的收窄由引擎做：它拿着候选出口逐格再问下一格的 `canEnterFromDirection`，
-**两个邻格都能接**时才报「去路过多」—— 那才是真的「把这块当两块板用」。
-
-**折线轴**（`foldAxis`）= 水平方向上垂直于 `FACING` 的那个轴（`facing=west` → Z 轴 → 被拦的是 N/S）。
-来向平行于折线时，横片和竖片**都**能承载这条波 = 两片都认 = 主动报「去路过多」。
-
-报错是**照抄引擎**的（见 §5 的 `many_exits` 原文），观感和原版完全一致。
-开关在 companion：
-
-```kotlin
-const val REPORT_FOLD_LINE_AMBIGUITY = true   // false = 退化成万能接头，任何方向都能过
-```
-
-行为表（贴地 + `facing=west`）：
-
-| `enterDir`（前进方向） | 上一格在哪 | 结果 |
-|---|---|---|
-| NORTH / SOUTH | 南 / 北 | **平行折线 → 去路过多** |
-| EAST | 西边（墙那侧） | 通过 |
-| WEST | 东边 | 通过 |
-| UP | 下方 | 通过 |
-| DOWN | 上方 | 通过 |
-
-出口再交给引擎按邻居收窄。**读法：这块只能"转"（水平 ↔ 竖直），不能当直板沿着墙走。**
-
-
-
-### 4.5 粒子
-
-```kotlin
-override fun normalDir(...) = if (half == BOTTOM) UP else DOWN     // 只喂粒子，逻辑不用它
-override fun particleHeight(...) = 0.5f - 15f / 16f                // = -0.4375
-```
-
-`-0.4375` 是**有符号**偏移：`vpos = 格心 + normalDir.step() * height`，贴地时法线朝上 → 粒子在
-`y = 1/16`（底板顶面）；贴天花板时法线朝下 → 同一个常量让粒子落在 `y = 15/16`（底板底面）。
-与 HexCasting 石板同值（它的板也是 1px）。
-
----
-
-## 5. HexCasting 0.11.3 环系统要点（实读源码，可直接照抄）
+## 3. HexCasting 0.11.4 环系统要点（改造前必读）
 
 环件判定：`state.getBlock() instanceof ICircleComponent`，**没有 tag、没有白名单**。
-
-`ICircleComponent` 的方法：
 
 ```java
 ControlFlow acceptControlFlow(CastingImage, CircleCastEnv, Direction enterDir, BlockPos, BlockState, ServerLevel);
 boolean canEnterFromDirection(Direction enterDir, BlockPos, BlockState, ServerLevel);
-EnumSet<Direction> possibleExitDirections(BlockPos, BlockState, Level);   // 注意是 Level，不是 ServerLevel
+EnumSet<Direction> possibleExitDirections(BlockPos, BlockState, Level);
 void startEnergized / boolean isEnergized / void endEnergized;
-default Direction normalDir(BlockPos, BlockState, Level, int recursionLeft);
-default float particleHeight(BlockPos, BlockState, Level);
-static void sfx(BlockPos, BlockState, ServerLevel, BlockEntityAbstractImpetus, boolean success);
-static Pair<BlockPos, Direction> exitPositionFromDirection(BlockPos, Direction);
+default Direction normalDir(...);  default float particleHeight(...);
+static void sfx(BlockPos, BlockState, Level, BlockEntityAbstractImpetus, boolean success);
 ```
 
-`BlockCircleComponent`（抽象基类）提供了 `ENERGIZED` 属性、比较器输出 15、
-`startEnergized/isEnergized/endEnergized`、抽象 `normalDir` 与 `particleHeight`；
-它的 `createBlockStateDefinition` 只注册 `ENERGIZED`，子类必须 `super`。
+`BlockCircleComponent` 提供 `ENERGIZED` 属性、比较器输出 15、`startEnergized/isEnergized/endEnergized`，
+并留下 `normalDir` / `particleHeight` 两个抽象方法。**子类的 `createBlockStateDefinition` 必须先 `super`。**
 
-**建环（`CircleExecutionState.createNew`）**：从 `impetus.relative(impetus.FACING)` 开始 DFS 洪泛，
-每格扩散 `possibleExitDirections`，进入前先过 `canEnterFromDirection`；必须能回到促动石本身，
-超过 `HexConfig.server().maxSpellCircleLength()` 失败。
+**建环**（`CircleExecutionState.createNew`）：从 `impetus.relative(FACING)` 起 DFS 洪泛，每格扩散
+`possibleExitDirections`，进之前先过 `canEnterFromDirection`，必须能走回促动石，超 `maxSpellCircleLength()` 失败。
 
-**每 tick（`CircleExecutionState.tick`）顺序**：
+**每 tick**（`CircleExecutionState.tick`）：
 
-1. 走到非环件 → 放失败音效、停机
-2. `startEnergized`
-3. `reachedPositions.add(currentPos)`
-4. `acceptControlFlow(...)`
-5. 促动石没了 → 停
-6. `Stop()` → 停机（**错误必须由 `acceptControlFlow` 自己发过**，引擎不会再补）
-7. `Continue(update, exits)` → 遍历 exits 问下一格肯不肯接：
-   **0 个** → 失败音效 + `impetus.postNoExits(pos)` + 停；
-   **≥2 个** → 见下；**恰好 1 个** → 走过去，`currentImage = update.withOverriddenUsedOps(0)`
+1. 走到非环件 → 失败音效 + 停机
+2. `startEnergized` → `reachedPositions.add(currentPos)` → `reachedSlate += 1`
+3. `acceptControlFlow(...)`
+4. 促动石没了 → 停
+5. `Stop()` → 停机（**错误必须由 `acceptControlFlow` 自己报**，引擎不会补）
+6. `Continue(update, exits)` → 逐个问下一格的 `canEnterFromDirection`：
+   **0 个** → 失败音效 + `postNoExits` + 停；**≥2 个** → `many_exits` 显示 + 停；**恰好 1 个** → 走过去，
+   `currentImage = update.withOverriddenUsedOps(0)`
 
-「去路过多」原文（`many_exits`，不是 mishap，是一条显示）：
+「去路过多」是 `postDisplay` 一条显示，不是 mishap：
 
 ```java
-impetus.postDisplay(
-    Component.translatable("hexcasting.tooltip.circle.many_exits",
-        Component.literal(pos.toShortString()).withStyle(ChatFormatting.RED)),
-    new ItemStack(Items.COMPASS));
-ICircleComponent.sfx(pos, bs, world, impetus, false);
-halt = true;
+impetus.postDisplay(Component.translatable("hexcasting.tooltip.circle.many_exits",
+    Component.literal(pos.toShortString()).withStyle(ChatFormatting.RED)), new ItemStack(Items.COMPASS));
 ```
 
-节流：`getTickSpeed() = max(2, 10 - (reachedPositions.size() - 1) / 3)`。
-结束时对 `reachedPositions` 全部 `endEnergized`。
+节流：`getTickSpeed() = max(2, 10 - (reachedSlate - 1) / 3)`（0.11.4 起吃 `reachedSlate`，不再是 `reachedPositions.size()`）。
 
-**关键限制**：一块促动石只持有一个 `executionState`（字段受保护），所以"真并行"必须
-子类化 `CircleExecutionState` 并自管 BE tick，见 §6。
+**0.11.4 相对 0.11.3 的破坏性改动**（我们的分流全靠这套 API）：
+
+- `knownPositions` 没了，并进 `reachedPositions`；后者从 `List` 变 `HashSet`
+- 新增 `reachedSlate: Long`、`greaterCorner` / `lesserCorner`，protected 构造器变 **11 参**
+- `ICircleComponent.sfx` 在成功分支里**不判空**就读 `impetus.getExecutionState().reachedSlate`（§7-8）
 
 ---
 
-## 6. 待办：`multi_directrix` / `multi_directrix_p`
+## 4. `plug_slate`（转角件）
 
-咩咩对机制的原话：
+### 4.1 状态与放置
 
-- `multi_directrix`：**分流器**，一个输入变多个媒质波输出（或者反过来合并）。
-- `multi_directrix_p`：**更智能的版本**，可以在内部通过咒术运算决定怎么分流/合并。
+```kotlin
+FACING : DirectionProperty = HORIZONTAL_FACING   // 竖墙贴住的那一面
+HALF   : EnumProperty<Half>                       // bottom=贴地 / top=贴天花板
+ENERGIZED : BooleanProperty                       // 父类提供
+```
 
-**视觉与状态层已拍板并落地**（见 §6.1）。分流/合并的**数据**语义还没定，只有三个档位的取舍（按成本递增）：
+- 点**侧面** → `facing = clicked.opposite`；点**顶/底** → `facing = context.horizontalDirection`
+- `half = if (clicked == DOWN) TOP else BOTTOM`
 
-| 档位 | 做法 | 代价 |
+### 4.2 形状：全部 1px，没有整格兜底
+
+板厚 1px（0.0625），因为是「同一条薄板折了 90°」，底板与竖墙同厚：底板 `(0,0,0)-(16,1,16)`，
+竖墙 1px 宽、随 `facing` 转；`half=top` 整体绕 X 翻 180°（模型与 `VoxelShape` 都是）。
+`getShape` 的兜底是 `SHAPES[half]?.get(facing) ?: PLATES.getValue(half)` —— **兜底只给底板**，
+碰撞箱不可能退化成整格。改厚度时**模型和 8 个 `VoxelShape` 必须同时改**。
+
+### 4.3 blockstate 旋转
+
+16 个变体，`facing` 映射（基模型是"西墙"）：`west` 0（省略）/ `north` 90 / `east` 180 / `south` 270，
+`half=top` 再加 `"x": 180`。旋转顺序是先 x 后 y（`BlockModelRotation = Ry·Rx`），两者正交，8 种形态够用。
+
+### 4.4 环件逻辑：两片并集 + 折线歧义报错
+
+```kotlin
+possibleExitDirections = 全 6 向
+canEnterFromDirection  = true                     // 任何方向都能进
+acceptControlFlow      = 来向平行于折线 ? 报「去路过多」+ Stop : Continue(全 6 向 - 来路)
+```
+
+**为什么出口是 6 个**：单块石板只有一片，出口只能取法线以外；这块是两片，两片各自禁掉自己暴露面的法线后取并集，正好全通。
+
+**为什么入口恒 true**（踩坑记，别改回去）：`enterDir != normal.opposite || enterDir != face.opposite`
+**恒为 true** —— 一个方向不可能同时等于两个互不相同的方向。改成 `&&` 才是错的（会把转角石板变成只能从下方进）。
+根因是上游只给方向、**不给带高**：波从东边朝墙来时，可能走在横片上边缘（合法），也可能垂直穿过竖片暴露面（不合法），
+`enterDir` 区分不了，只能取宽。真正的收窄由引擎做：它拿候选出口逐格再问下一格，**两个邻格都能接**时才报「去路过多」。
+
+**折线轴** = 水平方向上垂直于 `FACING` 的轴（`facing=west` → Z 轴 → 拦 N/S）。开关：
+`const val REPORT_FOLD_LINE_AMBIGUITY = true`（false = 退化成万能接头）。
+
+| `enterDir`（前进方向） | 上一格在哪 | 结果 |
 |---|---|---|
-| L1 路由 | 只把多向做成 `ICircleComponent`，出口列表给多个方向，让引擎自己消歧 | 零额外代码，但做不到"一个输入多个输出"（引擎要求恰好 1 个可进邻格） |
-| L2 时分 | 自己持 `BlockEntity` + 计数器，每 tick 轮换把不同的分支当出口 | 需要 BE 与 ticker；同一时刻仍只有一条波在跑 |
-| L3 并行 | 子类化 `CircleExecutionState`（`executionState` 字段 protected，子类可见），复制出多条波 | 最接近语义，但要不要改 `BlockAbstractImpetus` 的存盘格式要确认 → **咩咩已选这条，见 §6.2** |
+| NORTH / SOUTH | 南 / 北 | **平行折线 → 去路过多** |
+| EAST / WEST / UP / DOWN | 墙那侧 / 东边 / 下方 / 上方 | 通过 |
 
-### 6.1 端口状态与渲染（已落地）
+**读法：这块只能「转」（水平 ↔ 竖直），不能当直板沿着墙走。**
 
-咩咩拍板的机制：**六个面各自是一个端口，三档** —— `_0 = 未连接`、`_2 = 输入`、`_1 = 输出`。
+### 4.5 粒子
 
-| 项 | 定论 |
-|---|---|
-| 放置默认 | 六面全 `未连接`（`_0`），整块看起来是全封实的实心方块，**什么都不接** |
-| 切换 | **潜行右键点中哪一面就切哪一面**，按 `未连接 → 输入 → 输出 → 未连接` 循环（用 `hit.direction`，不用算视线）；音高 0.8 / 1.4 / 1.0 作三档反馈 |
-| 贴图 | `未连接` → `_0`/`_0_energized`；`输入` → `_2`/`_2_energized`；`输出` → `_1`/`_1_energized` |
-| 激活 | 媒质波经过时 `energized = true`，六面同时换成各自的 `_energized` |
-| 音效 | `SoundType.DEEPSLATE`。**照抄上游**：`HexBlocks.slateish()` = `Properties.copy(Blocks.DEEPSLATE_TILES).strength(4f, 4f)`，石板 / 促动石 / 两种导向石全用它，所以整族都是深板岩音效；本项目 `plug_slate` 早就是 DEEPSLATE |
-| 序列化名 | `none` / `in` / `out`（进 blockstate 的 `when`，别改） |
-| 状态数 | 3⁶ × 2 = **1458**（对比：vanilla `redstone_wire` 是 1296，还在这量级内） |
+`normalDir = if (half == BOTTOM) UP else DOWN`（只喂粒子），`particleHeight = 0.5f - 15f/16f = -0.4375`。
+带符号偏移让贴地/贴天花板两种情况都落在底板内侧面上，与 HexCasting 石板同值。
 
-**为什么值得多出这一档**：没有「未连接」时，每个没被用到的面也是 `in`，
-「这个块有几个输入」根本数不出来，合并就没法判断「到齐了没有」。有了这一档，
-`in` 面的个数就是**精确的期望到达数** —— 这是接合并的前提。
+---
 
-**不写 1458 个模型**：用 `multipart`。模型只有 6 个（同一张「朝北面片」配 6 张贴图：
-`none` / `in` / `out` 各一套未激活 + 激活），六个面靠 blockstate 的 `x`/`y` 旋转摆到各自面上，
-共 6 面 × 3 档 × 2 激活 = **36 条 multipart**：
+## 5. `multi_directrix`（分流 / 合并）
+
+### 5.1 端口三档与渲染
+
+六个面各一个 `PortMode`（属性名就是 `north/east/south/west/up/down`），序列化名 **`none` / `in` / `out`**（进 blockstate 的 `when`，别改）：
+
+| 档位 | 贴图 | 说明 |
+|---|---|---|
+| `none` 未连接 | `_0` / `_0_energized` | 新放置的默认值，既不接也不放 |
+| `in` 输入 | `_2` / `_2_energized` | 波从这一面进来 |
+| `out` 输出 | `_1` / `_1_energized` | 波从这一面出去 |
+
+- 潜行右键点**被点中的那一面**（用 `hit.direction`，不用算视线），`none → in → out → none` 循环，
+  音高 0.8 / 1.4 / 1.0
+- 波经过时 `energized = true`，六面一起换 `_energized`
+- `rotate` / `mirror` 必须把六个属性一起换位，否则结构方块一转端口就指错
+
+**为什么必须有「未连接」这一档**：没有它，没被用到的面也是 `in`，「这个块有几个输入」根本数不出来，
+合并就没法判断到齐没有。有了它，**`in` 面个数 = 精确的期望到达数**。
+
+**1458 个状态不写 1458 个模型**：`multipart` + 一个朝北面片，6 张图，靠 `x`/`y` 旋转摆到六个面，
+共 36 条。旋转表（**每一条都必须带 `uvlock: true`**，六张图没有任何旋转/镜像对称性，否则侧面图案会躺倒）：
 
 | face | 旋转 | face | 旋转 |
 |---|---|---|---|
@@ -276,167 +200,137 @@ halt = true;
 | east | `y: 90` | up | `x: 270` |
 | south | `y: 180` | down | `x: 90` |
 
-推导依据（别再靠猜）：MC 的 `BlockModelRotation` 四元数是 `Ry(-y)·Rx(-x)`，把朝北面片的
-法线 `(0,0,-1)` 代进去 → `y=90` 得 `+X`、`x=90` 得 `-Y`、`x=270` 得 `+Y`，与 vanilla
-`glow_lichen` 一致（它的本体就是一张 `z=0.1` 的朝北面片）。
+推导依据：MC 的 `BlockModelRotation` 是 `Ry(-y)·Rx(-x)`，把法线 `(0,0,-1)` 代进去 → `y=90` 得 `+X`、`x=90` 得 `-Y`、`x=270` 得 `+Y`，与 vanilla `glow_lichen` 一致。
 
-**每一条都必须带 `uvlock: true`**：六张图**都没有任何旋转或镜像对称性**
-（180°/90°/左右/上下全不相等；实测 `_0`↔`_2` 差 228 像素），不加 uvlock 时贴图跟着模型转，
-侧面图案会躺倒；uvlock 由 `FaceBakery.recomputeUVs` 把 UV 反向补偿回该面原本的朝向。
+### 5.2 引擎为什么挡路
 
-方块仍是**整格实心**：没有 `noOcclusion()`，形状用默认整格立方体，贴图全不透明 →
-走默认 solid 渲染层，**别加 cutout**。面片 `cullface` 指向自己那一面，邻格实心时正常剔除。
+`tick` 的出口循环逐个问「下一格肯不肯接」，**第二个能接就报 `many_exits` 并停机**。
+所以分流器不能把多个出口交出去 —— 其余的波必须自己另起一条。
 
-`rotate` / `mirror` 两个 override 必须把六个属性一起换位，否则结构方块一转就指错方向。
+### 5.3 分流（真并行）
 
-### 6.2 真并行分流（已落地）
+`acceptControlFlow` 第一步永远是**按「下一格当拍真的肯接」过滤 `out` 面**（不过滤会把波塞进当拍就被拒的方向，那条分支白死）。然后：
 
-咩咩拍板：**分流就是「一环变多环」，每个出口各拿一份镜像往下走**；合并的数据语义先放着，
-只写个占位函数备用。
+| viable 数量 | 做法 |
+|---|---|
+| 0 | `Continue(imageIn, 空)` → 引擎报无路可走 |
+| 1 | 直通 / 合并（见 5.4） |
+| **≥2** | **第一个**交回引擎当主波，**其余每个出口各 fork 一条分支波**挂到促动石上 |
 
-#### 6.2.1 引擎为什么挡路
+引擎只看到一条出口，`many_exits` 永远不会触发。镜像复制见 `CastingImage.forkImage()`：栈共享
+（`CastingImage` 不可变），只有会被就地改写的 `userData` 深拷贝，再 `withOverriddenUsedOps(0)` 对齐引擎推主波时的算子归零。
 
-`CircleExecutionState.tick` 的出口循环（原文见 §5）对每个候选出口问下一格
-`canEnterFromDirection`，**一旦出现第二个能接的就报 `many_exits` 并停机**。
-所以分流器不能把多个出口交出去，只能交一个 —— 其余的波必须自己另起一条。
+拿不到 `ImpetusBranchHost`（不是 HexCasting 的促动石）时**退回**「老实交出全部出口」，让引擎自己报 `many_exits` —— 宁可报错也不静默丢路。
 
-#### 6.2.2 分流器侧（`MultiDirectrixBlock.acceptControlFlow`）
+### 5.4 合并
 
-1. `possibleExitDirections` 给出全部 `out` 面，再**按「下一格真的肯接」过滤**一遍。
-   不过滤的话会把波塞进一个当拍就被拒的方向，那条分支等于白死。
-2. 过滤后 0 或 1 个 → 照原样交给引擎（无路可走 / 普通合并），行为和以前完全一致。
-3. ≥2 个 → **第一个**交回引擎当主波，**其余每个出口各 fork 一条分支波**挂到促动石上。
-   引擎只看到一条出口，`many_exits` 永远不会触发。
-4. 拿不到 `ImpetusBranchHost`（不是 HexCasting 的促动石）时**退回**「老实交出全部出口」，
-   让引擎自己报 `many_exits` —— 宁可报错也不静默丢路。
+三个卡点：
 
-镜像复制见 `CastingImage.forkImage()`：栈共享（`CastingImage` 是不可变的 data class），
-只有会被**就地改写**的 `userData`（`CompoundTag`）深拷贝，再 `withOverriddenUsedOps(0)`
-对齐引擎推主波时的算子归零。
+| 卡点 | 解法 |
+|---|---|
+| 引擎没有「等待」态：波到一格必须当拍决定走还是死 | 先到的波 `Stop()` 自己（不报错、格子保持点亮），镜像留在 `MergeBuffer` |
+| 「到齐了没有」 | §5.1 的「未连接」档让 `in` 面个数 = 期望到达数 |
+| 生命周期 | 改成「**一条活波都没有**才算结束」（否则 `Stop` 的波会被立刻收掉） |
 
-#### 6.2.3 促动石侧（`ImpetusBranchMixin`）
+可行 `out` 只有 1 个 **且** `in` 面 ≥ 2 → 登记自己；凑到最后一条时由**它**带着 `CircleImageMerge.merge(...)` 的结果继续走
+（**不多造波**）；登记表随后清空。
 
-促动石原本只有一条 `executionState`，全环也只有它一个天然调度者，所以四条注入：
+**凑不齐的兜底（栅栏）**：支路半路死了就永远到不齐，所以「全环一条活波都没有了」时由促动石把到手的凑合放行
+（`MergeBuffer.flushToBranch()`，在 `pos.relative(outDir)` **外面一格**造新波 —— 从本格出发会立刻再次登记自己，死循环）。
+
+**合并数据语义（咩咩拍板）**：栈**按到达顺序**从下往上摞（`ListIota` 约定表尾 = 栈顶）；
+**渡鸦之思后到覆盖先到**，最终取最后一个到达的那份（存在 `image.userData` 的 `hexcasting:ravenmind` 键下，
+`HexAPI.RAVENMIND_USERDATA`，读写见 `OpPushLocal` / `OpPeekLocal`）。必须 `copy()` `userData` —— 它会被 VM 就地改写。
+
+### 5.5 促动石混入层（`ImpetusBranchMixin`，4 条注入）
+
+分支波存在**促动石**上而不是分流器上：这样分流器被拆掉不影响已经分出去的波，也不需要给方块加 `BlockEntity`。
 
 | 目标 | 时机 | 干什么 |
 |---|---|---|
-| `tickExecution` | `RETURN` | 跟着主波一起 `tick` 每条分支；主波结束时把分支一起收掉 |
+| `tickExecution` | `RETURN` | 推进分支（走快照）、栅栏兜底、收尾熄灯、续调度 |
 | `startExecution` | `HEAD` | 开新一次施法前清掉上一次的残党（正在跑时不动） |
-| `saveModData` / `loadModData` | `TAIL` | 分支列表存盘读盘；读盘时世界可能没就绪，先存 NBT，等第一次 tick 再反序列化（上游自己也是这么处理 `executionState` 的） |
+| `saveModData` / `loadModData` | `TAIL` | 分支列表存盘/读盘；读盘时世界可能没就绪，先存 NBT，第一次 tick 再反序列化 |
 
-**不需要额外收尾**：分支与主波**共用同一个 `reachedPositions` 列表**，主波结束时的
-`endExecution` 会顺手把分支点亮的格子全部熄掉。这也是为什么 `ForkedExecutionState`
-必须共享这个 `List` 而不是各拿一份 —— 各拿一份就会留下一堆永远亮着的方块。
+`tickExecution` 尾部那四步：
 
-遍历分支时走**快照**（`new ArrayList<>(branches)`），因为分支自己路过另一个分流器时会往
-同一张表里加新分支，直接迭代会触发 `ConcurrentModificationException`；新加的分支这一 tick
-不跑，下一 tick 开始跑。
-
-#### 6.2.4 已知取舍
-
-- **主波一结束，所有分支立刻一起结束**。分支可能差一两格没走完就被切断 —— 只影响视觉
-  （那几格不点亮），不影响媒质和数据。要改成「等所有波走完」也可以，但得自己
-  `scheduleTick` 续命，还得在最后一条分支死掉时补一次 `endExecution`，否则会漏掉点亮。
-- `getTickSpeed()` 吃的是共享的 `reachedPositions.size()`，所以并行分支多时整环会一起变慢。
-- **分支比主波快一拍**：fork 是在主波 `tick` 里发生的，而分支在那次 `tickExecution` 的尾部就
-  被推进了一格，主波要等下一次调度才动。这个相位差是**恒定 1 tick**、不累积的（之后每 tick
-  两者各进一格），肉眼与手感上都无差别，但如果以后要对齐时序（比如合并登记）要记得它。
-- 分支存在促动石上，**分流器被拆掉不影响已经分出去的波**（这是选促动石而不是给分流器
-  加 `BlockEntity` 的原因）。
-
-#### 6.2.5 合并（已接上）
-
-三个卡点，逐个解决：
-
-| 卡点 | 怎么解决的 |
+| 步 | 干什么 |
 |---|---|
-| 引擎没有「等待」态：波到一格必须在同一 tick 决定走还是死 | 先到的波 `ControlFlow.Stop()` 自己，只把镜像留在登记表里 |
-| 「到齐了没有」 | §6.1 的 `未连接` 档让 **`in` 面个数 = 精确的期望到达数** |
-| 生命周期：上一版是「主波结束 → 所有分支一起结束」，而合并就是要让波主动 Stop | 改成「**一条活波都没有**才算结束」 |
+| ① | 逐条 `tick` 分支（**走快照**，新分支下一 tick 才动，否则 CME）；期间临时挂「代表波」防 §7-8 的空指针 |
+| ② 栅栏 | 一条活波都没有了、但登记表非空 → 凑合放行 |
+| ③ 收尾 | 彻底没波 → 补一次 `endExecution` 熄灯（幂等）+ 清表 |
+| ④ 续调度 | 主波死了但分支还活着 → **先重新点亮促动石**，再 `scheduleTick` |
 
-**真流程**（`MergeBuffer` + 促动石那五条注入）：
-
-| 谁 | 做什么 |
-|---|---|
-| `MultiDirectrixBlock.acceptControlFlow` | 可行 `out` 只有 1 个、且 `in` 面 ≥ 2 → 登记自己，不够数就 `Stop()`（不报错，格子保持点亮） |
-| 同上，凑够数的那一条 | `CircleImageMerge.merge(...)` 合并、清登记表、自己带着合并结果继续走 —— **不多造波** |
-| `ImpetusBranchMixin` ① | 推进分支波（走快照，新分支下一 tick 才动） |
-| ② 栅栏 | 一条活波都没有了、但登记表非空 → 凑合放行：合并已到手的，在 `pos.relative(outDir)` **外面一格**造新波（从本格出发会立刻再次登记自己，死循环） |
-| ③ 收尾 | 彻底没波 → 补一次 `endExecution` 熄灯（幂等），清表 |
-| ④ 续调度 | 主波死了但分支还活着 → 先重新点亮促动石，再 `scheduleTick` |
-
-**超时兜底不需要了**：原来担心「玩家搭出没有促动石的闭环支路时那条波永远转，栅栏永远不触发」。
-但那种环在接入前就已经是坏环（上游同样永远转），加个超时只会误伤正常的长环，所以不做。
-
-**两个踩到才知道的坑**：
+两个踩到才知道的坑：
 
 - `BlockAbstractImpetus.tick` 是 `if (... && pState.getValue(ENERGIZED)) tile.tickExecution();`
-  —— **促动石不亮就根本不推进**。而主波死掉时上游的 `endExecution()` 会把促动石一起熄灭，
-  所以续调度**之前必须先重新点亮**（走 `startEnergized`），否则排进去的 tick 什么都不做。
-- 熄灯不能只指望上游：栅栏放行出来的新波是主波死后才动的，它点亮的格子没人管，
-  收尾那一步得自己再扫一遍。
+  —— **促动石不亮就根本不推进**。主波死时上游 `endExecution()` 会把促动石一起熄灭，所以续调度之前必须先 `startEnergized`。
+- 熄灯不能只指望上游：栅栏放行出来的新波是主波死后才动的，它点亮的格子没人管，收尾那步得自己再扫一遍。
 
-**已知限制**：
+**不需要额外收尾**：分支与主波**共用同一个 `reachedPositions` 集合**（`ForkedExecutionState.fork` 里共享），
+主波结束时顺手把分支点亮的格子全熄掉。各拿一份就会留下一堆永远亮着的方块。
 
-- 登记表里攒的是已经 `Stop()` 掉的波，没有活波可以存盘 → **世界在施法中途保存时这部分会丢**
-  （分支本身是存盘的，不会坏档）。
-- 施法中把促动石拆掉：上游 `onRemove` 里的 `endExecution()` 会因为 `executionState == null`
-  直接返回，分支不会被清，那些格子会一直亮着。
+### 5.6 已知取舍
 
-**数据语义（咩咩拍板）**：栈按**到达顺序**从下往上摞（先到的先入栈，后到的压在上面）；
-**渡鸦之思后到的覆盖先到的**，也就是最终取最后一个到达的那份。渡鸦之思存在
-`image.userData` 的 `hexcasting:ravenmind` 键下（`HexAPI.RAVENMIND_USERDATA`，
-读写见 `OpPushLocal` / `OpPeekLocal`），所以合并时直接换 `userData` 即可。
+- **分支比主波快一拍**：fork 发生在主波 `tick` 里，分支当拍就被推进一格，主波等下次调度。相位差恒定 1 tick、不累积。
+- `getTickSpeed()` 吃共享的 `reachedSlate`，并行分支多时整环会一起变慢。
+- **登记表里攒的是已经 `Stop()` 掉的波，没有活波可以存盘** → 施法中途存档，这部分会丢（分支本身存盘，不会坏档）。
+- 施法中拆促动石：上游 `onRemove` 里的 `endExecution()` 因 `executionState == null` 直接返回，分支不会被清，那些格子会一直亮着。
+- 不做超时兜底：没有促动石的闭环支路在接入前就已经是坏环（上游同样永远转），加超时只会误伤正常长环。
 
-### 6.3 `_p`（可编程分流器）—— 已落地
+---
 
-`_p` = 普通分流器 + 「跑一条写在方块里的图案」。端口三档的贴图命名和普通件**不一样**：
+## 6. `multi_directrix_p`（可编程分流器）
+
+`_p` = 普通分流器 + 「跑一条写在方块里的图案」。**贴图命名和普通件不一样**：
 
 | 档位 | 贴图 | 渲染 |
 |---|---|---|
-| 输入（「原本」那张，非默认档） | `multi_directrix_p` | 骨架本体，**不贴附加层** |
+| 输入 | `multi_directrix_p` | 骨架本体，不贴附加层 |
 | 输出 | `multi_directrix_p_1`（**纯灰阶**） | 本体 + 面片附加层，`tintindex 0` 染色 |
 | 关闭 | `multi_directrix_p_2`（自带暗紫） | 本体 + 面片附加层，不染色 |
 
-放置默认仍是六面 `none`（关闭）—— 和普通件一致，「这个块有几个输入面」才数得出来（合并靠它）。
+放置默认仍是六面 `none`（关闭）—— 与普通件一致，这样「有几个输入面」才数得出来。
 
-#### 「附加层」怎么落地（咩咩选的 2.b 的可行解）
+### 6.1 「附加层」怎么落地
+
 骨架的 8 个角块每个都同时贴着三个面，**一整块几何没法表达「北面输入、东面输出」**。
-所以附加层落成**每个面一片 16×16 的附加面片**：`multi_directrix_p_face_out` / `_face_none`，
-由 multipart 按面状态挂到对应朝向，`y`/`x` + `uvlock` 复用同一张模型
-（旋转表和本体那套完全一致：east=y90 south=y180 west=y270 up=x270 down=x90）。
-面片贴在 `z = 0.01`（略内缩）—— 平齐会与角块的 `z = 0` 面 z-fighting。
+所以附加层落成**每个面一片 16×16 附加面片**：`multi_directrix_p_face_out` / `_face_none`，
+由 multipart 按面状态挂到对应朝向，`y`/`x` + `uvlock` 复用同一张模型（旋转表与本体一致）。
+面片贴 `z = 0.01`（略内缩）—— 平齐会与角块的 `z = 0` 面 z-fighting。
 
-#### 图案怎么存 / 怎么写
-- `MultiDirectrixPBlockEntity` 继承上游 `HexBlockEntity`（存盘 + `getUpdateTag` 同步白送），
-  存 `pattern: HexPattern?` + `tint: Int`。
-- 实现 `ADIotaHolder`，**只收 `PatternIota`**（写数字/列表没东西可执行，返回 `false`）。
+### 6.2 图案怎么存 / 怎么写
+
+- `MultiDirectrixPBlockEntity` 继承上游 `HexBlockEntity`（存盘 + `getUpdateTag` 同步白送），存 `pattern: HexPattern?` 与 `tint: Int`。
+- 实现 `ADIotaHolder`，**只收 `PatternIota`**（写数字/列表没东西可执行，`writeIota` 返回 `false`）。
 - 写入口交给 **IoticBlocks**：`Abadoned_greatworkIotaHolders.init()` 里
-  `IoticBlocksAPI.INSTANCE.registerIotaHolderProvider(id("multi_directrix_p"), ...)`。
-  它的包名 `gay.object.ioticblocks.api` 里 `object` 是 Kotlin 关键字，所以这段写成 **Java**。
+  `IoticBlocksAPI.INSTANCE.registerIotaHolderProvider(id("multi_directrix_p"), ...)`，provider 直接返回本方块实体。
+  那段注册写成 **Java**，因为包名 `gay.object.ioticblocks.api` 里的 `object` 是 Kotlin 关键字。
+- 方块要 `EntityBlock` + `getRenderShape() = MODEL`（`Block` 不声明 `newBlockEntity`；`EntityBlock` 默认 `INVISIBLE`）。
 
-#### 染色
-按**栈顶 iota 的类型**，直接借 Hex 自己的类型配色表 `IotaType.color()`
-（就是施法 GUI 堆栈列表上那些颜色），不另造映射。服务端在 `setTint()` 里落进方块实体并 `sync()`；
-客户端用 Architectury 的 `ColorHandlerRegistry.registerBlockColors` 读它，乘到 `_p_1` 上。
-空栈给白色 = 灰阶贴图原样。
+### 6.3 染色
 
-#### 时序（`MultiDirectrixPBlock.acceptControlFlow`）
-1. **过滤出口**：只留「下一格当拍真肯接」的。
-2. **合并**（输入面 ≥ 2 且拿得到促动石）：每条到达的波 `Stop()` 自己、镜像留在 `MergeBuffer`；
-   凑够「输入面个数」后按到达顺序各压**一个**列表：
+按**栈顶 iota 的类型**，直接借 Hex 自己的类型配色表 `IotaType.color()`（就是施法 GUI 堆栈列表上那些颜色），不另造映射。
+服务端在 `setTint()` 里落进方块实体并只在变化时 `sync()`；客户端用 Architectury 的
+`ColorHandlerRegistry.registerBlockColors` 读它，乘到 `_p_1` 上。空栈给白色（= 灰阶原样）。
 
-   `[ ListIota(那一支原本的整个栈), 渡鸦之思 或 null, 来自方向 ]`
+### 6.4 时序（`acceptControlFlow`）
 
-   三者都在同一个列表里，所以 N 条进来 = 出栈 N 个列表。然后**跑一次**图案。
-3. **分流**（每个出口各一遍）：记录镜像 → 压出口方向 → 跑图案 → 这就是该出口的分支镜像 →
-   调回记录的镜像 → 下一个出口。第一个出口交回引擎（主波），其余做成 `ForkedExecutionState` 分支波。
+1. **过滤出口**（同上）。0 个 → 交给引擎报无路可走。
+2. **合并**（`host != null` 且 `in` 面 ≥ 2）：所有到达都登记在 `viable.first()` 那把钥匙下；
+   不够数就 `Stop()`；凑够后**每条到达压一个列表**
+
+   `[ ListIota(那一支原本的整个栈), 渡鸦之思 或 null, Vec3Iota(来自方向) ]`
+
+   N 条进来 = 出栈 N 个列表，然后**跑一次**图案。图案失败 → `Stop()`。
+   没写图案时退回 `CircleImageMerge.merge`（普通件语义）。
+3. **分流**（每个出口各一遍）：压出口方向 → 跑图案 → 这条就是该出口的分支镜像。
+   第一个出口交回引擎当主波，其余 `ForkedExecutionState` 分支波。**没写图案时不压方向**（免得把普通环的栈弄脏）。
 4. **多进 + 多出** = 先合并跑一次，再对每个出口各跑一次。
 5. 图案执行失败（莫邪 / 停机）→ 那条路断掉；一条不剩就 `Stop()`。
-6. **没写图案**时退化成普通 `multi_directrix`（合并走 `CircleImageMerge`，且**不压方向**，
-   免得把普通环的栈弄脏）。
+6. 染色跟着**主出口**那条波的栈顶走。
 
-执行写法照抄 `BlockSlate.acceptControlFlow`：
+图案执行照抄 `BlockSlate.acceptControlFlow`：
 
 ```java
 var vm = new CastingVM(image, env);
@@ -445,174 +339,140 @@ if (!result.getResolutionType().getSuccess()) return null;   // 断这条
 return vm.getImage().withOverriddenUsedOps(0);               // 算子计数归零
 ```
 
-
 ---
 
-## 7. 踩过的坑（按痛苦程度排）
+## 7. 踩过的坑
 
-1. **IDE 缓冲区覆盖源码**：这个会话里 `PlugSlateBlock.kt` 被 IntelliJ 的旧缓冲区冲掉过两次
-   （表现：磁盘上的代码突然退回旧版本，或出现你以为已经删掉的函数）。
+1. **IDE 缓冲区覆盖源码**：这个项目里 `PlugSlateBlock.kt` 被 IntelliJ 旧缓冲区冲掉过两次（磁盘上的代码突然退回旧版）。
    改磁盘前先在 IDE 里 **File → Reload from Disk**，改完核对 mtime。
-2. **stale class**：文件写对了但 `build/classes` 还是旧的（`getShape` 曾因此"消失"，
-   碰撞箱因此变成整格方块）。改完必须看 `.class` 时间戳，或 `javap -p` 看方法在不在。
-3. **`possibleExitDirections` 写成空函数体 + `TODO()`** 会导致编译失败 / 运行期崩，别留空。
-4. **`createBlockStateDefinition` 忘了 `super`** → 首次点亮炸 `setValue` 未注册属性。
-5. **模型与形状表脱钩**：改了模型厚度但没改 8 个 `VoxelShape` → 看得见却撞不到 / 撞到看不见。
-6. **`facing` 的 y 旋转映射**记住基模型是"西墙"：north=90、east=180、south=270。
-7. **`RenderType` 加多了**：`plug_slate` 不需要 cutout；`multi_directrix_p` 才需要。
-8. **上游 `ICircleComponent.sfx` 不判空**：走通出口时它读
-   `impetus.getExecutionState().reachedSlate` 算音高（`ICircleComponent.java:138`），
-   而「主波已经结束、分支还在飞」正是 `executionState == null` 的时刻 ——
-   分支一走通出口就 `NullPointerException: Cannot read field "reachedSlate" because "state" is null`
-   崩服。`ImpetusBranchMixin` 的解法是在推进分支期间把**某条分支临时挂成促动石的
-   `executionState`**，跑完立刻摘掉（`try/finally`）。注意 `CircleCastEnv` 是在
-   `CircleExecutionState.tick` 里用 `this` 新建的，所以 `env.circleState()` 拿到的仍是
-   真正在跑的那条波，这个「临时替身」只骗 `sfx` / `getPigment`，不影响分流数据。
+2. **stale class**：文件写对了但 `build/classes` 还是旧的（`getShape` 曾因此"消失"，碰撞箱变成整格）。
+   改完看 `.class` 时间戳，或 `javap -p` 看方法在不在。
+3. **`createBlockStateDefinition` 忘了 `super`** → 首次点亮炸 `setValue` 未注册属性。
+4. **模型与形状表脱钩**：改了模型厚度没改 `VoxelShape` → 看得见撞不到 / 撞到看不见。
+5. **`RenderType` 加多了**：只有 `_p` 需要 cutout。
+6. **版本目录别名冲突**：`buildSrc` 里的 Java 版本别名**不能叫** `java-build` / `javaBuild`，
+   会和 `java` 形成前缀冲突，`libs.versions.java.get()` 当场变成 receiver type mismatch，一口气带崩 buildSrc。现在叫 `jdk = "21"`。
+7. **`Block` 不声明 `newBlockEntity`**：加方块实体必须 `EntityBlock` 且把 `getRenderShape` 改回 `MODEL`。
+8. **上游 `ICircleComponent.sfx` 不判空**：走通出口时它读 `impetus.getExecutionState().reachedSlate` 算音高
+   （`ICircleComponent.java:138`），而「主波已经结束、分支还在飞」正是 `executionState == null` 的时刻 ——
+   分支一走通出口就 `NullPointerException: Cannot read field "reachedSlate" because "state" is null` 崩服。
+   解法：推进分支期间把**某条分支临时挂成促动石的 `executionState`**，跑完 `try/finally` 立刻摘掉。
+   这个替身只骗 `sfx` / `getPigment`：`CircleCastEnv` 是在 `CircleExecutionState.tick` 里用 `this` 新建的，
+   所以 `env.circleState()` 拿到的仍是真正在跑的那条波，分流/合并数据不受污染。
+9. **Hex 0.11.4 的硬前置 `inline >= 1.20.1-1.2.2`**：项目里曾钉在 `1.20.1-1.0.1`，fabric 端直接
+   `Incompatible mods found / HARD_DEP_NO_CANDIDATE`。同族的还有 `paucal [0.6.0,0.7.0)`、
+   `patchouli >= 1.20.1-80`、`cardinal-components ~5.2.1`（fabric）、`caelus >= 3.1.0+1.20`（forge）。
+10. **IoticBlocks 不能走 Modrinth maven**：同一版本号只发一个文件，`maven.modrinth:ioticblocks:1.0.2+1.20.1`
+    拿到的是 forge 那个 jar，fabric 那边 404。所以按本仓库既有 `libs:` flatDir 约定放两个 jar。
+11. **`getExecutionState()` 会复活死波**：它在 `lazyExecutionState != null` 时懒加载，
+    而 `lazyExecutionState` 在波结束后**不会被清空**。所以「施法中途保存 → 重进世界 → 施法结束」之后
+    理论上还能把已经结束的波再拉起来。正常新世界不触发（该字段只在读档时出现），暂未处理。
 
 ---
 
 ## 8. 验证配方
 
 ```powershell
-# 1) 编译 + 产物里方法是否真的存在
-#    Gradle 必须跑在 JDK 21 上（Loom 1.11 的依赖要求 21）；产物仍是 Java 17
+# 1) 编译（日常够用）
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-21.0.10"
-.\gradlew.bat :common:classes --console=plain
-& "C:\Program Files\Java\jdk-17\bin\javap.exe" -p -classpath common\build\classes\kotlin\main `
-    cn.xm1221.abadoned_greatwork.block.PlugSlateBlock
+.\gradlew.bat :common:classes :fabric:classes :forge:classes --console=plain
 ```
 
 ```powershell
-# 2) 资产自检（变体数 / 模型元素 UV 尺寸是否等于面尺寸 / 贴图与战利品表是否存在）
-#    以前用 python 脚本做，核心检查：
-#    - blockstates/plug_slate.json 必须有 16 个 variants，且 pointing 到 models/block/plug_slate.json
-#    - 每个 element 的每个面 uv 宽度/高度 == 该面的实际尺寸（1px 板的面是 1×16 或 16×16）
-#    - textures/block/plug_slate.png 存在；loot_tables/blocks/plug_slate.json 存在
+# 2) 核对 dev 运行时的模组版本（Hex 升级后必做，比进游戏试错快得多）
+.\gradlew.bat :fabric:dependencyInsight --dependency inline --configuration modRuntimeClasspath --console=plain
+.\gradlew.bat :fabric:dependencies --configuration modRuntimeClasspath --console=plain | Select-String "hexcasting|ioticblocks|paucal|patchouli|inline"
 ```
 
 ```powershell
-# 3) 运行时读真实形状表（不启动游戏）
-#    - 用 --init-script 给 :fabric 加一个 dumpRuntimeCp 任务，打印 runtimeClasspath
-#    - java -cp "common\build\classes\kotlin\main;<cp>" 自己的 ShapeCheck.java
-#    - ShapeCheck 里必须先 SharedConstants.tryDetectVersion() 再 Bootstrap.bootStrap()，
-#      否则一碰 MC 类就炸
-#    - classpath 很长，用 java @argfile，且**不要**对它做 -replace '\\','/' 之类的变换
-#    期望输出：8 个状态的厚度都是 0.0625（1px）
+# 3) 资产自检
+#    texcheck.py 只覆盖普通分流器的 6 张图（multi_directrix_{0,1,2}[_energized]），
+#    打印尺寸/alpha 通道、两两像素差、_X 与 _X_energized 的轮廓是否一致，以及 ASCII 预览
+python doc\texcheck.py common\src\main\resources\assets\abadoned_greatwork\textures\block
+# 手工核：blockstates 条目数 16 / 36 / 13；每个 element 的 uv 尺寸 == 该面实际尺寸
 ```
+
+**进游戏手测清单**（不需要看截图，看日志和游戏内现象即可）：
+
+| # | 搭法 | 期望 |
+|---|---|---|
+| 1 | 促动石 + 两个 `plug_slate` 转角 + 一块石板 | 波正常转弯，无 `many_exits` |
+| 2 | 分流：`in`=北、`out`=东+西，两路各接石板 | **两条波同时前进**（不是一条），无 `many_exits`，日志无 NPE |
+| 3 | 拆分流的中途把分流器拆了 | 已经分出去的波照常跑完 |
+| 4 | 合并：`in`=东+西、`out`=南 | 先到的那条停住（格子**保持点亮**），到齐后从南出去一条，石板收到的栈按到达顺序排列 |
+| 5 | 合并只接一条来路 | 支路死了之后靠栅栏放行，不会永远卡住 |
+| 6 | `_p` 写入一条图案后分流 | 每个出口栈里多一个方向矢量，染色跟着栈顶 iota 的类型变 |
+| 7 | `_p` 写入 `[栈, 渡鸦之思, 方向]` 的合并 | 出栈 N 个列表，图案跑**一次** |
+| 8 | 施法中途存档、退出、重进 | 不应崩；分支应能续跑（登记表会丢，见 §5.6） |
 
 ---
 
-## 9. 文件清单
+## 9. 未完成 / 待定
+
+| # | 事项 | 状态 |
+|---|---|---|
+| 1 | **跑通一次完整施法** | 修复 sfx 空指针后还没试过，优先级最高 |
+| 2 | `_p` 没有 `_energized` 贴图 | 激活态在视觉上没变化（`energized` 属性还在，比较器照常可用） |
+| 3 | `_p` 不能「把图案写在物品上，放下去就带着」 | 石板那种 `BlockEntityTag` 携带没做；目前只能放下来再用 iota 写 |
+| 4 | `_p` 硬依赖 IoticBlocks | 没装就没有写入口，方块等于摆设。要不要「装了才注册」待定 |
+| 5 | 合并登记表不存盘 | 施法中途存档会丢（见 §5.6） |
+| 6 | 施法中拆促动石 → 格子常亮 | 上游 `onRemove` 在 `executionState == null` 时直接返回 |
+| 7 | `lazyExecutionState` 会复活死波 | 见 §7-11，未处理 |
+| 8 | `multi_directrix_energized.json` 是孤立模型 | 没有任何 blockstate 引用它，可删 |
+| 9 | `plug_slate` 的 `energized=true/false` 指向同一模型 | 点亮时没有视觉反馈；要不要补一张发光图待定 |
+| 10 | 潜行右键用的是 `AMETHYST_BLOCK_CHIME` | 方块本身是 DEEPSLATE 音效，这一下算不算违和待定 |
+| 11 | `strength(3.0, 6.0)` | 上游 `slateish()` 是 `(4, 4)`，要不要对齐待定 |
+
+---
+
+## 10. 文件清单
 
 ```
 common/src/main/kotlin/cn/xm1221/abadoned_greatwork/
-├── Abadoned_greatworkClient.kt                 # multi_directrix_p 的 cutout 层 + 附加层染色
+├── Abadoned_greatworkClient.kt                  # _p 的 cutout 层 + 附加层染色注册
 ├── block/
-│   ├── PlugSlateBlock.kt                       # 本文主体，含环件逻辑
-│   ├── MultiDirectrixBlock.kt                  # 普通分流/合并件（+ PortMode 枚举、PORTS 表）
-│   └── MultiDirectrixPBlock.kt                 # 可编程分流器（六面端口 + 跑图案 + 合并/分流）
+│   ├── PlugSlateBlock.kt                        # 转角件（L 形薄板）
+│   ├── MultiDirectrixBlock.kt                   # 分流/合并件 + PortMode + PORTS 表
+│   └── MultiDirectrixPBlock.kt                  # 可编程分流器（合并 → 跑图案 → 分流）
 ├── block/entity/
-│   └── MultiDirectrixPBlockEntity.kt           # 存 HexPattern + 染色，实现 ADIotaHolder
+│   └── MultiDirectrixPBlockEntity.kt            # 存 HexPattern + 染色，实现 ADIotaHolder
 ├── casting/circles/
-│   ├── ForkedExecutionState.kt                 # 分支波子类（只为暴露 protected 构造器）+ forkImage()
-│   ├── MergeBuffer.kt                          # 合并点到达登记表 + 栅栏兜底放行
-│   ├── CircleImageMerge.kt                     # 合并镜像（栈按到达顺序摞，渡鸦之思取最后一个到达的）
-│   └── ImpetusBranchHost.java                  # 促动石「分支表」鸭子接口
+│   ├── ForkedExecutionState.kt                  # 分支波子类（只为暴露 protected 构造器）+ forkImage()
+│   ├── MergeBuffer.kt                           # 合并点到达登记表 + 栅栏兜底放行
+│   ├── CircleImageMerge.kt                      # 合并镜像（栈按到达顺序摞，渡鸦之思取最后一个）
+│   └── ImpetusBranchHost.java                   # 促动石「分支表」鸭子接口
 └── registry/
-    ├── Abadoned_greatworkBlocks.kt             # 方块注册
-    ├── Abadoned_greatworkItems.kt              # BlockItem
-    └── Abadoned_greatworkCreativeTabs.kt       # 创造栏
+    ├── Abadoned_greatworkBlocks.kt              # 方块注册
+    ├── Abadoned_greatworkBlockEntities.kt       # 方块实体注册
+    ├── Abadoned_greatworkItems.kt               # BlockItem
+    └── Abadoned_greatworkCreativeTabs.kt        # 创造栏
 
 common/src/main/java/cn/xm1221/abadoned_greatwork/
-├── registry/Abadoned_greatworkIotaHolders.java  # IoticBlocks 写入口注册（包名里有 Kotlin 关键字，故用 Java）
+├── registry/Abadoned_greatworkIotaHolders.java   # IoticBlocks 写入口注册（Java，包名里有 Kotlin 关键字）
 └── mixin/
-├── ImpetusBranchMixin.java                     # 往促动石织入分支表（4 条注入，全部 remap = false）
-├── PatternIotaMixin.java                       # 已有：测试环境禁 SpellAction
-├── MixinDatagenMain.java                       # 已有：仅 datagen 时启用
-└── Abadoned_greatworkMixinConfigPlugin.java    # 已有：按系统属性开关 MixinDatagenMain
+    ├── ImpetusBranchMixin.java                   # 促动石分支表（4 条注入，全部 remap = false）
+    ├── PatternIotaMixin.java                     # 既有：测试环境禁 SpellAction
+    ├── MixinDatagenMain.java                     # 既有：仅 datagen 时启用
+    └── Abadoned_greatworkMixinConfigPlugin.java   # 既有：按系统属性开关 MixinDatagenMain
 
 common/src/main/resources/assets/abadoned_greatwork/
-├── blockstates/{plug_slate,multi_directrix,multi_directrix_p}.json   # multi_directrix 是 multipart，24 条；
-│                                                                     # _p 是本体 + 6 面 × (out/none) 附加面片，共 13 条
-├── models/block/{plug_slate,multi_directrix,multi_directrix_p}.json
-├── models/block/multi_directrix_p_face_{out,none}.json   # 16×16 附加面片（out 带 tintindex 0，none 不染色）
-├── models/block/multi_directrix_face_{none,in,out,in_energized,out_energized,none_energized}.json   # 6 张朝北面片
+├── blockstates/plug_slate.json                   # 16 变体（facing × half × energized）
+├── blockstates/multi_directrix.json              # 36 条 multipart（6 面 × 3 档 × 2 激活）
+├── blockstates/multi_directrix_p.json            # 13 条 multipart（本体 + 6 面 × out/none）
+├── models/block/plug_slate.json                  # L 形，1px
+├── models/block/multi_directrix.json
+├── models/block/multi_directrix_face_{none,in,out}{,_energized}.json   # 6 张朝北面片
+├── models/block/multi_directrix_p.json           # 8 角块 + 核心
+├── models/block/multi_directrix_p_face_{out,none}.json                 # 16×16 附加面片
+├── models/block/multi_directrix_energized.json   # ⚠ 孤立，无人引用
 ├── models/item/{plug_slate,multi_directrix,multi_directrix_p}.json
-├── textures/block/{plug_slate,multi_directrix_p}.png
-├── textures/block/multi_directrix_{0,0_energized,1,1_energized,2,2_energized}.png
-│                                    # 0=未连接 1=输出 2=输入，各自带 _energized 纯换色版
+├── textures/block/plug_slate.png
+├── textures/block/multi_directrix_{0,0_energized,1,1_energized,2,2_energized}.png   # 0=关闭 1=输出 2=输入
+├── textures/block/{multi_directrix_p,multi_directrix_p_1,multi_directrix_p_2}.png   # 输入 / 输出(灰阶) / 关闭
 └── lang/{zh_cn,en_us}.json
 
-doc/texcheck.py                     # 无依赖 PNG 解码：查不透明性 / 像素差 / 激活态轮廓是否一致
-
-common/src/main/resources/abadoned_greatwork-common.mixins.json   # mixins 里要有 ImpetusBranchMixin
-
-common/src/main/resources/data/abadoned_greatwork/loot_tables/blocks/
-└── {plug_slate,multi_directrix,multi_directrix_p}.json
+common/src/main/resources/abadoned_greatwork-common.mixins.json    # mixins 里要有 ImpetusBranchMixin
+common/src/main/resources/data/abadoned_greatwork/loot_tables/blocks/{plug_slate,multi_directrix,multi_directrix_p}.json
+doc/texcheck.py                                                     # 无依赖 PNG 自检
+libs/IoticBlocks-{fabric,forge}-1.20.1-1.0.2.jar                    # IoticBlocks 本地 jar（不进 Modrinth maven）
 ```
-
----
-
-## 10. 构建环境（Hex 0.11.4 那一轮升级）
-
-为了吃下 Hex Casting 0.11.4（它是 Kotlin 2.2.21 编的），整条工具链一起抬了：
-
-| 项 | 之前 | 现在 | 为什么 |
-|---|---|---|---|
-| Hex Casting | 0.11.3 | **0.11.4** | 目标版本 |
-| Kotlin | 1.9.22 | **2.2.21** | 0.11.4 的元数据是 2.2.0，1.9 的编译器读不进去 |
-| Architectury Loom | `[1.7, 1.8[`（1.7.435） | **1.11.454** | Loom 1.7 自带的 `kotlinx-metadata-jvm` 最高只认 2.0.0，重映射 Kotlin 2.2 的模组直接报 `cannot write metadata for future compiler versions` |
-| Gradle | 8.10 | **8.14** | Loom 1.11 的要求 |
-| shadow | 7.1.2 | **8.1.1** | 跟 Gradle 8.14 搭配 |
-| fabric-loader | 0.14.25 | **0.19.2** | 跟 FLK 1.13.7 搭配（照抄上游 HexMod） |
-| fabric-api | 0.87.0+1.20.1 | **0.92.8+1.20.1** | 同上 |
-| fabric-language-kotlin | 1.10.18+kotlin.1.9.22 | **1.13.7+kotlin.2.2.21** | 运行时 stdlib 必须和编译器同版 |
-| KotlinForForge | 4.10.0 | **4.12.0** | 同上 |
-
-### 三条会咬人的
-
-1. **Gradle 必须跑在 JDK 21 上。**
-   `$env:JAVA_HOME = "C:\Program Files\Java\jdk-21.0.10"`。
-   不然 buildSrc 解析 Loom 1.11 的依赖时直接
-   `unpick:3.0.0-beta.9 ... requires at least JVM runtime version 21` 收工。
-   mod 产物仍是 Java 17（catalog 的 `java = "17"`），`buildSrc` 里单独用 `jdk = "21"`。
-   **两个别名不能叫 `java-build` / `javaBuild`** —— 版本目录里它俩会和 `java` 形成前缀冲突，
-   `libs.versions.java.get()` 当场变成「receiver type mismatch」，一口气带崩 buildSrc。
-
-2. **Hex 0.11.4 改了 `CircleExecutionState` 的 protected 构造器**（我们的分流全靠它）：
-   - `knownPositions`（环上所有格）**没了**，并进了 `reachedPositions`
-   - `reachedPositions` 从 `List<BlockPos>` 变成 `HashSet<BlockPos>`
-   - 新增 `reachedSlate: Long`，`getTickSpeed()` 改成按它算（`max(2, (10 - (reachedSlate-1)/3))`），
-     所以 `ImpetusBranchMixin.abw$tickSpeed` 也跟着改了
-   - 新增 `greaterCorner` / `lesserCorner`，构造器要显式传给 `final AABB bounds`
-
-3. **IoticBlocks 走本地 jar，不走 Modrinth maven。**
-   Modrinth 对同一版本号只发一个文件，实测 `maven.modrinth:ioticblocks:1.0.2+1.20.1` 拿到的是
-   **forge** 那个 jar，fabric 那边就是 404。所以按本仓库既有的 `libs:` flatDir 约定：
-   `libs/IoticBlocks-fabric-1.20.1-1.0.2.jar`、`libs/IoticBlocks-forge-1.20.1-1.0.2.jar`。
-
-### IoticBlocks 的 API（`_p` 要用）
-
-包名 `gay.object.ioticblocks.api`：
-
-```java
-public interface IoticBlocksAPI {
-    IoticBlocksAPI INSTANCE;
-    ADIotaHolder findIotaHolder(ServerLevel level, BlockPos pos);
-    boolean registerIotaHolderProvider(ResourceLocation blockId, IotaHolderProvider provider);
-}
-
-public interface IotaHolderProvider {
-    ADIotaHolder getIotaHolder(ServerLevel level, BlockPos pos);
-}
-
-public interface ADIotaHolderReadOnly extends ADIotaHolder { // 只读目标用这个，写操作自动返回 false
-    default boolean writeIota(Iota, boolean simulate);
-    default boolean writeable();
-    static ADIotaHolder ofStatic(Iota);
-}
-```
-
-也就是：给方块 id 登记一个 provider，返回自己的 `ADIotaHolder` 即可，
-玩家就能用它的读写图案往方块里写 iota 了 —— 不用自己搓存 iota 的那套 NBT/同步。
-
