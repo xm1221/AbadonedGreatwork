@@ -43,17 +43,14 @@ object Abadoned_greatwork {
         )
         Abadoned_greatworkNetworking.init()
         Abadoned_greatworkLootInjector.register()
-<<<<<<< Updated upstream
         dev.architectury.registry.ReloadListenerRegistry.register(
             net.minecraft.server.packs.PackType.SERVER_DATA,
             net.minecraft.server.packs.resources.ResourceManagerReloadListener { rm ->
                 cn.xm1221.abadoned_greatwork.block.Abadoned_greatworkRiddleLoader.reload(rm)
             }
         )
-=======
         // 需要「玩家能往方块里写 iota」的方块（可编程分流器）走 IoticBlocks 的入口
         Abadoned_greatworkIotaHolders.init()
->>>>>>> Stashed changes
     }
 
     fun initServer() {
