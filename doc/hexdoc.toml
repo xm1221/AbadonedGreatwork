@@ -15,6 +15,15 @@ resource_dirs = [  # top takes priority
 ]
 export_dir = "src/hexdoc_abadoned_greatwork/_export/generated"
 
+# Brainsweep recipes with `"type": "entity_type"` resolve an entity texture through
+# hexdoc-hexcasting, but the bundled Minecraft assets only ship villager sprites and
+# `allay.png` - there is no evoker.png to find, so the build failed with
+#   ValueError: No PNGTexture for minecraft:textures/entities/evoker.png
+# The book never renders a mob portrait for our recipes anyway, so fall back to the
+# standard missing-texture placeholder instead of failing the whole deployment.
+[textures]
+missing = ["minecraft:textures/entities/*"]
+
 [template]
 icon = "{$_common.src}/main/resources/assets/abadoned_greatwork/icon.png"
 include = [
