@@ -1,0 +1,7 @@
+{
+	"parent": "abadoned_greatwork:block/wave_receiver",
+	"textures": {
+		"0": "abadoned_greatwork:block/wave_receiver_energized",
+		"particle": "abadoned_greatwork:block/wave_receiver_energized"
+	}
+}

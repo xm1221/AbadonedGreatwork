@@ -57,6 +57,18 @@ object Abadoned_greatworkItems : Abadoned_greatworkRegistrar<Item>(
     /** 插接石板的 BlockItem */
     val PLUG_SLATE = registerBlockItem(Abadoned_greatworkBlocks.PLUG_SLATE)
 
+    /** 队长发信石的 BlockItem */
+    val WAVE_TRANSMITTER = registerBlockItem(Abadoned_greatworkBlocks.WAVE_TRANSMITTER)
+
+    /** 谐振收信石的 BlockItem */
+    val WAVE_RECEIVER = registerBlockItem(Abadoned_greatworkBlocks.WAVE_RECEIVER)
+
+    /** 号角中继器的 BlockItem */
+    val WAVE_REPEATER = registerBlockItem(Abadoned_greatworkBlocks.WAVE_REPEATER)
+
+    /** 媒质池的 BlockItem */
+    val MEDIA_POOL = registerBlockItem(Abadoned_greatworkBlocks.MEDIA_POOL)
+
     /** 真理水晶（变体 0） */
     val TRUTH_CRYSTAL_0 = registerItem("item_truth_crystal_0", ItemTruthCrystal::create0)
 

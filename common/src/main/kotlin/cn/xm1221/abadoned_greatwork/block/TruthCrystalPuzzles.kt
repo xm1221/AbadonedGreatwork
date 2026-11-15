@@ -24,18 +24,24 @@ object TruthCrystalPuzzles {
     val ALL: List<ItemStack>
         get() {
             cachedStacks?.let { return it }
-            val list = Abadoned_greatworkRiddleLoader.riddles.flatMap { riddle ->
-                when (riddle.variant) {
-                    0 -> listOf(createStack(riddle, 0))
-                    1 -> listOf(createStack(riddle, 1))
-                    2 -> listOf(createStack(riddle, 2))
-                    else -> listOf(
-                        createStack(riddle, 0),
-                        createStack(riddle, 1),
-                        createStack(riddle, 2),
-                    )
+            val raw = Abadoned_greatworkRiddleLoader.riddles.flatMap { riddle ->
+                val variants = when (riddle.variant) {
+                    0 -> listOf(0)
+                    1 -> listOf(1)
+                    2 -> listOf(2)
+                    else -> listOf(0, 1, 2)
                 }
-            }.distinctBy { "${it.item}${it.tag}" }
+                variants.mapNotNull { v ->
+                    if (riddle.isRawNbt && riddle.nbtTag() == null) null else createStack(riddle, v)
+                }
+            }
+            val list = ArrayList<ItemStack>(raw.size)
+            for (candidate in raw) {
+                if (!candidate.hasTag()) continue
+                if (list.none { ItemStack.isSameItemSameTags(it, candidate) }) {
+                    list.add(candidate)
+                }
+            }
             cachedStacks = list
             return list
         }

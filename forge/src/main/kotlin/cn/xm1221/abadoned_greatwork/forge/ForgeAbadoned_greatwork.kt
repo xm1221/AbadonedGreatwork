@@ -3,7 +3,9 @@ package cn.xm1221.abadoned_greatwork.forge
 import dev.architectury.platform.forge.EventBuses
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.WaveTransmitterBlockEntity
 import cn.xm1221.abadoned_greatwork.client.renderer.TruthCrystalBlockEntityRenderer
+import cn.xm1221.abadoned_greatwork.client.renderer.WaveTransmitterBlockEntityRenderer
 import cn.xm1221.abadoned_greatwork.forge.datagen.ForgeAbadoned_greatworkDatagen
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes
@@ -35,6 +37,14 @@ class ForgeAbadoned_greatwork {
             e.registerBlockEntityRenderer(
                 Abadoned_greatworkBlockEntities.TRUTH_CRYSTAL.value as BlockEntityType<TruthCrystalBlockEntity>
             ) { ctx -> TruthCrystalBlockEntityRenderer(ctx) }
+            @Suppress("UNCHECKED_CAST")
+            e.registerBlockEntityRenderer(
+                Abadoned_greatworkBlockEntities.WAVE_TRANSMITTER.value as BlockEntityType<WaveTransmitterBlockEntity>
+            ) { ctx -> WaveTransmitterBlockEntityRenderer(ctx) }
+            @Suppress("UNCHECKED_CAST")
+            e.registerBlockEntityRenderer(
+                Abadoned_greatworkBlockEntities.MEDIA_POOL.value as BlockEntityType<cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity>
+            ) { ctx -> cn.xm1221.abadoned_greatwork.client.renderer.MediaPoolBlockEntityRenderer(ctx) }
         }
         Abadoned_greatwork.init()
     }

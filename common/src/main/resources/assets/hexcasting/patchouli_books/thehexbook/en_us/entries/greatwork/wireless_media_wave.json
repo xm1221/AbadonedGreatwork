@@ -1,0 +1,45 @@
+{
+  "name": "hexcasting.entry.wireless_media_wave",
+  "category": "hexcasting:greatwork",
+  "icon": "abadoned_greatwork:wave_transmitter",
+  "advancement": "hexcasting:enlightenment",
+  "entry_color": "54398a",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.wireless_media_wave.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.wireless_media_wave.2"
+    },
+    {
+      "type": "hexcasting:brainsweep",
+      "recipe": "abadoned_greatwork:brainsweep/wave_transmitter",
+      "text": "hexcasting.page.wireless_media_wave.transmitter_recipe"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.wireless_media_wave.transmitter_use"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "abadoned_greatwork:wave_repeater",
+      "text": "hexcasting.page.wireless_media_wave.repeater_recipe"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.wireless_media_wave.repeater_use"
+    },
+    {
+      "type": "hexcasting:brainsweep",
+      "recipe": "abadoned_greatwork:brainsweep/wave_receiver",
+      "text": "hexcasting.page.wireless_media_wave.receiver_recipe"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.wireless_media_wave.receiver_use"
+    }
+  ]
+}

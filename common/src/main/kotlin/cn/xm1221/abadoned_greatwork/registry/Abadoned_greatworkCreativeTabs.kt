@@ -55,6 +55,10 @@ object Abadoned_greatworkCreativeTabs : Abadoned_greatworkRegistrar<CreativeMode
         output.accept(Abadoned_greatworkBlocks.MULTI_DIRECTRIX.value)
         output.accept(Abadoned_greatworkBlocks.MULTI_DIRECTRIX_P.value)
         output.accept(Abadoned_greatworkBlocks.PLUG_SLATE.value)
+        output.accept(Abadoned_greatworkBlocks.WAVE_TRANSMITTER.value)
+        output.accept(Abadoned_greatworkBlocks.WAVE_RECEIVER.value)
+        output.accept(Abadoned_greatworkBlocks.WAVE_REPEATER.value)
+        output.accept(Abadoned_greatworkBlocks.MEDIA_POOL.value)
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_0.value)
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_1.value)
         output.accept(Abadoned_greatworkItems.TRUTH_CRYSTAL_2.value)
@@ -63,7 +67,7 @@ object Abadoned_greatworkCreativeTabs : Abadoned_greatworkRegistrar<CreativeMode
         output.accept(Abadoned_greatworkItems.EYE_OF_WAYPOINT.value)
         // 预定义谜题（每谜题 × 3 变体）
         for (stack in TruthCrystalPuzzles.ALL) {
-            output.accept(stack)
+            output.accept(stack.copy())
         }
     }
 

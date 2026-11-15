@@ -57,7 +57,11 @@ object Abadoned_greatworkRiddleLoader {
             if (snbt.isNullOrBlank()) return null
             return try {
                 TagParser.parseTag(snbt) as? CompoundTag
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                cn.xm1221.abadoned_greatwork.Abadoned_greatwork.LOGGER.error(
+                    "Failed to parse riddle SNBT: {}",
+                    e.message,
+                )
                 null
             }
         }

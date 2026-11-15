@@ -41,7 +41,7 @@ class MergeBuffer(val pos: BlockPos, val outDir: Direction) {
      */
     fun flushToBranch(): ForkedExecutionState? {
         val first = arrivals.firstOrNull() ?: return null
-        val merged = CircleImageMerge.merge(arrivals.map { it.currentImage })
+        val merged = CircleImageMerge.mergeStates(arrivals)
         return ForkedExecutionState.fork(
             parent = first,
             currentPos = pos.relative(outDir),

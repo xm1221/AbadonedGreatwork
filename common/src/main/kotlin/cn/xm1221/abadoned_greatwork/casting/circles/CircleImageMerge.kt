@@ -1,6 +1,9 @@
 package cn.xm1221.abadoned_greatwork.casting.circles
 
+import at.petrak.hexcasting.api.casting.circles.CircleExecutionState
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
+import net.minecraft.core.BlockPos
+import net.minecraft.nbt.Tag
 
 /**
  * 合并（多路汇一路）用的镜像处理函数。
@@ -21,6 +24,8 @@ import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
  */
 object CircleImageMerge {
 
+    const val TAG_MERGED_IMPETUSES = "abw_merged_impetuses"
+
     /**
      * 把多份分支镜像合成一份。
      *
@@ -32,10 +37,59 @@ object CircleImageMerge {
         if (branches.size == 1) return branches[0]
 
         var merged = branches[0]
+        val impetusSet = LinkedHashSet<Long>()
+        readImpetusLongs(branches[0]).forEach(impetusSet::add)
         for (i in 1 until branches.size) {
             merged = merged.copy(stack = merged.stack + branches[i].stack)
+            readImpetusLongs(branches[i]).forEach(impetusSet::add)
         }
 
-        return merged.copy(userData = branches.last().userData.copy())
+        val ud = branches.last().userData.copy()
+        if (impetusSet.isNotEmpty()) {
+            ud.putLongArray(TAG_MERGED_IMPETUSES, impetusSet.toLongArray())
+        }
+        return merged.copy(userData = ud)
+    }
+
+    /**
+     * 合并多条到达分支的执行态镜像，并把各自携带的促动石坐标一并合并写入镜像元数据。
+     */
+    fun mergeStates(arrivals: List<CircleExecutionState>): CastingImage {
+        require(arrivals.isNotEmpty()) { "CircleImageMerge.mergeStates 至少要一份执行态" }
+        val merged = merge(arrivals.map { it.currentImage })
+        return withMergedImpetuses(merged, arrivals)
+    }
+
+    /**
+     * 把一组到达分支的促动石坐标（以及它们之前已经合并过的促动石坐标）并入 [merged] 的 `userData`。
+     */
+    fun withMergedImpetuses(merged: CastingImage, arrivals: List<CircleExecutionState>): CastingImage {
+        val positions = LinkedHashSet<Long>()
+        for (state in arrivals) {
+            positions.add(state.impetusPos.asLong())
+            readImpetusLongs(state.currentImage).forEach(positions::add)
+        }
+        val tag = merged.userData.copy()
+        tag.putLongArray(TAG_MERGED_IMPETUSES, positions.toLongArray())
+        return merged.copy(userData = tag)
+    }
+
+    /**
+     * 从镜像中提取本次波关联的所有去重促动石坐标（始终包含当前的 [fallback]）。
+     */
+    fun extractImpetusPositions(image: CastingImage, fallback: BlockPos): List<BlockPos> {
+        val result = LinkedHashSet<Long>()
+        result.add(fallback.asLong())
+        readImpetusLongs(image).forEach(result::add)
+        return result.map(BlockPos::of)
+    }
+
+    private fun readImpetusLongs(image: CastingImage): LongArray {
+        val ud = image.userData
+        return if (ud.contains(TAG_MERGED_IMPETUSES, Tag.TAG_LONG_ARRAY.toInt())) {
+            ud.getLongArray(TAG_MERGED_IMPETUSES)
+        } else {
+            LongArray(0)
+        }
     }
 }

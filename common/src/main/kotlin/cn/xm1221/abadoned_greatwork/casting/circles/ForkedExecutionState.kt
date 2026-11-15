@@ -61,6 +61,8 @@ class ForkedExecutionState(
     greaterCorner,
     lesserCorner,
 ) {
+    fun currentTickSpeed(): Int = super.getTickSpeed()
+
     companion object {
         /**
          * 从母波 [parent] 分出一条落在 [currentPos]、由 [enteredFrom] 那一面驶入的分支。

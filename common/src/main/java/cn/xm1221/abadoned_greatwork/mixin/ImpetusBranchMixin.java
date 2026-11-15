@@ -3,6 +3,8 @@ package cn.xm1221.abadoned_greatwork.mixin;
 import at.petrak.hexcasting.api.block.circle.BlockCircleComponent;
 import at.petrak.hexcasting.api.casting.circles.BlockEntityAbstractImpetus;
 import at.petrak.hexcasting.api.casting.circles.CircleExecutionState;
+import at.petrak.hexcasting.api.casting.circles.ICircleComponent;
+import cn.xm1221.abadoned_greatwork.casting.circles.DirectrixConflictTracker;
 import cn.xm1221.abadoned_greatwork.casting.circles.ImpetusBranchHost;
 import cn.xm1221.abadoned_greatwork.casting.circles.MergeBuffer;
 import net.minecraft.core.BlockPos;
@@ -23,8 +25,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 给 HexCasting 的促动石加「多波并行」支持：**真并行分流** + **多路合并**。
@@ -93,6 +97,10 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
     @Nullable
     protected CircleExecutionState executionState;
 
+    @Shadow(remap = false)
+    @Nullable
+    CompoundTag lazyExecutionState;
+
     /** 分支波。**不要内联初始化**，Mixin 对实例字段初始化器的支持不稳，一律惰性建。 */
     @Unique
     @Nullable
@@ -103,6 +111,11 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
     @Nullable
     private Map<BlockPos, MergeBuffer> abw$mergeBuffers;
 
+    /** 所有支路（含已结束的主波和读档后分家的分支）点亮过的格子，收尾/拆块时统一熄灯。 */
+    @Unique
+    @Nullable
+    private Set<BlockPos> abw$allReached;
+
     /** 最近一次见到的波，收尾熄灯时要借它的共享 {@code reachedPositions}。每次施法开头清空。 */
     @Unique
     @Nullable
@@ -112,6 +125,12 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
     @Unique
     @Nullable
     private ListTag abw$lazyBranches;
+
+    @Unique
+    private boolean abw$inTickExecution;
+
+    @Unique
+    private boolean abw$cleaningUp;
 
     // ==================== 接口实现 ====================
 
@@ -125,9 +144,16 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
     }
 
     @Unique
+    private static final int ABW_MAX_ACTIVE_BRANCHES = 64;
+
+    @Unique
     @Override
     public void abwAddBranch(CircleExecutionState branch) {
-        this.abwBranches().add(branch);
+        List<CircleExecutionState> list = this.abwBranches();
+        // 防止孤立导向石回环内误接分合石导致指数级分叉波炸服
+        if (list.size() < ABW_MAX_ACTIVE_BRANCHES) {
+            list.add(branch);
+        }
     }
 
     @Unique
@@ -165,100 +191,221 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
         return Math.max(2, (int) (10 - (any.reachedSlate - 1) / 3));
     }
 
-    @Inject(method = "tickExecution", at = @At("RETURN"), remap = false)
-    private void abw$tickBranches(CallbackInfo ci) {
-        var hasLazy = this.abw$lazyBranches != null;
-        var branches = this.abw$branches;
-        var buffers = this.abw$mergeBuffers;
-        if (branches == null && !hasLazy && (buffers == null || buffers.isEmpty())) {
+    @Unique
+    private boolean abw$hasActiveWork() {
+        return this.abw$lazyBranches != null
+            || (this.abw$branches != null && !this.abw$branches.isEmpty())
+            || (this.abw$mergeBuffers != null && !this.abw$mergeBuffers.isEmpty());
+    }
+
+    @Unique
+    private void abw$recordReached(@Nullable CircleExecutionState state) {
+        if (state == null) {
             return;
         }
-
-        var self = (BlockEntityAbstractImpetus) (Object) this;
-
-        if (!(self.getLevel() instanceof ServerLevel level)) {
-            return;
+        if (this.abw$allReached == null) {
+            this.abw$allReached = new HashSet<>();
         }
+        this.abw$allReached.addAll(state.reachedPositions);
+    }
 
-        // 惰性反序列化（上游也是等世界就绪才 load 自己的 executionState）
-        if (this.abw$lazyBranches != null) {
-            var lazy = this.abw$lazyBranches;
-            this.abw$lazyBranches = null;
-            for (int i = 0; i < lazy.size(); i++) {
-                this.abwAddBranch(CircleExecutionState.load(lazy.getCompound(i), level));
+    @Unique
+    private void abw$extinguishAll(ServerLevel level) {
+        if (this.abw$allReached != null) {
+            for (var pos : this.abw$allReached) {
+                var there = level.getBlockState(pos);
+                if (there.getBlock() instanceof ICircleComponent cc) {
+                    cc.endEnergized(pos, there, level);
+                }
             }
-            branches = this.abw$branches;
+            this.abw$allReached.clear();
         }
-
-        // ① 推进分支。走快照：分支自己路过另一个分流器时会往这张表里加新分支，
-        //    直接迭代会 CME。新加的分支这一 tick 不跑，下一 tick 开始跑 —— 和主波分流的时序一致。
-        //
-        // 这里必须临时挂一条「代表波」到促动石的 executionState 上，原因见下面的注释。
-        var hadState = this.executionState;
-        if (hadState == null && branches != null && !branches.isEmpty()) {
-            // 上游 ICircleComponent.sfx 在 success 且 impetus != null 时**不判空**就读
-            // `impetus.getExecutionState().reachedSlate`（拿它算音高），
-            // 而「主波已经结束、分支还在飞」正是 executionState == null 的时刻（见 ④）。
-            // 不挂的话分支一走通出口就 NPE 崩服：Cannot read field "reachedSlate" because "state" is null。
-            // 挂的是分支自己，跑完立刻摘掉 —— 别让上游以为主波还活着。
-            this.executionState = branches.get(0);
-        }
-        try {
-            if (branches != null && !branches.isEmpty()) {
-                for (var branch : new ArrayList<>(branches)) {
-                    this.abw$last = branch;
-                    if (!branch.tick(self)) {
-                        branches.remove(branch);
+        if (this.abw$branches != null) {
+            for (var branch : this.abw$branches) {
+                for (var pos : branch.reachedPositions) {
+                    var there = level.getBlockState(pos);
+                    if (there.getBlock() instanceof ICircleComponent cc) {
+                        cc.endEnergized(pos, there, level);
                     }
                 }
             }
-        } finally {
-            if (hadState == null) {
-                this.executionState = null;
-            }
         }
+    }
 
-        // ② 栅栏：一条活波都没有了，但还有波卡在合并点等凑数 → 凑不齐也放出去
-        var anyLive = this.executionState != null || (branches != null && !branches.isEmpty());
-        if (!anyLive && this.abw$mergeBuffers != null && !this.abw$mergeBuffers.isEmpty()) {
-            for (var buf : new ArrayList<>(this.abw$mergeBuffers.values())) {
-                var spawned = buf.flushToBranch();
-                if (spawned != null) {
-                    this.abw$last = spawned;
-                    this.abwAddBranch(spawned);
-                }
-            }
-            this.abw$mergeBuffers.clear();
-            anyLive = this.abw$branches != null && !this.abw$branches.isEmpty();
+    @Inject(method = "tickExecution", at = @At("HEAD"), remap = false)
+    private void abw$beginTickExecution(CallbackInfo ci) {
+        this.abw$inTickExecution = true;
+        if (this.executionState != null) {
+            this.abw$recordReached(this.executionState);
         }
+    }
 
-        // ③ 彻底结束：补一次熄灯（幂等），清干净
-        if (!anyLive) {
-            if (this.abw$last != null) {
-                this.abw$last.endExecution(self);
-                this.abw$last = null;
+    @Inject(method = "endExecution", at = @At("HEAD"), cancellable = true, remap = false)
+    private void abw$guardPrematureEndExecution(CallbackInfo ci) {
+        // 主波先停（走到合并点或提前回促动石）时，只要还有分支或合并缓存没跑完，就先别把全环熄灯。
+        if (this.abw$inTickExecution && !this.abw$cleaningUp && this.abw$hasActiveWork()) {
+            this.abw$recordReached(this.executionState);
+            if (this.abw$last == null && this.executionState != null) {
+                this.abw$last = this.executionState;
             }
-            if (branches != null) {
-                branches.clear();
-            }
-            if (this.abw$mergeBuffers != null) {
-                this.abw$mergeBuffers.clear();
-            }
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "endExecution", at = @At("TAIL"), remap = false)
+    private void abw$cleanupOnBrokenImpetus(CallbackInfo ci) {
+        if (this.abw$inTickExecution || this.abw$cleaningUp) {
             return;
         }
-
-        // ④ 主波没了、分支还活着：上游在 executionState == null 处直接 return，
-        //    根本不会 scheduleTick，这里替它续上，否则分支会卡死在半路。
-        if (this.executionState == null) {
-            var any = (branches != null && !branches.isEmpty()) ? branches.get(0) : null;
-            if (any != null) {
-                // 关键一环：BlockAbstractImpetus.tick 只在 ENERGIZED 时才调 tickExecution。
-                // 主波死掉时上游的 endExecution() 已经把所有 reachedPositions（含促动石自己）
-                // 熄灭了，不重新点亮的话下面这句 scheduleTick 排进去的 tick 会因为 ENERGIZED=false
-                // 直接什么都不做，分支就永远停在那儿。施法没结束，促动石本就该亮着。
-                abw$lightImpetus(self, level);
-                level.scheduleTick(self.getBlockPos(), self.getBlockState().getBlock(), abw$tickSpeed(any));
+        var self = (BlockEntityAbstractImpetus) (Object) this;
+        if (self.getLevel() instanceof ServerLevel level) {
+            this.abw$cleaningUp = true;
+            try {
+                this.abw$extinguishAll(level);
+                if (this.abw$last != null) {
+                    this.abw$last.endExecution(self);
+                }
+            } finally {
+                this.abw$cleaningUp = false;
             }
+            DirectrixConflictTracker.releaseImpetus(level, self.getBlockPos());
+        }
+        if (this.abw$branches != null) {
+            this.abw$branches.clear();
+        }
+        if (this.abw$mergeBuffers != null) {
+            this.abw$mergeBuffers.clear();
+        }
+        this.abw$last = null;
+        this.abw$lazyBranches = null;
+    }
+
+    @Inject(method = "tickExecution", at = @At("RETURN"), remap = false)
+    private void abw$tickBranches(CallbackInfo ci) {
+        try {
+            // 上游 getExecutionState() 用完 lazyExecutionState 不会顺手清空，不置空的话主波结束后会复活死波
+            this.lazyExecutionState = null;
+
+            var self = (BlockEntityAbstractImpetus) (Object) this;
+            if (!(self.getLevel() instanceof ServerLevel level)) {
+                return;
+            }
+
+            var hasLazy = this.abw$lazyBranches != null;
+            var branches = this.abw$branches;
+            var buffers = this.abw$mergeBuffers;
+            if (branches == null && !hasLazy && (buffers == null || buffers.isEmpty())) {
+                if (this.executionState == null) {
+                    if (this.abw$allReached != null) {
+                        this.abw$allReached.clear();
+                    }
+                    DirectrixConflictTracker.releaseImpetus(level, self.getBlockPos());
+                }
+                return;
+            }
+
+            // 惰性反序列化（上游也是等世界就绪才 load 自己的 executionState）
+            if (this.abw$lazyBranches != null) {
+                var lazy = this.abw$lazyBranches;
+                this.abw$lazyBranches = null;
+                for (int i = 0; i < lazy.size(); i++) {
+                    var loaded = CircleExecutionState.load(lazy.getCompound(i), level);
+                    this.abw$recordReached(loaded);
+                    this.abwAddBranch(loaded);
+                }
+                branches = this.abw$branches;
+            }
+
+            // ① 推进分支。走快照：分支自己路过另一个分流器时会往这张表里加新分支，
+            //    直接迭代会 CME。新加的分支这一 tick 不跑，下一 tick 开始跑 —— 和主波分流的时序一致。
+            //
+            // 这里必须临时挂一条「代表波」到促动石的 executionState 上，原因见下面的注释。
+            var hadState = this.executionState;
+            if (hadState == null && branches != null && !branches.isEmpty()) {
+                // 上游 ICircleComponent.sfx 在 success 且 impetus != null 时**不判空**就读
+                // `impetus.getExecutionState().reachedSlate`（拿它算音高），
+                // 而「主波已经结束、分支还在飞」正是 executionState == null 的时刻（见 ④）。
+                // 不挂的话分支一走通出口就 NPE 崩服：Cannot read field "reachedSlate" because "state" is null。
+                // 挂的是分支自己，跑完立刻摘掉 —— 别让上游以为主波还活着。
+                this.executionState = branches.get(0);
+            }
+            try {
+                if (branches != null && !branches.isEmpty()) {
+                    for (var branch : new ArrayList<>(branches)) {
+                        this.abw$last = branch;
+                        var alive = branch.tick(self);
+                        this.abw$recordReached(branch);
+                        if (!alive) {
+                            branches.remove(branch);
+                        }
+                    }
+                }
+            } finally {
+                if (hadState == null) {
+                    this.executionState = null;
+                }
+            }
+
+            // ② 栅栏：一条活波都没有了，但还有波卡在合并点等凑数 → 凑不齐也放出去
+            var anyLive = this.executionState != null || (branches != null && !branches.isEmpty());
+
+            if (!anyLive && this.abw$mergeBuffers != null && !this.abw$mergeBuffers.isEmpty()) {
+                for (var buf : new ArrayList<>(this.abw$mergeBuffers.values())) {
+                    var spawned = buf.flushToBranch();
+                    if (spawned != null) {
+                        this.abw$last = spawned;
+                        this.abw$recordReached(spawned);
+                        this.abwAddBranch(spawned);
+                    }
+                }
+                this.abw$mergeBuffers.clear();
+                anyLive = this.abw$branches != null && !this.abw$branches.isEmpty();
+            }
+
+            // ③ 彻底结束：全环已经一条活波都没了，补一次熄灯（幂等），清干净
+            if (!anyLive) {
+                this.abw$cleaningUp = true;
+                try {
+                    this.abw$extinguishAll(level);
+                    if (this.abw$last != null) {
+                        this.abw$last.endExecution(self);
+                        this.abw$last = null;
+                    }
+                    var selfBs = self.getBlockState();
+                    if (selfBs.getBlock() instanceof BlockCircleComponent cc
+                        && cc.isEnergized(self.getBlockPos(), selfBs, level)) {
+                        cc.endEnergized(self.getBlockPos(), selfBs, level);
+                    }
+                } finally {
+                    this.abw$cleaningUp = false;
+                }
+                if (branches != null) {
+                    branches.clear();
+                }
+                if (this.abw$mergeBuffers != null) {
+                    this.abw$mergeBuffers.clear();
+                }
+                DirectrixConflictTracker.releaseImpetus(level, self.getBlockPos());
+                return;
+            }
+
+            // ④ 主波没了、分支还活着：上游在 executionState == null 处直接 return，
+            //    根本不会 scheduleTick，这里替它续上，否则分支会卡死在半路。
+            if (this.executionState == null) {
+                var any = (this.abw$branches != null && !this.abw$branches.isEmpty())
+                    ? this.abw$branches.get(0)
+                    : null;
+                if (any != null) {
+                    // 关键一环：BlockAbstractImpetus.tick 只在 ENERGIZED 时才调 tickExecution。
+                    // 主波死掉时上游的 endExecution() 已经把所有 reachedPositions（含促动石自己）
+                    // 熄灭了，不重新点亮的话下面这句 scheduleTick 排进去的 tick 会因为 ENERGIZED=false
+                    // 直接什么都不做，分支就永远停在那儿。施法没结束，促动石本就该亮着。
+                    abw$lightImpetus(self, level);
+                    level.scheduleTick(self.getBlockPos(), self.getBlockState().getBlock(), abw$tickSpeed(any));
+                }
+            }
+        } finally {
+            this.abw$inTickExecution = false;
         }
     }
 
@@ -272,10 +419,11 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
         }
     }
 
-    @Inject(method = "startExecution", at = @At("HEAD"), remap = false)
+    @Inject(method = "startExecution", at = @At("HEAD"), cancellable = true, remap = false)
     private void abw$clearStaleBranches(@Nullable ServerPlayer player, CallbackInfo ci) {
-        // 正在跑的时候别动：startExecution 自己也会直接 return
-        if (this.executionState != null) {
+        // 正在跑的时候别动（包括主波已停但分支/合并点还在跑的情况）
+        if (this.executionState != null || this.abw$hasActiveWork()) {
+            ci.cancel();
             return;
         }
         if (this.abw$branches != null) {
@@ -284,8 +432,16 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
         if (this.abw$mergeBuffers != null) {
             this.abw$mergeBuffers.clear();
         }
+        if (this.abw$allReached != null) {
+            this.abw$allReached.clear();
+        }
         this.abw$last = null;
         this.abw$lazyBranches = null;
+        this.lazyExecutionState = null;
+        var self = (BlockEntityAbstractImpetus) (Object) this;
+        if (self.getLevel() instanceof ServerLevel srv) {
+            DirectrixConflictTracker.releaseImpetus(srv, self.getBlockPos());
+        }
     }
 
     @Inject(method = "saveModData", at = @At("TAIL"), remap = false)

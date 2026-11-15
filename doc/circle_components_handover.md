@@ -124,8 +124,8 @@ HALF   : EnumProperty<Half>                       // bottom=贴地 / top=贴天�
 ENERGIZED : BooleanProperty                       // 父类提供
 ```
 
-- 点**侧面** → `facing = clicked.opposite`；点**顶/底** → `facing = context.horizontalDirection`
-- `half = if (clicked == DOWN) TOP else BOTTOM`
+- 点**侧面** → `facing = clicked.opposite`，点侧面上半格（`clickLocation.y - clickedPos.y > 0.5`）时 `half = TOP`，下半格为 `BOTTOM`
+- 点**顶/底** → `facing = context.horizontalDirection`，`half = if (clicked == DOWN) TOP else BOTTOM`
 
 ### 4.2 形状：全部 1px，没有整格兜底
 
@@ -139,30 +139,22 @@ ENERGIZED : BooleanProperty                       // 父类提供
 16 个变体，`facing` 映射（基模型是"西墙"）：`west` 0（省略）/ `north` 90 / `east` 180 / `south` 270，
 `half=top` 再加 `"x": 180`。旋转顺序是先 x 后 y（`BlockModelRotation = Ry·Rx`），两者正交，8 种形态够用。
 
-### 4.4 环件逻辑：两片并集 + 折线歧义报错
+### 4.4 环件逻辑：两块正交板连接（`Slab(t, g)` + 双板隔离与分叉判定）
 
 ```kotlin
-possibleExitDirections = 全 6 向
-canEnterFromDirection  = true                     // 任何方向都能进
-acceptControlFlow      = 来向平行于折线 ? 报「去路过多」+ Stop : Continue(全 6 向 - 来路)
+possibleExitDirections = openDirections(bs) 中至少与一片 slabMeetsState 相接的方向   // 排除两片背面，且对石板邻居验 1px 相交
+canEnterFromDirection  = carryingSlabs(...).isNotEmpty()
+acceptControlFlow      = 1. carrying > 1（同时命中两片）→ 报 many_exits
+                         2. 唯一落入 entrySlab：若 entrySlab 除 comeFrom 外还接有任意外部可进邻格（含同侧/折线共角石板）→ 报 many_exits
+                         3. 否则波转上 otherSlab，返回 otherSlab 除 comeFrom 外所有相接可进出口（0→no_exits，1→前进，≥2→many_exits）
 ```
 
-**为什么出口是 6 个**：单块石板只有一片，出口只能取法线以外；这块是两片，两片各自禁掉自己暴露面的法线后取并集，正好全通。
+**两片匹配规则**：
+- 每片定义为 `Slab(薄轴 t, 贴合面 g)`；两片背面（`plateGlue` 与 `facing`）严格绝缘，来波与去路均不可穿过背面。
+- `BlockSlate` 与 `PlugSlate` 按 `meets(s, m, enterDir.axis)` 匹配（`m.t != axis` 且 `s.t != m.t || s.g == m.g`）；邻格为相邻侧板时（如南侧贴西墙 `BlockSlate` 与底板共角），也会被视为与 `entrySlab` 相邻而触发分叉校验。
+- 促动石 / 导引石等非石板来源（`slabsAt == null`）只要不从背面进入，就按 `mine.filter { it.t != enterDir.axis }` 计算承载片：垂直壁面来向落 1 片并转入另一板；沿折线同时命中两片则报 `many_exits`。
 
-**为什么入口恒 true**（踩坑记，别改回去）：`enterDir != normal.opposite || enterDir != face.opposite`
-**恒为 true** —— 一个方向不可能同时等于两个互不相同的方向。改成 `&&` 才是错的（会把转角石板变成只能从下方进）。
-根因是上游只给方向、**不给带高**：波从东边朝墙来时，可能走在横片上边缘（合法），也可能垂直穿过竖片暴露面（不合法），
-`enterDir` 区分不了，只能取宽。真正的收窄由引擎做：它拿候选出口逐格再问下一格，**两个邻格都能接**时才报「去路过多」。
-
-**折线轴** = 水平方向上垂直于 `FACING` 的轴（`facing=west` → Z 轴 → 拦 N/S）。开关：
-`const val REPORT_FOLD_LINE_AMBIGUITY = true`（false = 退化成万能接头）。
-
-| `enterDir`（前进方向） | 上一格在哪 | 结果 |
-|---|---|---|
-| NORTH / SOUTH | 南 / 北 | **平行折线 → 去路过多** |
-| EAST / WEST / UP / DOWN | 墙那侧 / 东边 / 下方 / 上方 | 通过 |
-
-**读法：这块只能「转」（水平 ↔ 竖直），不能当直板沿着墙走。**
+**读法：设定上视为共用一格、在内侧折线相连的两块独立石板；波只能落在一块板上并在无外部分支时拐入另一块板，随后可沿另一块板转出或继续沿折线前行。**
 
 ### 4.5 粒子
 

@@ -1,0 +1,32 @@
+{
+  "name": "hexcasting.entry.confluence_directrix",
+  "category": "hexcasting:greatwork",
+  "icon": "abadoned_greatwork:multi_directrix_p",
+  "advancement": "hexcasting:enlightenment",
+  "entry_color": "54398a",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.confluence_directrix.1"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "abadoned_greatwork:multi_directrix",
+      "text": "hexcasting.page.confluence_directrix.empty"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.confluence_directrix.2"
+    },
+    {
+      "type": "hexcasting:brainsweep",
+      "recipe": "abadoned_greatwork:brainsweep/multi_directrix_p",
+      "text": "hexcasting.page.confluence_directrix.evoker"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.confluence_directrix.3"
+    }
+  ]
+}

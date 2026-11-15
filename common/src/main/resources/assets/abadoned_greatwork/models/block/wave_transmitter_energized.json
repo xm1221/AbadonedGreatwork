@@ -1,0 +1,8 @@
+{
+	"parent": "abadoned_greatwork:block/wave_transmitter",
+	"textures": {
+		"0": "abadoned_greatwork:block/wave_transmitter_energized",
+		"1": "abadoned_greatwork:block/multi_directrix_2_energized",
+		"particle": "abadoned_greatwork:block/wave_transmitter_energized"
+	}
+}

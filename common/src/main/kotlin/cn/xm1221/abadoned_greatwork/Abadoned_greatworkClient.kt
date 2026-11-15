@@ -1,6 +1,10 @@
 package cn.xm1221.abadoned_greatwork
 
+import at.petrak.hexcasting.api.client.ScryingLensOverlayRegistry
+import cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MultiDirectrixPBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.WaveRepeaterBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.WaveTransmitterBlockEntity
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkClientConfig
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlocks
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry
@@ -16,6 +20,7 @@ object Abadoned_greatworkClient {
         Abadoned_greatworkClientConfig.init()
         registerBlockRenderTypes()
         registerBlockTints()
+        registerScryingLensOverlays()
     }
 
     fun getConfigScreen(parent: Screen): Screen {
@@ -34,6 +39,10 @@ object Abadoned_greatworkClient {
         RenderTypeRegistry.register(
             RenderType.cutout(),
             Abadoned_greatworkBlocks.MULTI_DIRECTRIX_P.value,
+            Abadoned_greatworkBlocks.WAVE_TRANSMITTER.value,
+            Abadoned_greatworkBlocks.WAVE_RECEIVER.value,
+            Abadoned_greatworkBlocks.WAVE_REPEATER.value,
+            Abadoned_greatworkBlocks.MEDIA_POOL.value,
         )
     }
 
@@ -59,5 +68,21 @@ object Abadoned_greatworkClient {
             },
             Abadoned_greatworkBlocks.MULTI_DIRECTRIX_P.value,
         )
+    }
+
+    @Environment(EnvType.CLIENT)
+    private fun registerScryingLensOverlays() {
+        ScryingLensOverlayRegistry.addDisplayer(Abadoned_greatworkBlocks.WAVE_TRANSMITTER.value) { lines, state, pos, _, world, _ ->
+            val be = world.getBlockEntity(pos) as? WaveTransmitterBlockEntity ?: return@addDisplayer
+            be.appendLensLines(lines, state)
+        }
+        ScryingLensOverlayRegistry.addDisplayer(Abadoned_greatworkBlocks.WAVE_REPEATER.value) { lines, _, pos, _, world, _ ->
+            val be = world.getBlockEntity(pos) as? WaveRepeaterBlockEntity ?: return@addDisplayer
+            be.appendLensLines(lines)
+        }
+        ScryingLensOverlayRegistry.addDisplayer(Abadoned_greatworkBlocks.MEDIA_POOL.value) { lines, _, pos, _, world, _ ->
+            val be = world.getBlockEntity(pos) as? MediaPoolBlockEntity ?: return@addDisplayer
+            be.appendLensLines(lines)
+        }
     }
 }

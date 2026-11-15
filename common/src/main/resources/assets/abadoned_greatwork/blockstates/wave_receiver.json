@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=north,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_receiver" },
+    "facing=north,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized" },
+    "facing=east,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "y": 90 },
+    "facing=east,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "y": 90 },
+    "facing=south,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "y": 180 },
+    "facing=south,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "y": 180 },
+    "facing=west,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "y": 270 },
+    "facing=west,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "y": 270 },
+    "facing=up,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "x": 270 },
+    "facing=up,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "x": 270 },
+    "facing=down,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "x": 90 },
+    "facing=down,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "x": 90 },
+    "facing=north,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "x": 180, "y": 180 },
+    "facing=north,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "x": 180, "y": 180 },
+    "facing=east,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "x": 180, "y": 270 },
+    "facing=east,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "x": 180, "y": 270 },
+    "facing=south,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "x": 180 },
+    "facing=south,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "x": 180 },
+    "facing=west,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "x": 180, "y": 90 },
+    "facing=west,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "x": 180, "y": 90 },
+    "facing=up,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "x": 270, "y": 180 },
+    "facing=up,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "x": 270, "y": 180 },
+    "facing=down,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_receiver", "x": 90, "y": 180 },
+    "facing=down,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_receiver_energized", "x": 90, "y": 180 }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "energized=false": { "model": "abadoned_greatwork:block/media_pool" },
+    "energized=true": { "model": "abadoned_greatwork:block/media_pool_energized" }
+  }
+}

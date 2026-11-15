@@ -1,0 +1,52 @@
+{
+  "multipart": [
+    {
+      "when": { "facing": "up", "energized": "false" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter" }
+    },
+    {
+      "when": { "facing": "up", "energized": "true" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter_energized" }
+    },
+    {
+      "when": { "facing": "down", "energized": "false" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter", "x": 180 }
+    },
+    {
+      "when": { "facing": "down", "energized": "true" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter_energized", "x": 180 }
+    },
+    {
+      "when": { "facing": "north", "energized": "false" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter", "x": 90 }
+    },
+    {
+      "when": { "facing": "north", "energized": "true" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter_energized", "x": 90 }
+    },
+    {
+      "when": { "facing": "east", "energized": "false" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter", "x": 90, "y": 90 }
+    },
+    {
+      "when": { "facing": "east", "energized": "true" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter_energized", "x": 90, "y": 90 }
+    },
+    {
+      "when": { "facing": "south", "energized": "false" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter", "x": 90, "y": 180 }
+    },
+    {
+      "when": { "facing": "south", "energized": "true" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter_energized", "x": 90, "y": 180 }
+    },
+    {
+      "when": { "facing": "west", "energized": "false" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter", "x": 90, "y": 270 }
+    },
+    {
+      "when": { "facing": "west", "energized": "true" },
+      "apply": { "model": "abadoned_greatwork:block/wave_transmitter_energized", "x": 90, "y": 270 }
+    }
+  ]
+}

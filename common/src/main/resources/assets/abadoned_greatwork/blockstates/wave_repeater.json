@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_repeater" },
+    "facing=north,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_repeater_energized" },
+    "facing=east,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_repeater", "y": 90 },
+    "facing=east,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_repeater_energized", "y": 90 },
+    "facing=south,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_repeater", "y": 180 },
+    "facing=south,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_repeater_energized", "y": 180 },
+    "facing=west,half=bottom,energized=false": { "model": "abadoned_greatwork:block/wave_repeater", "y": 270 },
+    "facing=west,half=bottom,energized=true": { "model": "abadoned_greatwork:block/wave_repeater_energized", "y": 270 },
+    "facing=north,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_repeater", "x": 180, "y": 180 },
+    "facing=north,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_repeater_energized", "x": 180, "y": 180 },
+    "facing=east,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_repeater", "x": 180, "y": 270 },
+    "facing=east,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_repeater_energized", "x": 180, "y": 270 },
+    "facing=south,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_repeater", "x": 180 },
+    "facing=south,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_repeater_energized", "x": 180 },
+    "facing=west,half=top,energized=false": { "model": "abadoned_greatwork:block/wave_repeater", "x": 180, "y": 90 },
+    "facing=west,half=top,energized=true": { "model": "abadoned_greatwork:block/wave_repeater_energized", "x": 180, "y": 90 }
+  }
+}

@@ -16,8 +16,10 @@ import at.petrak.hexcasting.api.casting.iota.Vec3Iota
 import at.petrak.hexcasting.api.casting.math.HexPattern
 import cn.xm1221.abadoned_greatwork.block.entity.MultiDirectrixPBlockEntity
 import cn.xm1221.abadoned_greatwork.casting.circles.CircleImageMerge
+import cn.xm1221.abadoned_greatwork.casting.circles.DirectrixConflictTracker
 import cn.xm1221.abadoned_greatwork.casting.circles.ForkedExecutionState
 import cn.xm1221.abadoned_greatwork.casting.circles.ImpetusBranchHost
+import cn.xm1221.abadoned_greatwork.casting.circles.MishapConflictingImpetus
 import cn.xm1221.abadoned_greatwork.casting.circles.forkImage
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import net.minecraft.core.BlockPos
@@ -213,6 +215,12 @@ class MultiDirectrixPBlock(properties: Properties) : BlockCircleComponent(proper
         bs: BlockState,
         world: ServerLevel,
     ): ICircleComponent.ControlFlow {
+        val conflictImpetusPos = DirectrixConflictTracker.claimOrGetConflict(world, pos, env.circleState().impetusPos)
+        if (conflictImpetusPos != null) {
+            MishapConflictingImpetus(pos, conflictImpetusPos).triggerInCircle(imageIn, env, bs)
+            return ICircleComponent.ControlFlow.Stop()
+        }
+
         val viable = possibleExitDirections(pos, bs, world).filter { dir ->
             val next = pos.relative(dir)
             val there = world.getBlockState(next)
@@ -232,25 +240,24 @@ class MultiDirectrixPBlock(properties: Properties) : BlockCircleComponent(proper
                 imageIn, viable.map { exitPositionFromDirection(pos, it) })
         }
 
-        // ===== 一、合并：多输入面时先攒够到达数 =====
+        // ===== 一、合并：多输入面时仅在同一促动石内攒够到达数，来自不同促动石的媒质流不合并 =====
         val inCount = PORTS.keys.count { bs.getValue(PORTS.getValue(it)) == PortMode.IN }
         val baseImage: CastingImage = if (host != null && inCount >= 2) {
-            // 多进多出时，所有到达都登记在「第一个出口」那把钥匙下，凑齐了一起放行
-            val buffer = host.abwMergeBuffer(pos, viable.first())
-            buffer.arrivals.add(env.circleState())
-            if (buffer.arrivals.size < inCount) {
-                // 引擎的波没有等待态：Stop 自己、把镜像留在登记表里，格子保持点亮
+            val buf = host.abwMergeBuffer(pos, viable.first())
+            buf.arrivals.add(env.circleState())
+            if (buf.arrivals.size < inCount) {
                 return ICircleComponent.ControlFlow.Stop()
             }
-            val arrivals = buffer.arrivals.toList()
+            val arrivals = ArrayList(buf.arrivals)
             host.abwClearMergeBuffer(pos)
             if (program == null) {
                 // 没写图案 → 退回普通版的合并语义
-                CircleImageMerge.merge(arrivals.map { it.currentImage })
+                CircleImageMerge.mergeStates(arrivals)
             } else {
                 // 每支压成一个 `[栈列表, 渡鸦之思, 来自方向]`，然后跑一次图案
-                runProgram(collectArrivals(arrivals, world), env, world, program)
+                val executed = runProgram(collectArrivals(arrivals, world), env, world, program)
                     ?: return ICircleComponent.ControlFlow.Stop()
+                CircleImageMerge.withMergedImpetuses(executed, arrivals)
             }
         } else {
             imageIn
@@ -258,12 +265,13 @@ class MultiDirectrixPBlock(properties: Properties) : BlockCircleComponent(proper
 
         // ===== 二、分流：每个出口各跑一遍图案 =====
         val perExit: List<Pair<Direction, CastingImage>> = viable.mapNotNull { dir ->
+            val isolated = baseImage.forkImage()
             if (program == null) {
                 // 没写图案：压栈会把普通环的栈弄脏，所以只复制镜像、不压方向
-                dir to baseImage.forkImage()
+                dir to isolated
             } else {
-                val withDir = baseImage.copy(
-                    stack = baseImage.stack + Vec3Iota(Vec3.atLowerCornerOf(dir.normal)),
+                val withDir = isolated.copy(
+                    stack = isolated.stack + Vec3Iota(Vec3.atLowerCornerOf(dir.normal)),
                 )
                 runProgram(withDir, env, world, program)?.let { dir to it }
             }
@@ -294,6 +302,15 @@ class MultiDirectrixPBlock(properties: Properties) : BlockCircleComponent(proper
         Direction.UP
 
     override fun particleHeight(pos: BlockPos, bs: BlockState, level: Level): Float = 0.5f
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onRemove(state: BlockState, level: Level, pos: BlockPos, newState: BlockState, isMoving: Boolean) {
+        if (!state.`is`(newState.block) && level is ServerLevel) {
+            DirectrixConflictTracker.releaseNode(level, pos)
+        }
+        @Suppress("DEPRECATION")
+        super.onRemove(state, level, pos, newState, isMoving)
+    }
 
     // ==================== 内部：执行 / 收集 ====================
 

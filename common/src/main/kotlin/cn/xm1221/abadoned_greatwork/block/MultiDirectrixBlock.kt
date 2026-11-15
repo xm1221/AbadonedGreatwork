@@ -5,8 +5,10 @@ import at.petrak.hexcasting.api.casting.circles.ICircleComponent
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
 import cn.xm1221.abadoned_greatwork.casting.circles.CircleImageMerge
+import cn.xm1221.abadoned_greatwork.casting.circles.DirectrixConflictTracker
 import cn.xm1221.abadoned_greatwork.casting.circles.ForkedExecutionState
 import cn.xm1221.abadoned_greatwork.casting.circles.ImpetusBranchHost
+import cn.xm1221.abadoned_greatwork.casting.circles.MishapConflictingImpetus
 import cn.xm1221.abadoned_greatwork.casting.circles.forkImage
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -239,56 +241,61 @@ class MultiDirectrixBlock(properties: Properties) : BlockCircleComponent(propert
         bs: BlockState,
         world: ServerLevel,
     ): ICircleComponent.ControlFlow {
+        val conflictImpetusPos = DirectrixConflictTracker.claimOrGetConflict(world, pos, env.circleState().impetusPos)
+        if (conflictImpetusPos != null) {
+            MishapConflictingImpetus(pos, conflictImpetusPos).triggerInCircle(imageIn, env, bs)
+            return ICircleComponent.ControlFlow.Stop()
+        }
+
         val viable = possibleExitDirections(pos, bs, world).filter { dir ->
             val next = pos.relative(dir)
             val there = world.getBlockState(next)
             (there.block as? ICircleComponent)
                 ?.canEnterFromDirection(dir, next, there, world) == true
         }
-        val host = env.impetus as? ImpetusBranchHost
+        if (viable.isEmpty()) return ICircleComponent.ControlFlow.Continue(imageIn, emptyList())
 
-        // ===== 一、分流 =====
-        if (viable.size > 1) {
-            if (host == null) {
-                return ICircleComponent.ControlFlow.Continue(
-                    imageIn, viable.map { exitPositionFromDirection(pos, it) })
+        val host = env.impetus as? ImpetusBranchHost
+        if (host == null && viable.size > 1) {
+            return ICircleComponent.ControlFlow.Continue(
+                imageIn, viable.map { exitPositionFromDirection(pos, it) })
+        }
+
+        // ===== 一、合并（多输入面时仅在同一促动石内先攒够到达数，来自不同促动石的媒质流不合并） =====
+        val inCount = DIRECTIONS.count { bs.getValue(PORTS.getValue(it)) == PortMode.IN }
+        val baseImage: CastingImage = if (host != null && inCount >= 2) {
+            val buf = host.abwMergeBuffer(pos, viable.first())
+            buf.arrivals.add(env.circleState())
+            if (buf.arrivals.size < inCount) {
+                return ICircleComponent.ControlFlow.Stop()
             }
+            val arrivals = ArrayList(buf.arrivals)
+            host.abwClearMergeBuffer(pos)
+            CircleImageMerge.mergeStates(arrivals)
+        } else {
+            imageIn
+        }
+
+        // ===== 二、分流 / 直通 =====
+        if (viable.size > 1) {
             // imageIn 本身不可变，engine 之后会自己 withOverriddenUsedOps(0)，所以主波不用动
             val parent = env.circleState()
             for (dir in viable.subList(1, viable.size)) {
-                host.abwAddBranch(
+                host?.abwAddBranch(
                     ForkedExecutionState.fork(
                         parent = parent,
                         currentPos = pos.relative(dir),
                         enteredFrom = dir,
-                        image = imageIn.forkImage(),
+                        image = baseImage.forkImage(),
                     )
                 )
             }
             return ICircleComponent.ControlFlow.Continue(
-                imageIn, viable.subList(0, 1).map { exitPositionFromDirection(pos, it) })
+                baseImage, viable.subList(0, 1).map { exitPositionFromDirection(pos, it) })
         }
 
-        val outDir = viable.firstOrNull()
-            ?: return ICircleComponent.ControlFlow.Continue(imageIn, emptyList())
-        val exits = listOf(exitPositionFromDirection(pos, outDir))
-
-        // ===== 二、合并 =====
-        val inCount = DIRECTIONS.count { bs.getValue(PORTS.getValue(it)) == PortMode.IN }
-        if (host != null && inCount >= 2) {
-            val buffer = host.abwMergeBuffer(pos, outDir)
-            buffer.arrivals.add(env.circleState())
-            if (buffer.arrivals.size < inCount) {
-                // 还没到齐：停下等。Stop 不报错、格子保持点亮，镜像由登记表保管
-                return ICircleComponent.ControlFlow.Stop()
-            }
-            val merged = CircleImageMerge.merge(buffer.arrivals.map { it.currentImage })
-            host.abwClearMergeBuffer(pos)
-            return ICircleComponent.ControlFlow.Continue(merged, exits)
-        }
-
-        // ===== 三、普通直通 =====
-        return ICircleComponent.ControlFlow.Continue(imageIn, exits)
+        return ICircleComponent.ControlFlow.Continue(
+            baseImage, listOf(exitPositionFromDirection(pos, viable.first())))
     }
 
     /** 整格实心方块，没有「朝上」的概念，粒子方向取默认的 UP。 */
@@ -297,6 +304,15 @@ class MultiDirectrixBlock(properties: Properties) : BlockCircleComponent(propert
 
     /** `vpos = 格心 + 法线 × height`，0.5 落在顶面中心（原版促动石同值）。 */
     override fun particleHeight(pos: BlockPos, bs: BlockState, level: Level): Float = 0.5f
+
+    @Suppress("OVERRIDE_DEPRECATION")
+    override fun onRemove(state: BlockState, level: Level, pos: BlockPos, newState: BlockState, isMoving: Boolean) {
+        if (!state.`is`(newState.block) && level is ServerLevel) {
+            DirectrixConflictTracker.releaseNode(level, pos)
+        }
+        @Suppress("DEPRECATION")
+        super.onRemove(state, level, pos, newState, isMoving)
+    }
 
     companion object {
         /**

@@ -1,10 +1,14 @@
 package cn.xm1221.abadoned_greatwork.registry
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.block.MediaPoolBlock
 import cn.xm1221.abadoned_greatwork.block.MultiDirectrixBlock
 import cn.xm1221.abadoned_greatwork.block.MultiDirectrixPBlock
 import cn.xm1221.abadoned_greatwork.block.PlugSlateBlock
 import cn.xm1221.abadoned_greatwork.block.TruthCrystalBlock
+import cn.xm1221.abadoned_greatwork.block.WaveReceiverBlock
+import cn.xm1221.abadoned_greatwork.block.WaveRepeaterBlock
+import cn.xm1221.abadoned_greatwork.block.WaveTransmitterBlock
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
@@ -119,6 +123,62 @@ object Abadoned_greatworkBlocks : Abadoned_greatworkRegistrar<Block>(
                 .sound(SoundType.DEEPSLATE)
                 .pushReaction(PushReaction.BLOCK)
                 // L 形薄件：不参与整格遮挡，形状由 getShape 给出
+                .noOcclusion(),
+        )
+    }
+
+    /**
+     * 队长发信石 — 旗帜天线 + 励磁线圈发射环件。
+     */
+    val WAVE_TRANSMITTER: RegistrarEntry<Block> = registerBlock("wave_transmitter") {
+        WaveTransmitterBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(3.0f, 6.0f)
+                .sound(SoundType.DEEPSLATE)
+                .pushReaction(PushReaction.BLOCK)
+                .noOcclusion(),
+        )
+    }
+
+    /**
+     * 谐振收信石 — 感应线圈 + 双极子接收促动环件。
+     */
+    val WAVE_RECEIVER: RegistrarEntry<Block> = registerBlock("wave_receiver") {
+        WaveReceiverBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(3.0f, 6.0f)
+                .sound(SoundType.DEEPSLATE)
+                .pushReaction(PushReaction.BLOCK)
+                .noOcclusion(),
+        )
+    }
+
+    /**
+     * 号角中继器 — 无线媒质波多跳接力与号角增程节点。
+     */
+    val WAVE_REPEATER: RegistrarEntry<Block> = registerBlock("wave_repeater") {
+        WaveRepeaterBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(3.0f, 6.0f)
+                .sound(SoundType.DEEPSLATE)
+                .pushReaction(PushReaction.BLOCK)
+                .noOcclusion(),
+        )
+    }
+
+    /**
+     * 媒质池 — 临时为法术环与无线收信石补充媒质的蓄能环件。
+     */
+    val MEDIA_POOL: RegistrarEntry<Block> = registerBlock("media_pool") {
+        MediaPoolBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(3.0f, 6.0f)
+                .sound(SoundType.DEEPSLATE)
+                .pushReaction(PushReaction.BLOCK)
                 .noOcclusion(),
         )
     }

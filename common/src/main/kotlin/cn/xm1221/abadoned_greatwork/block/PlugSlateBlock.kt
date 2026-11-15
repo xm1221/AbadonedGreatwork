@@ -25,7 +25,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.DirectionProperty
 import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraft.world.level.block.state.properties.Half
-import net.minecraft.world.level.levelgen.SurfaceRules.state
 import net.minecraft.world.phys.shapes.CollisionContext
 import net.minecraft.world.phys.shapes.Shapes
 import net.minecraft.world.phys.shapes.VoxelShape
@@ -40,7 +39,7 @@ import java.util.EnumSet
  * - `energized`：由 [BlockCircleComponent] 提供；媒质波经过时为 `true`，比较器输出 15
  *
  * ## 放置规则
- * - 点方块的侧面：竖墙贴着被点的那一格（`facing` = 被点面的反方向）
+ * - 点方块的侧面：竖墙贴着被点的那一格（`facing` = 被点面的反方向）；点在侧面上半格时板贴天花板
  * - 点方块的顶面/底面：竖墙朝着玩家视线方向；点底面时板贴天花板
  *
  * ## 形状
@@ -74,7 +73,12 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
 
     override fun getStateForPlacement(context: BlockPlaceContext): BlockState {
         val clicked = context.clickedFace
-        val half = if (clicked == Direction.DOWN) Half.TOP else Half.BOTTOM
+        val half = when {
+            clicked == Direction.DOWN -> Half.TOP
+            clicked == Direction.UP -> Half.BOTTOM
+            context.clickLocation.y - context.clickedPos.y > 0.5 -> Half.TOP
+            else -> Half.BOTTOM
+        }
         val facing = if (clicked.axis.isHorizontal) clicked.opposite else context.horizontalDirection
         return defaultBlockState().setValue(FACING, facing).setValue(HALF, half)
     }
@@ -109,14 +113,22 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
     override fun particleHeight(pos: BlockPos, bs: BlockState, level: Level): Float = 0.5f - 15f / 16f
 
     /**
-     * 建环洪泛时扩散的候选方向：**全部 6 个**。
+     * 建环洪泛时扩散的候选方向：从四向非背面中筛出至少有一片在物理上与邻格相接的方向。
      *
-     * 洪泛时还不知道波会贴哪一片（取决于来向），所以取两片面内方向的并集 ——
-     * 横片给 `x/z` 四向，竖片给 `y` 两向加折线两向，合起来就是 6 个。
-     * 真正的收窄在 [acceptControlFlow] 里按「波贴着哪一轴」做。
+     * 非石板邻格（如促动石、导引石、空气）对非薄轴方向视为可通；石板邻格必须与至少一片 [meets]，
+     * 避免跨空隙误连到天花板或对侧墙面的石板，同时保证为 [acceptControlFlow] 出口的超集。
      */
-    override fun possibleExitDirections(pos: BlockPos, bs: BlockState, level: Level): EnumSet<Direction> =
-        EnumSet.allOf(Direction::class.java)
+    override fun possibleExitDirections(pos: BlockPos, bs: BlockState, level: Level): EnumSet<Direction> {
+        val mine = slabsOf(bs)
+        val exits = EnumSet.noneOf(Direction::class.java)
+        for (dir in openDirections(bs)) {
+            val there = level.getBlockState(pos.relative(dir))
+            if (mine.any { m -> slabMeetsState(m, there, dir) }) {
+                exits.add(dir)
+            }
+        }
+        return exits
+    }
 
     /**
      * **一片 = 薄轴 + 贴合面。**
@@ -125,26 +137,14 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
      * 和法线的关系就能定「波在片的哪一侧」。本件两片法线垂直，同一个 `enterDir` 可能是撞板、
      * 也可能是沿墙 —— 差的那半个自由度是**片贴在哪一面**，用一个轴集合表达不出来。
      *
-     * 判据两条，全部只看状态量，不算坐标：
-     * 1. 薄轴 == `enterDir.axis` 的片两边都不参与。波只贴在**暴露面**上走，沿薄轴方向它
-     *    离不开那个面，也就到不了共享面；`BlockSlate` 靠「入口禁撞面 + 出口禁离面」把这件
-     *    事拆给两格各判一半，我们这里是单侧完整判断，所以两侧都要排掉。
-     * 2. 剩下的片比贴合面：薄轴不同则必相交（各自满格的那一轴覆盖对方的 1px 带）；
-     *    薄轴相同则要求贴同一面（`g` 相同）。
-     *
-     * 来源不是本件也不是上游 [BlockSlate]（促动石、导向石、别的环件）时取宽。
+     * 具体匹配见 [carryingSlabs]：来路不在两片贴合背面，且至少有一片能接住来波才允许进入。
      */
     override fun canEnterFromDirection(
         enterDir: Direction,
         pos: BlockPos,
         bs: BlockState,
         level: ServerLevel,
-    ): Boolean {
-        val src = slabsAt(level.getBlockState(pos.relative(enterDir.opposite))) ?: return true
-        val axis = enterDir.axis
-        val mine = slabsOf(bs)
-        return src.any { s -> s.t != axis && mine.any { m -> meets(s, m, axis) } }
-    }
+    ): Boolean = carryingSlabs(enterDir, pos, bs, level).isNotEmpty()
 
     // ==================== 片 ====================
 
@@ -161,6 +161,15 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
         Slab(Direction.Axis.Y, if (bs.getValue(HALF) == Half.BOTTOM) Direction.DOWN else Direction.UP),
         Slab(bs.getValue(FACING).axis, bs.getValue(FACING)),
     )
+
+    /** 除去两片贴合背面（底板背面与竖墙背面）后，几何上可通行/检查的四个方向。 */
+    private fun openDirections(bs: BlockState): EnumSet<Direction> {
+        val dirs = EnumSet.allOf(Direction::class.java)
+        for (s in slabsOf(bs)) {
+            dirs.remove(s.g)
+        }
+        return dirs
+    }
 
     /**
      * 某格环件的片；`null` = 不认识的方块，调用方取宽。
@@ -191,63 +200,32 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
         return s.t != m.t || s.g == m.g               // 薄轴不同必相交；同轴要比贴合面
     }
 
-    /**
-     * 媒质波走到这一格：**转角必须转弯**。
-     *
-     * 转角在设定上是两块板拼成的 L：波贴着进来那一块（[carryingSlabs] 的单片），从这里
-     * 出去就只有一条合法的路 —— 沿薄轴离开这块板、转上另一块，也就是 `g.opposite`。
-     *
-     * 候选先砍两向：来路（不许原路返回）和 `g`（往板里撞，物理上走不了）。剩下的逐个问
-     * 下一格，然后分三种情形：
-     * - 没人接 → 没有去向，交回空表，让引擎报 `no_exits`；
-     * - 恰好只有 `turn` 接 → 正常转弯；
-     * - 接的不止一条，或者接的不是 `turn` → 去路过多，本件自己报 `many_exits` 并停下。
-     *
-     * 波没骑在任何一片上（来源不认识，或同轴不同面、物理上走不到那种来向）时取宽，不在此
-     * 处判 —— 只有确定它骑在哪块板上，才谈得上「该不该转弯」。
-     */
-    override fun acceptControlFlow(
-        imageIn: CastingImage,
-        env: CircleCastEnv,
-        enterDir: Direction,
+    /** 本件单片 [slab] 朝 [dir] 看去时，物理边界上是否能与 [targetState] 相通。 */
+    private fun slabMeetsState(slab: Slab, targetState: BlockState, dir: Direction): Boolean {
+        if (slab.t == dir.axis) return false
+        val targetSlabs = slabsAt(targetState) ?: return true
+        return targetSlabs.any { s -> s.t != dir.axis && meets(s, slab, dir.axis) }
+    }
+
+    /** 本件单片 [slab] 沿 [exit] 出去时，邻格环件是否与该片相接且可进入。 */
+    private fun slabAcceptsNext(
+        slab: Slab,
+        exit: Direction,
+        pos: BlockPos,
+        level: ServerLevel,
+    ): Boolean {
+        val therePos = pos.relative(exit)
+        val there = level.getBlockState(therePos)
+        val next = there.block as? ICircleComponent ?: return false
+        return slabMeetsState(slab, there, exit) && next.canEnterFromDirection(exit, therePos, there, level)
+    }
+
+    private fun stopManyExits(
         pos: BlockPos,
         bs: BlockState,
         world: ServerLevel,
-    ): ICircleComponent.ControlFlow {
-        val slab = carryingSlabs(enterDir, pos, bs, world)?.singleOrNull()
-
-        if (slab == null) {
-            val any = EnumSet.allOf(Direction::class.java)
-            any.remove(enterDir.opposite)
-            return ICircleComponent.ControlFlow.Continue(
-                imageIn,
-                any.map { exitPositionFromDirection(pos, it) },
-            )
-        }
-
-        val turn = slab.g.opposite
-        val exits = EnumSet.allOf(Direction::class.java)
-        exits.remove(enterDir.opposite)                                      // 不许原路返回
-        exits.remove(slab.g)                                                 // 往板里撞
-
-        val accepting = exits.filter { exit ->
-            val therePos = pos.relative(exit)
-            val there = world.getBlockState(therePos)
-            val next = there.block as? ICircleComponent
-            next != null && next.canEnterFromDirection(exit, therePos, there, world)
-        }
-
-        if (accepting.isEmpty()) {
-            return ICircleComponent.ControlFlow.Continue(imageIn, emptyList())
-        }
-
-        if (accepting.size == 1 && accepting[0] == turn) {
-            return ICircleComponent.ControlFlow.Continue(
-                imageIn,
-                listOf(exitPositionFromDirection(pos, turn)),
-            )
-        }
-
+        env: CircleCastEnv,
+    ): ICircleComponent.ControlFlow.Stop {
         val impetus = env.impetus
         if (impetus != null) {
             impetus.postDisplay(
@@ -263,23 +241,72 @@ class PlugSlateBlock(properties: Properties) : BlockCircleComponent(properties) 
     }
 
     /**
-     * 波此刻贴着本件的哪一片 —— 也就是它在转角里骑在哪块板上。
+     * 媒质波走到这一格：**按「两块垂直相交的板」判定去向**。
      *
-     * 只认「与来源承载片共面继续」的那片（同轴同贴合面）。`null` = 来源不认识（促动石、
-     * 导向石、别的环件），不知道波骑在哪，调用方取宽；空列表 = 认识但对不上，那种来向
-     * 已经被 [canEnterFromDirection] 拒在门外，走到这里说明摆法本身有问题。
+     * 1. 来波必须明确落在其中一块板 [entrySlab] 上；若沿折线同时骑上两片（`carrying.size > 1`）报 `many_exits`；
+     * 2. 另一块板 [otherSlab] 在内部始终与 [entrySlab] 相连，因此先检查 [entrySlab] 除来路外
+     *    是否还接触任意外部可进环件（含同侧/转角相邻石板）；一旦有，说明 [entrySlab] 存在分叉，
+     *    直接报 `many_exits` 并停下；
+     * 3. 确认 [entrySlab] 无外部邻接后，波唯一转上 [otherSlab]，交出 [otherSlab] 除来路外所有
+     *    物理相接且可进的出口（既可从 `otherSlab.g.opposite` 转出，也可沿 [otherSlab] 折线继续），
+     *    由引擎按 0 / 1 / ≥2 处理 `no_exits` / 前进 / `many_exits`。
+     */
+    override fun acceptControlFlow(
+        imageIn: CastingImage,
+        env: CircleCastEnv,
+        enterDir: Direction,
+        pos: BlockPos,
+        bs: BlockState,
+        world: ServerLevel,
+    ): ICircleComponent.ControlFlow {
+        val carrying = carryingSlabs(enterDir, pos, bs, world)
+        if (carrying.isEmpty()) {
+            return ICircleComponent.ControlFlow.Continue(imageIn, emptyList())
+        }
+
+        val entrySlab = carrying.singleOrNull() ?: return stopManyExits(pos, bs, world, env)
+        val otherSlab = slabsOf(bs).first { it != entrySlab }
+        val open = openDirections(bs)
+        val comeFrom = enterDir.opposite
+
+        val entryHasExternalBranch = open.any { dir ->
+            dir != comeFrom && slabAcceptsNext(entrySlab, dir, pos, world)
+        }
+        if (entryHasExternalBranch) {
+            return stopManyExits(pos, bs, world, env)
+        }
+
+        val exits = open
+            .filter { dir -> dir != comeFrom && slabAcceptsNext(otherSlab, dir, pos, world) }
+            .map { dir -> exitPositionFromDirection(pos, dir) }
+
+        return ICircleComponent.ControlFlow.Continue(imageIn, exits)
+    }
+
+    /**
+     * 波此刻贴着本件的哪几片 —— 也就是它在转角里骑在哪块板上。
+     *
+     * - 若来向面（`enterDir.opposite`）本身是本件某片的贴合背面，物理绝缘，直接返回空集；
+     * - 若来源是 [PlugSlateBlock] 或 [BlockSlate]：用 [meets] 匹配所有薄轴不平行于来向且在边界相通的片；
+     * - 若来源是其它环件（促动石、导向石等，[slabsAt] 为 `null`）：取本件中薄轴不平行于来向的片。
+     *
+     * 返回 1 片时说明波明确骑在其中一块板上；返回 2 片说明沿折线同时骑上两片（歧义）。
      */
     fun carryingSlabs(
         enterDir: Direction,
         pos: BlockPos,
         bs: BlockState,
         level: Level,
-    ): List<Slab>? {
-        val src = slabsAt(level.getBlockState(pos.relative(enterDir.opposite))) ?: return null
+    ): List<Slab> {
+        val comeFrom = enterDir.opposite
+        val mine = slabsOf(bs)
+        if (mine.any { it.g == comeFrom }) return emptyList()
         val axis = enterDir.axis
+        val src = slabsAt(level.getBlockState(pos.relative(comeFrom)))
+            ?: return mine.filter { m -> m.t != axis }
         return src
             .filter { s -> s.t != axis }
-            .flatMap { s -> slabsOf(bs).filter { m -> m.t == s.t && m.g == s.g } }
+            .flatMap { s -> mine.filter { m -> meets(s, m, axis) } }
             .distinct()
     }
 

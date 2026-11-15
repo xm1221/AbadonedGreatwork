@@ -2,7 +2,9 @@ package cn.xm1221.abadoned_greatwork.fabric
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatworkClient
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.WaveTransmitterBlockEntity
 import cn.xm1221.abadoned_greatwork.client.renderer.TruthCrystalBlockEntityRenderer
+import cn.xm1221.abadoned_greatwork.client.renderer.WaveTransmitterBlockEntityRenderer
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes
 import net.fabricmc.api.ClientModInitializer
@@ -27,5 +29,15 @@ object FabricAbadoned_greatworkClient : ClientModInitializer {
         BlockEntityRendererRegistry.register(
             Abadoned_greatworkBlockEntities.TRUTH_CRYSTAL.value as BlockEntityType<TruthCrystalBlockEntity>,
         ) { ctx -> TruthCrystalBlockEntityRenderer(ctx) }
+
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
+        BlockEntityRendererRegistry.register(
+            Abadoned_greatworkBlockEntities.WAVE_TRANSMITTER.value as BlockEntityType<WaveTransmitterBlockEntity>,
+        ) { ctx -> WaveTransmitterBlockEntityRenderer(ctx) }
+
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
+        BlockEntityRendererRegistry.register(
+            Abadoned_greatworkBlockEntities.MEDIA_POOL.value as BlockEntityType<cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity>,
+        ) { ctx -> cn.xm1221.abadoned_greatwork.client.renderer.MediaPoolBlockEntityRenderer(ctx) }
     }
 }

@@ -1,8 +1,12 @@
 package cn.xm1221.abadoned_greatwork.registry
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MultiDirectrixPBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.WaveReceiverBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.WaveRepeaterBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.WaveTransmitterBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
@@ -51,6 +55,34 @@ object Abadoned_greatworkBlockEntities : Abadoned_greatworkRegistrar<BlockEntity
         "multi_directrix_p",
         ::MultiDirectrixPBlockEntity,
         Abadoned_greatworkBlocks.MULTI_DIRECTRIX_P,
+    )
+
+    /** 队长发信石的 BlockEntityType */
+    val WAVE_TRANSMITTER = registerBE(
+        "wave_transmitter",
+        ::WaveTransmitterBlockEntity,
+        Abadoned_greatworkBlocks.WAVE_TRANSMITTER,
+    )
+
+    /** 谐振收信石的 BlockEntityType */
+    val WAVE_RECEIVER = registerBE(
+        "wave_receiver",
+        ::WaveReceiverBlockEntity,
+        Abadoned_greatworkBlocks.WAVE_RECEIVER,
+    )
+
+    /** 号角中继器的 BlockEntityType */
+    val WAVE_REPEATER = registerBE(
+        "wave_repeater",
+        ::WaveRepeaterBlockEntity,
+        Abadoned_greatworkBlocks.WAVE_REPEATER,
+    )
+
+    /** 媒质池的 BlockEntityType */
+    val MEDIA_POOL = registerBE(
+        "media_pool",
+        ::MediaPoolBlockEntity,
+        Abadoned_greatworkBlocks.MEDIA_POOL,
     )
 
     /**

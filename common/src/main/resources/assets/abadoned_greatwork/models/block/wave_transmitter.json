@@ -1,0 +1,102 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made for AbadonedGreatwork",
+	"textures": {
+		"0": "abadoned_greatwork:block/wave_transmitter",
+		"1": "abadoned_greatwork:block/multi_directrix_2",
+		"particle": "abadoned_greatwork:block/wave_transmitter"
+	},
+	"elements": [
+		{
+			"name": "slate_base",
+			"from": [0, 0, 0],
+			"to": [16, 3, 16],
+			"faces": {
+				"north": {"uv": [0, 16, 16, 14.5], "texture": "#1"},
+				"east": {"uv": [0, 16, 16, 14.5], "texture": "#1"},
+				"south": {"uv": [0, 16, 16, 14.5], "texture": "#1"},
+				"west": {"uv": [0, 16, 16, 14.5], "texture": "#1"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#1"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#1"}
+			}
+		},
+		{
+			"name": "lower_flange",
+			"from": [4, 3, 4],
+			"to": [12, 4, 12],
+			"faces": {
+				"north": {"uv": [8, 4, 12, 4.5], "texture": "#0"},
+				"east": {"uv": [8, 4, 12, 4.5], "texture": "#0"},
+				"south": {"uv": [8, 4, 12, 4.5], "texture": "#0"},
+				"west": {"uv": [8, 4, 12, 4.5], "texture": "#0"},
+				"up": {"uv": [8, 0, 12, 4], "texture": "#0"},
+				"down": {"uv": [8, 0, 12, 4], "texture": "#0"}
+			}
+		},
+		{
+			"name": "coil_turn_1",
+			"from": [5, 4, 5],
+			"to": [11, 6, 11],
+			"faces": {
+				"north": {"uv": [8, 5, 11, 6], "texture": "#0"},
+				"east": {"uv": [8, 5, 11, 6], "texture": "#0"},
+				"south": {"uv": [8, 5, 11, 6], "texture": "#0"},
+				"west": {"uv": [8, 5, 11, 6], "texture": "#0"},
+				"up": {"uv": [12, 0, 15, 3], "texture": "#0"},
+				"down": {"uv": [12, 0, 15, 3], "texture": "#0"}
+			}
+		},
+		{
+			"name": "coil_spacer",
+			"from": [6, 6, 6],
+			"to": [10, 7, 10],
+			"faces": {
+				"north": {"uv": [12, 4, 14, 4.5], "texture": "#0"},
+				"east": {"uv": [12, 4, 14, 4.5], "texture": "#0"},
+				"south": {"uv": [12, 4, 14, 4.5], "texture": "#0"},
+				"west": {"uv": [12, 4, 14, 4.5], "texture": "#0"},
+				"up": {"uv": [12.5, 0.5, 14.5, 2.5], "texture": "#0"},
+				"down": {"uv": [12.5, 0.5, 14.5, 2.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "coil_turn_2",
+			"from": [5, 7, 5],
+			"to": [11, 9, 11],
+			"faces": {
+				"north": {"uv": [8, 5, 11, 6], "texture": "#0"},
+				"east": {"uv": [8, 5, 11, 6], "texture": "#0"},
+				"south": {"uv": [8, 5, 11, 6], "texture": "#0"},
+				"west": {"uv": [8, 5, 11, 6], "texture": "#0"},
+				"up": {"uv": [12, 0, 15, 3], "texture": "#0"},
+				"down": {"uv": [12, 0, 15, 3], "texture": "#0"}
+			}
+		},
+		{
+			"name": "upper_cap",
+			"from": [5, 9, 5],
+			"to": [11, 10, 11],
+			"faces": {
+				"north": {"uv": [12, 3, 15, 3.5], "texture": "#0"},
+				"east": {"uv": [12, 3, 15, 3.5], "texture": "#0"},
+				"south": {"uv": [12, 3, 15, 3.5], "texture": "#0"},
+				"west": {"uv": [12, 3, 15, 3.5], "texture": "#0"},
+				"up": {"uv": [12, 0, 15, 3], "texture": "#0"},
+				"down": {"uv": [12, 0, 15, 3], "texture": "#0"}
+			}
+		},
+		{
+			"name": "mast_pole_base",
+			"from": [7, 3, 7],
+			"to": [9, 11, 9],
+			"faces": {
+				"north": {"uv": [0, 10.5, 1, 14.5], "texture": "#0"},
+				"east": {"uv": [0, 10.5, 1, 14.5], "texture": "#0"},
+				"south": {"uv": [0, 10.5, 1, 14.5], "texture": "#0"},
+				"west": {"uv": [0, 10.5, 1, 14.5], "texture": "#0"},
+				"up": {"uv": [0, 9, 1, 10], "texture": "#0"},
+				"down": {"uv": [0, 9, 1, 10], "texture": "#0"}
+			}
+		}
+	]
+}

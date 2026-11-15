@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "QBQ",
+    "S S",
+    "SSS"
+  ],
+  "key": {
+    "Q": { "item": "hexcasting:quenched_allay_shard" },
+    "B": { "item": "hexcasting:battery" },
+    "S": { "item": "hexcasting:slate" }
+  },
+  "result": {
+    "item": "abadoned_greatwork:media_pool",
+    "count": 1
+  },
+  "show_notification": true
+}

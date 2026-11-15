@@ -28,8 +28,14 @@ public final class Abadoned_greatworkIotaHolders {
      * 方块不在（或者还没同步出方块实体）时返回 {@code null}，上游会当成「这里不能写」。
      */
     public static void init() {
+        registerHolder("multi_directrix_p");
+        registerHolder("wave_transmitter");
+        registerHolder("wave_receiver");
+    }
+
+    private static void registerHolder(String path) {
         IoticBlocksAPI.INSTANCE.registerIotaHolderProvider(
-            Abadoned_greatwork.id("multi_directrix_p"),
+            Abadoned_greatwork.id(path),
             (level, pos) -> {
                 BlockEntity be = level.getBlockEntity(pos);
                 return be instanceof ADIotaHolder holder ? holder : null;
