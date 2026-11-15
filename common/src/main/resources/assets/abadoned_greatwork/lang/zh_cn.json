@@ -138,7 +138,7 @@
   "hexcasting.entry.confluence_directrix": "分合石",
   "hexcasting.page.confluence_directrix.1": "普通的$(l:greatwork/directrix)$(item)导向石/$每次只能挑出一条出路。但在研究了一些古代遗迹后，我发现$(media)媒质/$波完全可以同时沿多条路径并发前行——只要有一道足够清醒、又足够分裂的意志为它护航。$(br2)可惜，普通的村民意识在分神两处时便已摇摇欲坠；唯有灾厄村民之中精于同时驱策多位仆从的存在，才足以承受这股撕扯。",
   "hexcasting.page.confluence_directrix.empty": "以$(l:greatwork/directrix)$(item)空白导向石/$为基底，嵌合绿宝石与充能紫水晶，便可制出$(item)空白分合石/$。$(br2)潜行并$(k:use)其任意一面，可将该面在$(thing)未连接/$、$(thing)输入/$与$(thing)输出/$三态间切换。",
-  "hexcasting.page.confluence_directrix.2": "当$(media)媒质/$波进入$(item)空白分合石/$时，它将把当前栈与$(thing)渡鸦之思/$复制给所有已连通的$(thing)输出/$面，令多条分支真正$(l)并行推进/$；唯有全部活跃分支皆终结，$(l:greatwork/impetus)$(item)促动石/$才会结束本次施法。$(br2)若配置了多个$(thing)输入/$面，先抵达的分支会在此驻留等待，直到所有输入面齐聚后再合并放行：栈按到达顺序自下而上拼接，$(thing)渡鸦之思/$则以最后到达者为准。然而，若来自不同$(l:greatwork/impetus)$(item)促动石/$的$(media)媒质/$波在同一分合石中相遇，冲突的波源将立即引爆$(l:basics/mishaps)$(thing)事故/$！",
+  "hexcasting.page.confluence_directrix.2": "当$(media)媒质/$波进入$(item)空白分合石/$时，它将把当前栈与$(thing)渡鸦之思/$复制给所有已连通的$(thing)输出/$面，令多条分支真正$(l)并行推进/$；唯有全部活跃分支皆终结，$(l:greatwork/impetus)$(item)促动石/$才会结束本次施法。$(br2)若配置了多个$(thing)输入/$面，先抵达的分支会在此驻留等待，直到所有输入面齐聚后再合并放行：栈按到达顺序自下而上拼接，$(thing)渡鸦之思/$则以最后到达者为准。然而，若来自不同$(l:greatwork/impetus)$(item)促动石/$的$(media)媒质/$波在同一分合石中相遇，冲突的波源将立即引爆$(l:casting/mishaps)$(thing)事故/$！",
   "hexcasting.page.confluence_directrix.evoker": "将一只$(thing)唤魔者/$的意识$(l:patterns/great_spells/brainsweep)$(action)剥离/$到分合石中，便能唤醒其中的核心，得到$(item)唤魔者分合石/$。",
   "hexcasting.page.confluence_directrix.3": "$(item)唤魔者分合石/$可写入一条$(thing)图案/$作为节点程序；若未写入任何图案，则其行为与$(item)空白分合石/$完全一致。$(br)$(l)合流阶段/$（存在多个输入面）：当所有输入齐聚时，原栈会被替换为按到达顺序排列的若干列表——每支对应一个形如 $(thing)[原栈列表, 渡鸦之思或Null, 来向单位向量]/$ 的列表，随后执行一次内置图案。$(br)$(l)分流阶段/$：向每个可连通的输出面发射前，会先将其$(thing)出口方向单位向量/$压入栈顶并各执行一次内置图案；若某分支触发事故，仅该分支中止，其余分支仍继续运行。",
   "text.abadoned_greatwork.wireless.channel": "谐振频道：%s",
@@ -163,5 +163,5 @@
   "hexcasting.page.media_pool.1": "纵使布局再精巧的卓伟法术环，往往也受限于$(l:greatwork/impetus)$(item)促动石/$有限的媒质容量——每每未至终局便中途枯竭。$(br2)若能以淬灵晶与石板构筑一口开放的蓄能石槽，将媒质之瓶的储流引入其中，或许就能在法阵运行途中随时为其补给，甚至回收余流。",
   "hexcasting.page.media_pool.recipe": "以$(item)媒质之瓶/$为核心，与$(item)淬灵晶碎片/$及$(item)石板/$围合砌成$(item)媒质池/$。",
   "hexcasting.page.media_pool.2": "$(item)媒质池/$仅能水平平放，最大可储存 $(thing)7680/$ 紫水晶粉（注入$(item)造物解除器/$则变为$(thing)无限/$）。手持紫水晶粉、碎片、充能紫水晶或媒质之瓶等媒质容器$(k:use)即可向池内注能；池中液面会随储量升降，接入红石比较器可输出 $(thing)0~15/$ 信号，佩戴$(item)探知透镜/$可察看准确余量。",
-  "hexcasting.page.media_pool.3": "$(item)媒质池/$可作为串联节点接入法术环，媒质波穿过时会从栈顶弹出一个有限$(thing)数值 n/$：$(br)$(li)$(thing)n > 0/$：从池中取出 $(media)n/$ 粉注入本环促动石（池内不足则引发$(l:basics/mishaps)$(thing)事故/$）；$(br)$(li)$(thing)n < 0/$：从促动石抽取 $(media)|n|/$ 粉充入池中（促动石不足则引发$(l:basics/mishaps)$(thing)事故/$）；$(br)$(li)$(thing)n = 0/$：仅消耗该数值并继续传递；若栈空或栈顶非数值，同样触发事故。"
+  "hexcasting.page.media_pool.3": "$(item)媒质池/$可作为串联节点接入法术环，媒质波穿过时会从栈顶弹出一个有限$(thing)数值 n/$：$(br)$(li)$(thing)n > 0/$：从池中取出 $(media)n/$ 粉注入本环促动石（池内不足则引发$(l:casting/mishaps)$(thing)事故/$）；$(br)$(li)$(thing)n < 0/$：从促动石抽取 $(media)|n|/$ 粉充入池中（促动石不足则引发$(l:casting/mishaps)$(thing)事故/$）；$(br)$(li)$(thing)n = 0/$：仅消耗该数值并继续传递；若栈空或栈顶非数值，同样触发事故。"
 }
