@@ -1,0 +1,32 @@
+{
+  "name": "hexcasting.entry.vindicator_ambit",
+  "category": "hexcasting:greatwork",
+  "icon": "abadoned_greatwork:ambit_switch",
+  "advancement": "hexcasting:enlightenment",
+  "entry_color": "54398a",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.vindicator_ambit.1"
+    },
+    {
+      "type": "hexcasting:brainsweep",
+      "recipe": "abadoned_greatwork:brainsweep/ambit_switch",
+      "text": "hexcasting.page.vindicator_ambit.switch_recipe"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "abadoned_greatwork:ambit_anchor",
+      "text": "hexcasting.page.vindicator_ambit.pylon_recipe"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.vindicator_ambit.2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "hexcasting.page.vindicator_ambit.3"
+    }
+  ]
+}

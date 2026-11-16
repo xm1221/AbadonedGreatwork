@@ -1,0 +1,15 @@
+{
+  "type": "hexcasting:brainsweep",
+  "blockIn": {
+    "type": "block",
+    "block": "hexcasting:directrix/empty"
+  },
+  "cost": 1000000,
+  "entityIn": {
+    "type": "entity_type",
+    "entityType": "minecraft:vindicator"
+  },
+  "result": {
+    "name": "abadoned_greatwork:ambit_switch"
+  }
+}

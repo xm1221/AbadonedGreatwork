@@ -1,6 +1,8 @@
 package cn.xm1221.abadoned_greatwork.registry
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.AmbitSwitchBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MultiDirectrixPBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
@@ -83,6 +85,20 @@ object Abadoned_greatworkBlockEntities : Abadoned_greatworkRegistrar<BlockEntity
         "media_pool",
         ::MediaPoolBlockEntity,
         Abadoned_greatworkBlocks.MEDIA_POOL,
+    )
+
+    /** 域形切换件的 BlockEntityType */
+    val AMBIT_SWITCH = registerBE(
+        "ambit_switch",
+        ::AmbitSwitchBlockEntity,
+        Abadoned_greatworkBlocks.AMBIT_SWITCH,
+    )
+
+    /** 域形锚点的 BlockEntityType */
+    val AMBIT_ANCHOR = registerBE(
+        "ambit_anchor",
+        ::AmbitAnchorBlockEntity,
+        Abadoned_greatworkBlocks.AMBIT_ANCHOR,
     )
 
     /**

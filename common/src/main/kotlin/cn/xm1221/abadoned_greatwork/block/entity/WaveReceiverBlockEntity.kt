@@ -4,6 +4,7 @@ import at.petrak.hexcasting.api.addldata.ADIotaHolder
 import at.petrak.hexcasting.api.casting.circles.BlockEntityAbstractImpetus
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
 import at.petrak.hexcasting.api.casting.iota.Iota
+import cn.xm1221.abadoned_greatwork.casting.circles.AmbitReshapeHook
 import cn.xm1221.abadoned_greatwork.casting.circles.ImpetusBranchHost
 import cn.xm1221.abadoned_greatwork.casting.circles.WirelessChannelState
 import cn.xm1221.abadoned_greatwork.casting.circles.WirelessWaveNetwork
@@ -85,7 +86,7 @@ class WaveReceiverBlockEntity(
         super.startExecution(caster)
         val state = this.executionState ?: return false
         state.currentImage = incomingImage
-            .copy(userData = incomingImage.userData.copy())
+            .copy(userData = AmbitReshapeHook.clearShapeFromUserData(incomingImage.userData))
             .withOverriddenUsedOps(0)
         setChanged()
         return true

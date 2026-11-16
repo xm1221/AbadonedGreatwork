@@ -31,6 +31,8 @@ public final class Abadoned_greatworkIotaHolders {
         registerHolder("multi_directrix_p");
         registerHolder("wave_transmitter");
         registerHolder("wave_receiver");
+        registerHolder("ambit_switch");
+        registerHolder("ambit_anchor");
     }
 
     private static void registerHolder(String path) {

@@ -1,6 +1,8 @@
 package cn.xm1221.abadoned_greatwork
 
 import at.petrak.hexcasting.api.client.ScryingLensOverlayRegistry
+import cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity
+import cn.xm1221.abadoned_greatwork.block.entity.AmbitSwitchBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MultiDirectrixPBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.WaveRepeaterBlockEntity
@@ -43,6 +45,7 @@ object Abadoned_greatworkClient {
             Abadoned_greatworkBlocks.WAVE_RECEIVER.value,
             Abadoned_greatworkBlocks.WAVE_REPEATER.value,
             Abadoned_greatworkBlocks.MEDIA_POOL.value,
+            Abadoned_greatworkBlocks.AMBIT_ANCHOR.value,
         )
     }
 
@@ -82,6 +85,14 @@ object Abadoned_greatworkClient {
         }
         ScryingLensOverlayRegistry.addDisplayer(Abadoned_greatworkBlocks.MEDIA_POOL.value) { lines, _, pos, _, world, _ ->
             val be = world.getBlockEntity(pos) as? MediaPoolBlockEntity ?: return@addDisplayer
+            be.appendLensLines(lines)
+        }
+        ScryingLensOverlayRegistry.addDisplayer(Abadoned_greatworkBlocks.AMBIT_SWITCH.value) { lines, _, pos, _, world, _ ->
+            val be = world.getBlockEntity(pos) as? AmbitSwitchBlockEntity ?: return@addDisplayer
+            be.appendLensLines(lines)
+        }
+        ScryingLensOverlayRegistry.addDisplayer(Abadoned_greatworkBlocks.AMBIT_ANCHOR.value) { lines, _, pos, _, world, _ ->
+            val be = world.getBlockEntity(pos) as? AmbitAnchorBlockEntity ?: return@addDisplayer
             be.appendLensLines(lines)
         }
     }

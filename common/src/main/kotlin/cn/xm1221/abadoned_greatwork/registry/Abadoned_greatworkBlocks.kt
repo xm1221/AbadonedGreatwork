@@ -1,6 +1,8 @@
 package cn.xm1221.abadoned_greatwork.registry
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.block.AmbitAnchorBlock
+import cn.xm1221.abadoned_greatwork.block.AmbitSwitchBlock
 import cn.xm1221.abadoned_greatwork.block.MediaPoolBlock
 import cn.xm1221.abadoned_greatwork.block.MultiDirectrixBlock
 import cn.xm1221.abadoned_greatwork.block.MultiDirectrixPBlock
@@ -178,6 +180,34 @@ object Abadoned_greatworkBlocks : Abadoned_greatworkRegistrar<Block>(
                 .mapColor(MapColor.COLOR_PURPLE)
                 .strength(3.0f, 6.0f)
                 .sound(SoundType.DEEPSLATE)
+                .pushReaction(PushReaction.BLOCK)
+                .noOcclusion(),
+        )
+    }
+
+    /**
+     * 域形切换件（暂定名）— 法术环节点，激活后将当前波的施法范围重塑为同频锚点围出的多边形立柱。
+     */
+    val AMBIT_SWITCH: RegistrarEntry<Block> = registerBlock("ambit_switch") {
+        AmbitSwitchBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(3.0f, 6.0f)
+                .sound(SoundType.DEEPSLATE)
+                .pushReaction(PushReaction.BLOCK)
+                .noOcclusion(),
+        )
+    }
+
+    /**
+     * 域形锚点（暂定名）— 放置在世界中的独立界桩，同频按顺位闭合构形并决定上下界高度。
+     */
+    val AMBIT_ANCHOR: RegistrarEntry<Block> = registerBlock("ambit_anchor") {
+        AmbitAnchorBlock(
+            BlockBehaviour.Properties.of()
+                .mapColor(MapColor.COLOR_PURPLE)
+                .strength(2.0f, 6.0f)
+                .sound(SoundType.AMETHYST)
                 .pushReaction(PushReaction.BLOCK)
                 .noOcclusion(),
         )

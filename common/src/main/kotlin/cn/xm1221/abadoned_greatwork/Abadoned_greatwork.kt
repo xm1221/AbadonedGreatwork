@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import cn.xm1221.abadoned_greatwork.block.Abadoned_greatworkLootInjector
+import cn.xm1221.abadoned_greatwork.casting.circles.AmbitReshapeHook
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkServerConfig
 import cn.xm1221.abadoned_greatwork.networking.Abadoned_greatworkNetworking
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkActions
@@ -51,6 +52,7 @@ object Abadoned_greatwork {
         )
         // 需要「玩家能往方块里写 iota」的方块（可编程分流器）走 IoticBlocks 的入口
         Abadoned_greatworkIotaHolders.init()
+        AmbitReshapeHook.init()
     }
 
     fun initServer() {

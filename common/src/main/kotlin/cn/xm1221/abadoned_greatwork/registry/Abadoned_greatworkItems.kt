@@ -69,6 +69,12 @@ object Abadoned_greatworkItems : Abadoned_greatworkRegistrar<Item>(
     /** 媒质池的 BlockItem */
     val MEDIA_POOL = registerBlockItem(Abadoned_greatworkBlocks.MEDIA_POOL)
 
+    /** 域形切换件的 BlockItem */
+    val AMBIT_SWITCH = registerBlockItem(Abadoned_greatworkBlocks.AMBIT_SWITCH)
+
+    /** 域形锚点的 BlockItem */
+    val AMBIT_ANCHOR = registerBlockItem(Abadoned_greatworkBlocks.AMBIT_ANCHOR)
+
     /** 真理水晶（变体 0） */
     val TRUTH_CRYSTAL_0 = registerItem("item_truth_crystal_0", ItemTruthCrystal::create0)
 

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " A ",
+    "ISI",
+    " D "
+  ],
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "I": { "item": "minecraft:iron_ingot" },
+    "S": { "item": "hexcasting:slate" },
+    "D": [
+      { "item": "minecraft:deepslate" },
+      { "item": "minecraft:cobbled_deepslate" }
+    ]
+  },
+  "result": {
+    "item": "abadoned_greatwork:ambit_anchor",
+    "count": 4
+  },
+  "show_notification": true
+}

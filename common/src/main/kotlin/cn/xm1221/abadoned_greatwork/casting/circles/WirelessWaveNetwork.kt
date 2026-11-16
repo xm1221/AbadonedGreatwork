@@ -93,6 +93,12 @@ class WirelessChannelState(
         customIotaTag?.let { tag.put(TAG_CUSTOM_IOTA, it.copy()) }
     }
 
+    fun copyTo(target: CompoundTag) {
+        target.remove(TAG_CHANNEL)
+        target.remove(TAG_CUSTOM_IOTA)
+        save(target)
+    }
+
     fun load(tag: CompoundTag) {
         channel = if (tag.contains(TAG_CHANNEL)) Math.floorMod(tag.getInt(TAG_CHANNEL), CHANNEL_COUNT) else 0
         customIotaTag = if (tag.contains(TAG_CUSTOM_IOTA, Tag.TAG_COMPOUND.toInt())) {
