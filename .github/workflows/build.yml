@@ -35,10 +35,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Two JDKs: 21 is what runs Gradle (buildSrc uses Loom 1.11 / unpick 3.0, which
+      # needs a Java 21 runtime), 17 is the toolchain the mod compiles against.
+      # setup-java exports JAVA_HOME_17_X64, and gradle.properties registers it through
+      # org.gradle.java.installations.fromEnv - Gradle does not read that variable by itself.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          # ORDER MATTERS: setup-java makes the LAST version the default JAVA_HOME/PATH.
+          # Gradle must launch on 21, so 21 goes last; 17 is then only reachable via
+          # JAVA_HOME_17_X64, which gradle.properties registers as a toolchain source.
+          java-version: |
+            17
+            21
 
       - uses: gradle/actions/setup-gradle@v4
 
