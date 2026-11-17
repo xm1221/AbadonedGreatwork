@@ -242,13 +242,30 @@ object AmbitNetwork {
         val channelByPos = HashMap<BlockPos, WirelessChannelKey>()
         val orderByPos = HashMap<BlockPos, Long>()
         val posByChannel = HashMap<WirelessChannelKey, HashSet<BlockPos>>()
+
+        /**
+         * 该坐标当前归属哪个方块实体实例。
+         *
+         * 用来判断一次注销是否还有效：同坐标换 BE 时，旧实例的 `setRemoved()` 会晚于新实例的
+         * 注册执行，若只按坐标删就会把新实例的登记一起抹掉。
+         *
+         * 这里刻意不调 `Level.getBlockEntity` 去反查——那个方法默认带
+         * `EntityCreationType.IMMEDIATE`，在 `setRemoved` 期间反查可能顺手把一个新 BE 建出来。
+         */
+        val ownerByPos = HashMap<BlockPos, AmbitAnchorBlockEntity>()
     }
 
     private val worlds = WeakHashMap<ServerLevel, WorldBucket>()
 
     private fun bucket(level: ServerLevel): WorldBucket = worlds.getOrPut(level) { WorldBucket() }
 
-    fun registerAnchor(level: ServerLevel, pos: BlockPos, key: WirelessChannelKey, order: Long) {
+    fun registerAnchor(
+        level: ServerLevel,
+        pos: BlockPos,
+        key: WirelessChannelKey,
+        order: Long,
+        owner: AmbitAnchorBlockEntity? = null,
+    ) {
         val immutable = pos.immutable()
         val wb = bucket(level)
         wb.channelByPos.remove(immutable)?.let { oldKey ->
@@ -260,10 +277,25 @@ object AmbitNetwork {
         wb.channelByPos[immutable] = key
         wb.orderByPos[immutable] = order
         wb.posByChannel.getOrPut(key) { HashSet() }.add(immutable)
+        if (owner != null) {
+            wb.ownerByPos[immutable] = owner
+        }
     }
 
-    fun unregisterAnchor(level: ServerLevel, pos: BlockPos) {
+    /**
+     * 注销 [pos] 上的锚点。
+     *
+     * 传入 [owner] 时做归属校验：只有当索引里记的仍是这个实例才真正删除。传 `null` 表示强制删除
+     * （给不持有实例的调用方用）。
+     */
+    fun unregisterAnchor(level: ServerLevel, pos: BlockPos, owner: AmbitAnchorBlockEntity? = null) {
         val wb = worlds[level] ?: return
+        val currentOwner = wb.ownerByPos[pos]
+        if (owner != null && currentOwner != null && currentOwner !== owner) {
+            // 这个坐标已经被另一个（更新的）实例接管了，旧实例的注销必须让路
+            return
+        }
+        wb.ownerByPos.remove(pos)
         wb.orderByPos.remove(pos)
         val oldKey = wb.channelByPos.remove(pos) ?: return
         wb.posByChannel[oldKey]?.let { set ->
@@ -272,20 +304,33 @@ object AmbitNetwork {
         }
     }
 
-    fun updateAnchor(level: ServerLevel, pos: BlockPos, newKey: WirelessChannelKey, newOrder: Long) {
-        registerAnchor(level, pos, newKey, newOrder)
+    fun updateAnchor(
+        level: ServerLevel,
+        pos: BlockPos,
+        newKey: WirelessChannelKey,
+        newOrder: Long,
+        owner: AmbitAnchorBlockEntity? = null,
+    ) {
+        registerAnchor(level, pos, newKey, newOrder, owner)
     }
 
-    /** 为刚放入某频道的新锚点分配末尾顺位号。 */
+    /**
+     * 为刚放进某频道的新锚点分配顺位号。
+     *
+     * 号从 [AmbitOrderCounter] 的持久计数器取，而不是"扫当前已加载锚点取最大值 +1"。
+     * 后者在跨区块场景下会撞号：同频道锚点分布在不同区块、可独立卸载，卸载期间它们不在
+     * [WorldBucket] 里，于是新号会等于某个已持久化但未加载锚点的旧号。撞号后
+     * [getOrderedAnchors] 只能靠坐标兜底排序，顶点顺序就偏离了玩家的摆放意图。
+     */
     fun allocateAppendOrder(level: ServerLevel, key: WirelessChannelKey): Long {
+        val counter = AmbitOrderCounter.of(level)
+        // 已加载锚点里若存在比计数器更大的号（例如旧存档、或手动改过 NBT），先把它抬上来，
+        // 避免下一次分配正好撞上它。
         val wb = bucket(level)
-        val set = wb.posByChannel[key] ?: return 1L
-        var maxOrder = 0L
-        for (p in set) {
-            val o = wb.orderByPos[p] ?: 0L
-            if (o > maxOrder) maxOrder = o
+        wb.posByChannel[key]?.forEach { p ->
+            counter.observe(key, wb.orderByPos[p] ?: 0L)
         }
-        return maxOrder + 1L
+        return counter.allocate(key)
     }
 
     /** 返回该频道当前所有已加载且按顺位排序的锚点坐标列表。 */
@@ -322,9 +367,11 @@ object AmbitNetwork {
         ordered.add(nextIdx, moving)
 
         val wb = bucket(level)
+        val counter = AmbitOrderCounter.of(level)
         for ((rankIdx, anchorPos) in ordered.withIndex()) {
             val normalizedOrder = (rankIdx + 1).toLong()
             wb.orderByPos[anchorPos] = normalizedOrder
+            counter.observe(key, normalizedOrder)
             val be = level.getBlockEntity(anchorPos) as? AmbitAnchorBlockEntity
             be?.applyNormalizedOrder(normalizedOrder)
         }

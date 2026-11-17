@@ -93,7 +93,8 @@
     - `common/src/main/resources/assets/abadoned_greatwork/models/block/ambit_switch.json`
     - `common/src/main/resources/assets/abadoned_greatwork/models/block/ambit_switch_energized.json`
     - `common/src/main/resources/assets/abadoned_greatwork/models/item/ambit_switch.json`
-    - `common/src/main/resources/assets/abadoned_greatwork/textures/block/ambit_switch_front.png`（及 `_energized`、`side`、`_side_energized`）
+    - `common/src/main/resources/assets/abadoned_greatwork/textures/block/ambit_switch.png`（及 `ambit_switch_energized.png`；另有拼写错误的 `ambit_swich.png`，当前无引用，可删）
+  - **当前状态**：`models/block/ambit_switch.json` 与 `ambit_switch_energized.json` 的 `textures` 段仍指向 `multi_directrix_1` / `multi_directrix_0`（及对应 `_energized`），所以游戏内外观与 `multi_directrix` 相同——上面三张专用贴图已画好但尚未接入 model。
   - **视觉目标**：沿用板岩法术环方砖底材；不要只画简单纯 `cube` 格子，应结合镂空凹槽/斜切斧刃折角铁质镶边与中心菱形紫晶核（`energized` 时菱形刻槽与棱线亮起亮紫/冷银光），可参考 Blockbench 多元素立体结构。
 - **道引标（`ambit_anchor`）**
   - 当前文件：
