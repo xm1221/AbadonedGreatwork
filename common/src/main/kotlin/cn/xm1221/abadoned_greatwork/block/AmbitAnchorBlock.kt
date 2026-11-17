@@ -26,21 +26,22 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.shapes.CollisionContext
+import net.minecraft.world.phys.shapes.Shapes
 import net.minecraft.world.phys.shapes.VoxelShape
 
 /**
- * 范围锚点（`ambit_anchor`）— 在世界中界定施法域轮廓顶点与上下界高度的独立锚桩方块。
+ * 道引标（`ambit_anchor`）— 在世界中界定施法域轮廓顶点与上下界高度的独立界桩方块。
  *
- * - 持有经由 [AmbitSwitchBlock] 刷印过频道的物品放下时，自动继承频道并按放置次序追加为该频道末位节点；
- * - 空手右击：切换频道 `0..15` 并置入新频道末尾；
- * - **潜行 + 空手右击**：将该锚点在本频道内的顺位序号向后挪动一位（末尾回绕首位），并喷射轮廓连线粒子提示。
+ * - 放下时默认顺位为 `0`（未指定），持有经 [AmbitSwitchBlock] 刷印过频道的物品放下时自动继承频道；
+ * - **空手右击**：切换频道 `0..15`（保留自身顺位号）；
+ * - **潜行 + 空手右击**：手动递增这根道引标的顺位（`0 -> 1 -> 2 -> ... -> 16 -> 1`），并实时提示重号与连线粒子。
  */
 class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock {
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
         AmbitAnchorBlockEntity(Abadoned_greatworkBlockEntities.AMBIT_ANCHOR.value, pos, state)
 
-    override fun getRenderShape(state: BlockState): RenderShape = RenderShape.MODEL
+    override fun getRenderShape(state: BlockState): RenderShape = RenderShape.ENTITYBLOCK_ANIMATED
 
     override fun getShape(
         state: BlockState,
@@ -57,28 +58,14 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
         stack: ItemStack,
     ) {
         super.setPlacedBy(level, pos, state, placer, stack)
-        val srv = level as? ServerLevel ?: return
-        val be = srv.getBlockEntity(pos) as? AmbitAnchorBlockEntity ?: return
+        if (level !is ServerLevel) return
+        val be = level.getBlockEntity(pos) as? AmbitAnchorBlockEntity ?: return
 
-        val itemTag = BlockItem.getBlockEntityData(stack)
-        if (itemTag != null) {
-            // 先预览加载目标频道，以便分配正确频道桶中的顺位号
-            val probe = WirelessChannelState {}
-            probe.load(itemTag)
-            val allocated = AmbitNetwork.allocateAppendOrder(srv, probe.key())
-            be.applyPlacedBinding(itemTag, allocated)
-        } else {
-            val allocated = AmbitNetwork.allocateAppendOrder(srv, be.channelState.key())
-            be.applyPlacedBinding(null, allocated)
-        }
-
-        val (rank, total) = AmbitNetwork.getAnchorRank(srv, pos, be.channelState.key())
+        be.applyPlacedBinding(BlockItem.getBlockEntityData(stack))
         (placer as? Player)?.displayClientMessage(
             Component.translatable(
-                "text.abadoned_greatwork.ambit.anchor_placed",
+                "text.abadoned_greatwork.ambit.anchor_placed_manual",
                 be.channelState.channelDisplay(),
-                rank,
-                total,
             ),
             true,
         )
@@ -98,34 +85,46 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
         if (!level.isClientSide) {
             val srv = level as ServerLevel
             if (player.isShiftKeyDown) {
-                val (newRank, total) = AmbitNetwork.rotateAnchorOrder(srv, pos, be.channelState.key())
-                val anchors = AmbitNetwork.getOrderedAnchors(srv, be.channelState.key())
-                AmbitNetwork.spawnPolygonOutlineParticles(srv, anchors)
-                player.displayClientMessage(
+                val newOrder = be.cycleManualOrder()
+                val key = be.channelState.key()
+                val conflict = AmbitNetwork.findConflictingPos(srv, pos, key, newOrder)
+                AmbitNetwork.spawnPolygonOutlineParticles(srv, AmbitNetwork.getChannelAssignedOutline(srv, key))
+
+                val msg = if (conflict != null) {
                     Component.translatable(
-                        "text.abadoned_greatwork.ambit.anchor_reordered",
+                        "text.abadoned_greatwork.ambit.anchor_order_conflict",
                         be.channelState.channelDisplay(),
-                        newRank,
-                        total,
-                    ),
-                    true,
-                )
+                        newOrder,
+                        conflict.toShortString(),
+                    ).withStyle(ChatFormatting.YELLOW)
+                } else {
+                    Component.translatable(
+                        "text.abadoned_greatwork.ambit.anchor_order_set",
+                        be.channelState.channelDisplay(),
+                        newOrder,
+                    )
+                }
+                player.displayClientMessage(msg, true)
                 srv.playSound(
                     null,
                     pos,
                     SoundEvents.AMETHYST_CLUSTER_PLACE,
                     SoundSource.BLOCKS,
                     0.85f,
-                    0.8f + (newRank % 8) * 0.08f,
+                    0.75f + (newOrder % 16) * 0.05f,
                 )
             } else {
-                val pair = be.reassignChannelAndOrder(1)
+                val ch = be.cycleChannel(1)
+                val orderComp = if (be.order <= 0L) {
+                    Component.translatable("text.abadoned_greatwork.ambit.anchor_order_unset")
+                } else {
+                    Component.literal("#${be.order}")
+                }
                 player.displayClientMessage(
                     Component.translatable(
-                        "text.abadoned_greatwork.ambit.anchor_placed",
+                        "text.abadoned_greatwork.ambit.anchor_channel_status",
                         be.channelState.channelDisplay(),
-                        pair.first,
-                        pair.second,
+                        orderComp,
                     ),
                     true,
                 )
@@ -135,7 +134,7 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
                     SoundEvents.AMETHYST_BLOCK_CHIME,
                     SoundSource.BLOCKS,
                     1.0f,
-                    0.7f + be.channelState.channel * 0.05f,
+                    0.7f + ch * 0.05f,
                 )
             }
         }
@@ -161,6 +160,9 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
     }
 
     companion object {
-        private val SHAPE: VoxelShape = box(4.0, 0.0, 4.0, 12.0, 16.0, 12.0)
+        private val SHAPE: VoxelShape = Shapes.or(
+            box(2.0, 0.0, 2.0, 14.0, 4.5, 14.0),
+            box(4.5, 4.5, 4.5, 11.5, 16.0, 11.5),
+        )
     }
 }

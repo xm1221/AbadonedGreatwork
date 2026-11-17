@@ -1,56 +1,6 @@
 {
   "variants": {
-    "energized=false,facing=up": {
-      "model": "abadoned_greatwork:block/ambit_switch"
-    },
-    "energized=false,facing=down": {
-      "model": "abadoned_greatwork:block/ambit_switch",
-      "x": 180
-    },
-    "energized=false,facing=north": {
-      "model": "abadoned_greatwork:block/ambit_switch",
-      "x": 90
-    },
-    "energized=false,facing=east": {
-      "model": "abadoned_greatwork:block/ambit_switch",
-      "x": 90,
-      "y": 90
-    },
-    "energized=false,facing=south": {
-      "model": "abadoned_greatwork:block/ambit_switch",
-      "x": 90,
-      "y": 180
-    },
-    "energized=false,facing=west": {
-      "model": "abadoned_greatwork:block/ambit_switch",
-      "x": 90,
-      "y": 270
-    },
-    "energized=true,facing=up": {
-      "model": "abadoned_greatwork:block/ambit_switch_energized"
-    },
-    "energized=true,facing=down": {
-      "model": "abadoned_greatwork:block/ambit_switch_energized",
-      "x": 180
-    },
-    "energized=true,facing=north": {
-      "model": "abadoned_greatwork:block/ambit_switch_energized",
-      "x": 90
-    },
-    "energized=true,facing=east": {
-      "model": "abadoned_greatwork:block/ambit_switch_energized",
-      "x": 90,
-      "y": 90
-    },
-    "energized=true,facing=south": {
-      "model": "abadoned_greatwork:block/ambit_switch_energized",
-      "x": 90,
-      "y": 180
-    },
-    "energized=true,facing=west": {
-      "model": "abadoned_greatwork:block/ambit_switch_energized",
-      "x": 90,
-      "y": 270
-    }
+    "energized=false": { "model": "abadoned_greatwork:block/ambit_switch" },
+    "energized=true": { "model": "abadoned_greatwork:block/ambit_switch_energized" }
   }
 }

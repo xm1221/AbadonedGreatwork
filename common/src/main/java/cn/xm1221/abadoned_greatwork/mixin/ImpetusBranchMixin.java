@@ -4,6 +4,7 @@ import at.petrak.hexcasting.api.block.circle.BlockCircleComponent;
 import at.petrak.hexcasting.api.casting.circles.BlockEntityAbstractImpetus;
 import at.petrak.hexcasting.api.casting.circles.CircleExecutionState;
 import at.petrak.hexcasting.api.casting.circles.ICircleComponent;
+import cn.xm1221.abadoned_greatwork.casting.circles.AmbitNetwork;
 import cn.xm1221.abadoned_greatwork.casting.circles.DirectrixConflictTracker;
 import cn.xm1221.abadoned_greatwork.casting.circles.ImpetusBranchHost;
 import cn.xm1221.abadoned_greatwork.casting.circles.MergeBuffer;
@@ -269,6 +270,7 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
                 this.abw$cleaningUp = false;
             }
             DirectrixConflictTracker.releaseImpetus(level, self.getBlockPos());
+            AmbitNetwork.deactivateImpetusAnchors(level, self.getBlockPos());
         }
         if (this.abw$branches != null) {
             this.abw$branches.clear();
@@ -300,6 +302,7 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
                         this.abw$allReached.clear();
                     }
                     DirectrixConflictTracker.releaseImpetus(level, self.getBlockPos());
+                    AmbitNetwork.deactivateImpetusAnchors(level, self.getBlockPos());
                 }
                 return;
             }
@@ -386,6 +389,7 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
                     this.abw$mergeBuffers.clear();
                 }
                 DirectrixConflictTracker.releaseImpetus(level, self.getBlockPos());
+                AmbitNetwork.deactivateImpetusAnchors(level, self.getBlockPos());
                 return;
             }
 
@@ -441,6 +445,7 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
         var self = (BlockEntityAbstractImpetus) (Object) this;
         if (self.getLevel() instanceof ServerLevel srv) {
             DirectrixConflictTracker.releaseImpetus(srv, self.getBlockPos());
+            AmbitNetwork.deactivateImpetusAnchors(srv, self.getBlockPos());
         }
     }
 

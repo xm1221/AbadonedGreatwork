@@ -39,5 +39,10 @@ object FabricAbadoned_greatworkClient : ClientModInitializer {
         BlockEntityRendererRegistry.register(
             Abadoned_greatworkBlockEntities.MEDIA_POOL.value as BlockEntityType<cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity>,
         ) { ctx -> cn.xm1221.abadoned_greatwork.client.renderer.MediaPoolBlockEntityRenderer(ctx) }
+
+        @Suppress("UNCHECKED_CAST", "DEPRECATION")
+        BlockEntityRendererRegistry.register(
+            Abadoned_greatworkBlockEntities.AMBIT_ANCHOR.value as BlockEntityType<cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity>,
+        ) { ctx -> cn.xm1221.abadoned_greatwork.client.renderer.AmbitAnchorBlockEntityRenderer(ctx) }
     }
 }

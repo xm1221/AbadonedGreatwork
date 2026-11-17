@@ -4,12 +4,17 @@ import at.petrak.hexcasting.api.block.circle.BlockCircleComponent
 import at.petrak.hexcasting.api.casting.circles.ICircleComponent
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
+import at.petrak.hexcasting.api.pigment.FrozenPigment
+import at.petrak.hexcasting.common.lib.HexItems
+import cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.AmbitSwitchBlockEntity
 import cn.xm1221.abadoned_greatwork.casting.circles.AmbitNetwork
 import cn.xm1221.abadoned_greatwork.casting.circles.AmbitPolygonShape
 import cn.xm1221.abadoned_greatwork.casting.circles.AmbitReshapeHook
 import cn.xm1221.abadoned_greatwork.casting.circles.MishapAmbitBudgetExceeded
+import cn.xm1221.abadoned_greatwork.casting.circles.MishapDuplicateAmbitOrder
 import cn.xm1221.abadoned_greatwork.casting.circles.MishapNotEnoughAmbitAnchors
+import cn.xm1221.abadoned_greatwork.casting.circles.MishapUnassignedAmbitOrder
 import cn.xm1221.abadoned_greatwork.casting.circles.triggerInCircle
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkItems
@@ -29,13 +34,9 @@ import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
-import net.minecraft.world.level.block.Mirror
-import net.minecraft.world.level.block.Rotation
+import net.minecraft.world.level.block.RenderShape
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.minecraft.world.level.block.state.StateDefinition
-import net.minecraft.world.level.block.state.properties.BlockStateProperties
-import net.minecraft.world.level.block.state.properties.DirectionProperty
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.shapes.CollisionContext
 import net.minecraft.world.phys.shapes.Shapes
@@ -56,38 +57,23 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
         registerDefaultState(
             stateDefinition.any()
                 .setValue(ENERGIZED, false)
-                .setValue(FACING, Direction.UP)
         )
-    }
-
-    override fun createBlockStateDefinition(builder: StateDefinition.Builder<Block, BlockState>) {
-        super.createBlockStateDefinition(builder)
-        builder.add(FACING)
     }
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity =
         AmbitSwitchBlockEntity(Abadoned_greatworkBlockEntities.AMBIT_SWITCH.value, pos, state)
+
+    override fun getRenderShape(state: BlockState): RenderShape = RenderShape.MODEL
 
     override fun getShape(
         state: BlockState,
         level: BlockGetter,
         pos: BlockPos,
         context: CollisionContext,
-    ): VoxelShape = Shapes.block()
+    ): VoxelShape = SHAPE
 
-    override fun getStateForPlacement(context: BlockPlaceContext): BlockState {
-        val base = context.nearestLookingDirection.opposite
-        val facing = if (context.player?.isShiftKeyDown == true) base.opposite else base
-        return defaultBlockState()
-            .setValue(FACING, facing)
-            .setValue(ENERGIZED, false)
-    }
-
-    override fun rotate(state: BlockState, rotation: Rotation): BlockState =
-        state.setValue(FACING, rotation.rotate(state.getValue(FACING)))
-
-    override fun mirror(state: BlockState, mirror: Mirror): BlockState =
-        state.rotate(mirror.getRotation(state.getValue(FACING)))
+    override fun getStateForPlacement(context: BlockPlaceContext): BlockState =
+        defaultBlockState().setValue(ENERGIZED, false)
 
     override fun use(
         state: BlockState,
@@ -155,10 +141,10 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
         pos: BlockPos,
         bs: BlockState,
         level: ServerLevel,
-    ): Boolean = true
+    ): Boolean = enterDir != Direction.DOWN
 
     override fun possibleExitDirections(pos: BlockPos, bs: BlockState, level: Level): EnumSet<Direction> =
-        EnumSet.allOf(Direction::class.java)
+        EXIT_DIRECTIONS.clone()
 
     override fun acceptControlFlow(
         imageIn: CastingImage,
@@ -170,15 +156,44 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
     ): ICircleComponent.ControlFlow {
         val be = world.getBlockEntity(pos) as? AmbitSwitchBlockEntity
         var nextUserData = imageIn.userData
+        val impetusPos = env.circleState().impetusPos
 
         if (be != null) {
             val key = be.channelState.key()
-            val anchors = AmbitNetwork.getOrderedAnchors(world, key)
+            val anchors = when (val chain = AmbitNetwork.resolveChannelAnchors(world, key)) {
+                AmbitNetwork.AnchorChainResult.Empty -> emptyList()
+
+                is AmbitNetwork.AnchorChainResult.TooFewAnchors -> {
+                    MishapNotEnoughAmbitAnchors(be.channelState.channelDisplay(), chain.count)
+                        .triggerInCircle(imageIn, env, bs)
+                    return ICircleComponent.ControlFlow.Stop()
+                }
+
+                is AmbitNetwork.AnchorChainResult.UnassignedOrder -> {
+                    MishapUnassignedAmbitOrder(be.channelState.channelDisplay(), chain.pos)
+                        .triggerInCircle(imageIn, env, bs)
+                    return ICircleComponent.ControlFlow.Stop()
+                }
+
+                is AmbitNetwork.AnchorChainResult.DuplicateOrder -> {
+                    MishapDuplicateAmbitOrder(
+                        channelDisplay = be.channelState.channelDisplay(),
+                        order = chain.order,
+                        posA = chain.posA,
+                        posB = chain.posB,
+                    ).triggerInCircle(imageIn, env, bs)
+                    return ICircleComponent.ControlFlow.Stop()
+                }
+
+                is AmbitNetwork.AnchorChainResult.Valid -> chain.anchors
+            }
+
             val budgetVolume = AmbitReshapeHook.circleBudgetVolume(env.circleState().bounds)
             when (val res = AmbitPolygonShape.computeAndValidate(anchors, budgetVolume)) {
                 AmbitPolygonShape.ValidationResult.Empty -> {
                     be.recordShapeSummary(0L, 0, 0L)
                     nextUserData = AmbitReshapeHook.clearShapeFromUserData(nextUserData)
+                    AmbitNetwork.deactivateImpetusAnchors(world, impetusPos)
                 }
 
                 is AmbitPolygonShape.ValidationResult.TooFewAnchors -> {
@@ -201,6 +216,27 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
                     val shape = res.shape
                     be.recordShapeSummary(shape.areaBlocks, shape.height, shape.volumeBlocks)
                     nextUserData = AmbitReshapeHook.writeShapeToUserData(nextUserData, shape)
+
+                    // 光球颜色：施法者定制染色优先，否则回落到栈顶 Iota 类型配色（空栈再回落默认紫）
+                    val pigment = env.pigment
+                    val customPigmentTag = if (!pigment.item.isEmpty &&
+                        !pigment.item.`is`(HexItems.DEFAULT_PIGMENT) &&
+                        pigment != FrozenPigment.DEFAULT.get()
+                    ) {
+                        pigment.serializeToNBT()
+                    } else {
+                        null
+                    }
+                    val fallbackColor = imageIn.stack.lastOrNull()?.type?.color()
+                        ?: AmbitAnchorBlockEntity.DEFAULT_ORB_COLOR
+
+                    AmbitNetwork.activateAnchorsForImpetus(
+                        level = world,
+                        impetusPos = impetusPos,
+                        anchors = anchors,
+                        pigmentTag = customPigmentTag,
+                        fallbackColor = fallbackColor,
+                    )
                     AmbitNetwork.spawnPolygonOutlineParticles(world, anchors)
                 }
             }
@@ -223,6 +259,11 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
     override fun particleHeight(pos: BlockPos, bs: BlockState, level: Level): Float = 0.5f
 
     companion object {
-        val FACING: DirectionProperty = BlockStateProperties.FACING
+        private val EXIT_DIRECTIONS: EnumSet<Direction> = EnumSet.complementOf(EnumSet.of(Direction.UP))
+
+        private val SHAPE: VoxelShape = Shapes.or(
+            box(0.0, 0.0, 0.0, 16.0, 3.0, 16.0),
+            box(2.0, 3.0, 2.0, 14.0, 13.0, 14.0),
+        )
     }
 }

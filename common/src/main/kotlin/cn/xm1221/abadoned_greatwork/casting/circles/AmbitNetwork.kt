@@ -43,9 +43,9 @@ class AmbitPolygonShape(
     fun contains(vec: Vec3): Boolean {
         val iy = Mth.floor(vec.y)
         if (iy < minY || iy > maxY) return false
-        val px = Mth.floor(vec.x) + 0.5
-        val pz = Mth.floor(vec.z) + 0.5 + SCAN_EPSILON
-        return isPointInsideEvenOdd(px, pz, xs, zs)
+        val ix = Mth.floor(vec.x)
+        val iz = Mth.floor(vec.z)
+        return isBlockInsideOrOnBoundary(ix, iz, xs, zs)
     }
 
     fun toNbt(): CompoundTag {
@@ -100,6 +100,51 @@ class AmbitPolygonShape(
         }
 
         /**
+         * 判断整数格 `(ix, iz)` 的方块中心是否在封闭多边形内部或边界线上：
+         * 先判点是否落于任意一条边界线段（含端点），再走与扫描线一致的奇偶射线测试，
+         * 确保东/南外沿及所有道引标自身角点不会因半开区间被意外裁掉。
+         */
+        fun isBlockInsideOrOnBoundary(ix: Int, iz: Int, xs: DoubleArray, zs: DoubleArray): Boolean {
+            val n = xs.size
+            if (n < 3) return false
+            val px = ix + 0.5
+            val pz = iz + 0.5
+            var j = n - 1
+            for (i in 0 until n) {
+                val xi = xs[i]
+                val zi = zs[i]
+                val xj = xs[j]
+                val zj = zs[j]
+                if (isPointOnSegment(px, pz, xj, zj, xi, zi)) {
+                    return true
+                }
+                j = i
+            }
+            return isPointInsideEvenOdd(px, pz + SCAN_EPSILON, xs, zs)
+        }
+
+        private fun isPointOnSegment(
+            px: Double,
+            pz: Double,
+            ax: Double,
+            az: Double,
+            bx: Double,
+            bz: Double,
+        ): Boolean {
+            val minX = min(ax, bx) - SCAN_EPSILON
+            val maxX = max(ax, bx) + SCAN_EPSILON
+            val minZ = min(az, bz) - SCAN_EPSILON
+            val maxZ = max(az, bz) + SCAN_EPSILON
+            if (px < minX || px > maxX || pz < minZ || pz > maxZ) return false
+            val dx = bx - ax
+            val dz = bz - az
+            val lenSq = dx * dx + dz * dz
+            if (lenSq <= 1.0e-12) return true
+            val cross = kotlin.math.abs((px - ax) * dz - (pz - az) * dx)
+            return cross * cross <= SCAN_EPSILON * SCAN_EPSILON * lenSq
+        }
+
+        /**
          * 与扫描线计数保持严格一致的奇偶射线测试。
          */
         fun isPointInsideEvenOdd(px: Double, pz: Double, xs: DoubleArray, zs: DoubleArray): Boolean {
@@ -124,7 +169,8 @@ class AmbitPolygonShape(
         }
 
         /**
-         * 使用奇偶扫描线统计封闭多边形覆盖的整数方块柱数，并在超出 [budgetVolume] 时提前中止。
+         * 使用奇偶扫描线 + 边界段并集统计封闭多边形覆盖的整数方块柱数（与 [isBlockInsideOrOnBoundary] 严格一致），
+         * 并在超出 [budgetVolume] 时提前中止。
          */
         fun computeAndValidate(anchors: List<BlockPos>, budgetVolume: Long): ValidationResult {
             if (anchors.isEmpty()) return ValidationResult.Empty
@@ -156,16 +202,41 @@ class AmbitPolygonShape(
 
             var area = 0L
             val crossings = DoubleArray(n)
+            val rowIntervals = ArrayList<LongRange>(n * 2)
             for (iz in minZ..maxZ) {
-                val pz = iz + 0.5 + SCAN_EPSILON
+                rowIntervals.clear()
+                val pzInterior = iz + 0.5 + SCAN_EPSILON
+                val pzEdge = iz + 0.5
                 var count = 0
                 var j = n - 1
                 for (i in 0 until n) {
+                    val xi = xs[i]
                     val zi = zs[i]
+                    val xj = xs[j]
                     val zj = zs[j]
-                    if ((zi > pz) != (zj > pz)) {
-                        crossings[count++] = xs[j] + (pz - zj) * (xs[i] - xs[j]) / (zi - zj)
+
+                    // 1. 奇偶内部交点
+                    if ((zi > pzInterior) != (zj > pzInterior)) {
+                        crossings[count++] = xj + (pzInterior - zj) * (xi - xj) / (zi - zj)
                     }
+
+                    // 2. 落在本行格中心的边界（水平边或正好压线通过格心的斜边/端点）
+                    if (kotlin.math.abs(zi - zj) <= SCAN_EPSILON) {
+                        if (kotlin.math.abs(zi - pzEdge) <= SCAN_EPSILON) {
+                            val minIx = Mth.floor(min(xi, xj)).toLong()
+                            val maxIx = Mth.floor(max(xi, xj)).toLong()
+                            if (maxIx >= minIx) rowIntervals.add(minIx..maxIx)
+                        }
+                    } else if (pzEdge >= min(zi, zj) - SCAN_EPSILON && pzEdge <= max(zi, zj) + SCAN_EPSILON) {
+                        val t = ((pzEdge - zj) / (zi - zj)).coerceIn(0.0, 1.0)
+                        val xAtZ = xj + t * (xi - xj)
+                        val nearestIx = floor(xAtZ).toLong()
+                        val pxCand = nearestIx + 0.5
+                        if (isPointOnSegment(pxCand, pzEdge, xj, zj, xi, zi)) {
+                            rowIntervals.add(nearestIx..nearestIx)
+                        }
+                    }
+
                     j = i
                 }
                 if (count >= 2) {
@@ -180,19 +251,37 @@ class AmbitPolygonShape(
                             var endIx = floor(x1.nextDown() - 0.5).toLong()
                             while (endIx + 0.5 >= x1) endIx--
                             if (endIx >= startIx) {
-                                area += (endIx - startIx + 1L)
-                                val currentVol = safeMultiply(area, height)
-                                if (currentVol > budgetVolume) {
-                                    return ValidationResult.OverBudget(
-                                        neededVolume = currentVol,
-                                        budgetVolume = budgetVolume,
-                                        areaBlocks = area,
-                                        height = height.toInt(),
-                                    )
-                                }
+                                rowIntervals.add(startIx..endIx)
                             }
                         }
                         k += 2
+                    }
+                }
+
+                if (rowIntervals.isNotEmpty()) {
+                    rowIntervals.sortWith(compareBy<LongRange> { it.first }.thenBy { it.last })
+                    var curStart = rowIntervals[0].first
+                    var curEnd = rowIntervals[0].last
+                    for (idx in 1 until rowIntervals.size) {
+                        val next = rowIntervals[idx]
+                        if (next.first <= curEnd + 1L) {
+                            if (next.last > curEnd) curEnd = next.last
+                        } else {
+                            area += (curEnd - curStart + 1L)
+                            curStart = next.first
+                            curEnd = next.last
+                        }
+                    }
+                    area += (curEnd - curStart + 1L)
+
+                    val currentVol = safeMultiply(area, height)
+                    if (currentVol > budgetVolume) {
+                        return ValidationResult.OverBudget(
+                            neededVolume = currentVol,
+                            budgetVolume = budgetVolume,
+                            areaBlocks = area,
+                            height = height.toInt(),
+                        )
                     }
                 }
             }
@@ -253,6 +342,8 @@ object AmbitNetwork {
          * `EntityCreationType.IMMEDIATE`，在 `setRemoved` 期间反查可能顺手把一个新 BE 建出来。
          */
         val ownerByPos = HashMap<BlockPos, AmbitAnchorBlockEntity>()
+        val activeAnchorsByImpetus = HashMap<BlockPos, HashSet<BlockPos>>()
+        val holdersByAnchor = HashMap<BlockPos, HashSet<BlockPos>>()
     }
 
     private val worlds = WeakHashMap<ServerLevel, WorldBucket>()
@@ -297,10 +388,89 @@ object AmbitNetwork {
         }
         wb.ownerByPos.remove(pos)
         wb.orderByPos.remove(pos)
+        wb.holdersByAnchor.remove(pos)?.forEach { impPos ->
+            wb.activeAnchorsByImpetus[impPos]?.let { set ->
+                set.remove(pos)
+                if (set.isEmpty()) wb.activeAnchorsByImpetus.remove(impPos)
+            }
+        }
         val oldKey = wb.channelByPos.remove(pos) ?: return
         wb.posByChannel[oldKey]?.let { set ->
             set.remove(pos)
             if (set.isEmpty()) wb.posByChannel.remove(oldKey)
+        }
+    }
+
+    /**
+     * 当法术环经过 `AmbitSwitchBlock` 并成功切换为 [anchors] 围出的范围时点亮这批道引标，
+     * 并自动熄灭同一促动石此前持有的其它道引标。
+     */
+    fun activateAnchorsForImpetus(
+        level: ServerLevel,
+        impetusPos: BlockPos,
+        anchors: List<BlockPos>,
+        pigmentTag: CompoundTag?,
+        fallbackColor: Int,
+    ) {
+        val imp = impetusPos.immutable()
+        val wb = bucket(level)
+        val newSet = anchors.map { it.immutable() }.toHashSet()
+
+        val prevSet = wb.activeAnchorsByImpetus[imp]
+        if (prevSet != null) {
+            for (oldAnchor in prevSet) {
+                if (oldAnchor !in newSet) {
+                    removeHolderAndMaybeExtinguish(level, wb, oldAnchor, imp)
+                }
+            }
+        }
+
+        if (newSet.isEmpty()) {
+            wb.activeAnchorsByImpetus.remove(imp)
+            return
+        }
+
+        wb.activeAnchorsByImpetus[imp] = newSet
+        for (anchorPos in newSet) {
+            wb.holdersByAnchor.getOrPut(anchorPos) { HashSet() }.add(imp)
+            val be = wb.ownerByPos[anchorPos] ?: (level.getBlockEntity(anchorPos) as? AmbitAnchorBlockEntity)
+            be?.setOrbActivation(true, pigmentTag, fallbackColor)
+        }
+    }
+
+    /**
+     * 促动石结束执行或切换回默认方盒时，熄灭其当前点亮的全部道引标（若有另一促动石仍在持有则保留）。
+     */
+    @JvmStatic
+    fun deactivateImpetusAnchors(level: ServerLevel, impetusPos: BlockPos) {
+        val wb = worlds[level] ?: return
+        val held = wb.activeAnchorsByImpetus.remove(impetusPos) ?: return
+        for (anchorPos in held) {
+            removeHolderAndMaybeExtinguish(level, wb, anchorPos, impetusPos)
+        }
+    }
+
+    fun isAnchorHeld(level: ServerLevel, anchorPos: BlockPos): Boolean {
+        val wb = worlds[level] ?: return false
+        return !wb.holdersByAnchor[anchorPos].isNullOrEmpty()
+    }
+
+    private fun removeHolderAndMaybeExtinguish(
+        level: ServerLevel,
+        wb: WorldBucket,
+        anchorPos: BlockPos,
+        impetusPos: BlockPos,
+    ) {
+        val holders = wb.holdersByAnchor[anchorPos]
+        if (holders != null) {
+            holders.remove(impetusPos)
+            if (holders.isEmpty()) {
+                wb.holdersByAnchor.remove(anchorPos)
+            }
+        }
+        if (wb.holdersByAnchor[anchorPos].isNullOrEmpty()) {
+            val be = wb.ownerByPos[anchorPos] ?: (level.getBlockEntity(anchorPos) as? AmbitAnchorBlockEntity)
+            be?.setOrbActivation(false, null, AmbitAnchorBlockEntity.DEFAULT_ORB_COLOR)
         }
     }
 
@@ -314,68 +484,78 @@ object AmbitNetwork {
         registerAnchor(level, pos, newKey, newOrder, owner)
     }
 
-    /**
-     * 为刚放进某频道的新锚点分配顺位号。
-     *
-     * 号从 [AmbitOrderCounter] 的持久计数器取，而不是"扫当前已加载锚点取最大值 +1"。
-     * 后者在跨区块场景下会撞号：同频道锚点分布在不同区块、可独立卸载，卸载期间它们不在
-     * [WorldBucket] 里，于是新号会等于某个已持久化但未加载锚点的旧号。撞号后
-     * [getOrderedAnchors] 只能靠坐标兜底排序，顶点顺序就偏离了玩家的摆放意图。
-     */
-    fun allocateAppendOrder(level: ServerLevel, key: WirelessChannelKey): Long {
-        val counter = AmbitOrderCounter.of(level)
-        // 已加载锚点里若存在比计数器更大的号（例如旧存档、或手动改过 NBT），先把它抬上来，
-        // 避免下一次分配正好撞上它。
-        val wb = bucket(level)
-        wb.posByChannel[key]?.forEach { p ->
-            counter.observe(key, wb.orderByPos[p] ?: 0L)
-        }
-        return counter.allocate(key)
+    /** 频道内道引标连线顺位检查结果。 */
+    sealed interface AnchorChainResult {
+        data object Empty : AnchorChainResult
+        data class TooFewAnchors(val count: Int) : AnchorChainResult
+        data class UnassignedOrder(val pos: BlockPos) : AnchorChainResult
+        data class DuplicateOrder(val order: Long, val posA: BlockPos, val posB: BlockPos) : AnchorChainResult
+        data class Valid(val anchors: List<BlockPos>) : AnchorChainResult
     }
 
-    /** 返回该频道当前所有已加载且按顺位排序的锚点坐标列表。 */
-    fun getOrderedAnchors(level: ServerLevel, key: WirelessChannelKey): List<BlockPos> {
+    /** 返回该频道当前已加载的道引标数量。 */
+    fun countAnchorsInChannel(level: ServerLevel, key: WirelessChannelKey): Int =
+        worlds[level]?.posByChannel?.get(key)?.size ?: 0
+
+    /** 检查同频道是否已有另一根道引标占用了 [order]（用于玩家手调顺位时即时提示重号）。 */
+    fun findConflictingPos(
+        level: ServerLevel,
+        selfPos: BlockPos,
+        key: WirelessChannelKey,
+        order: Long,
+    ): BlockPos? {
+        if (order <= 0L) return null
+        val wb = worlds[level] ?: return null
+        val set = wb.posByChannel[key] ?: return null
+        for (p in set) {
+            if (p != selfPos && (wb.orderByPos[p] ?: 0L) == order) {
+                return p
+            }
+        }
+        return null
+    }
+
+    /**
+     * 校验并按手动顺位排序该频道的全部已加载道引标：
+     * - 必须至少 3 根；
+     * - 每一根都必须已手动指定顺位（`order >= 1`）；
+     * - 同频道内顺位不允许重复（但允许跳号，例如 `1, 2, 5`）。
+     */
+    fun resolveChannelAnchors(level: ServerLevel, key: WirelessChannelKey): AnchorChainResult {
+        val wb = worlds[level] ?: return AnchorChainResult.Empty
+        val set = wb.posByChannel[key] ?: return AnchorChainResult.Empty
+        if (set.isEmpty()) return AnchorChainResult.Empty
+        if (set.size < 3) return AnchorChainResult.TooFewAnchors(set.size)
+
+        val entries = ArrayList<AnchorEntry>(set.size)
+        for (p in set) {
+            val ord = wb.orderByPos[p] ?: 0L
+            if (ord <= 0L) {
+                return AnchorChainResult.UnassignedOrder(p)
+            }
+            entries.add(AnchorEntry(p, ord))
+        }
+        entries.sort()
+        for (i in 1 until entries.size) {
+            if (entries[i - 1].order == entries[i].order) {
+                return AnchorChainResult.DuplicateOrder(
+                    order = entries[i].order,
+                    posA = entries[i - 1].pos,
+                    posB = entries[i].pos,
+                )
+            }
+        }
+        return AnchorChainResult.Valid(entries.map { it.pos })
+    }
+
+    /** 返回频道内所有已指定正顺位（`order > 0`）的道引标坐标（仅用于调序时的粒子连线预览）。 */
+    fun getChannelAssignedOutline(level: ServerLevel, key: WirelessChannelKey): List<BlockPos> {
         val wb = worlds[level] ?: return emptyList()
         val set = wb.posByChannel[key] ?: return emptyList()
-        return set.map { p -> AnchorEntry(p, wb.orderByPos[p] ?: 0L) }
-            .sorted()
-            .map { it.pos }
-    }
-
-    /** 返回指定锚点在当前频道中的 `1`-based 排位与总数 `(rank, total)`。 */
-    fun getAnchorRank(level: ServerLevel, pos: BlockPos, key: WirelessChannelKey): Pair<Int, Int> {
-        val list = getOrderedAnchors(level, key)
-        if (list.isEmpty()) return 1 to 1
-        val idx = list.indexOf(pos)
-        return (if (idx >= 0) idx + 1 else 1) to list.size
-    }
-
-    /**
-     * 将 [pos] 在该频道中的顺序向后移动一位（末尾回绕至首位），重新规整所有同频锚点顺位并落盘同步。
-     *
-     * 返回调整后的 `(新1-based排位, 总数)`。
-     */
-    fun rotateAnchorOrder(level: ServerLevel, pos: BlockPos, key: WirelessChannelKey): Pair<Int, Int> {
-        val ordered = getOrderedAnchors(level, key).toMutableList()
-        if (ordered.size <= 1) return 1 to ordered.size.coerceAtLeast(1)
-
-        val idx = ordered.indexOf(pos)
-        if (idx < 0) return 1 to ordered.size
-
-        val nextIdx = (idx + 1) % ordered.size
-        val moving = ordered.removeAt(idx)
-        ordered.add(nextIdx, moving)
-
-        val wb = bucket(level)
-        val counter = AmbitOrderCounter.of(level)
-        for ((rankIdx, anchorPos) in ordered.withIndex()) {
-            val normalizedOrder = (rankIdx + 1).toLong()
-            wb.orderByPos[anchorPos] = normalizedOrder
-            counter.observe(key, normalizedOrder)
-            val be = level.getBlockEntity(anchorPos) as? AmbitAnchorBlockEntity
-            be?.applyNormalizedOrder(normalizedOrder)
-        }
-        return (nextIdx + 1) to ordered.size
+        return set.mapNotNull { p ->
+            val ord = wb.orderByPos[p] ?: 0L
+            if (ord > 0L) AnchorEntry(p, ord) else null
+        }.sorted().map { it.pos }
     }
 
     /**

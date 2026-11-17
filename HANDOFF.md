@@ -1,8 +1,6 @@
 # AbadonedGreatwork 换手文档（2026-11-16）
 
-> 本文件用于新会话快速接手当前工程进度。核心代码逻辑、注册、配方与手册文本均已编写并编译通过；**主要待办是重做 `塑界卫道石`（`ambit_switch`）与 `道引标`（`ambit_anchor`）的贴图和方块模型，以及入游戏实机验证。**
 
----
 
 ## 1. 环境与验证命令
 
@@ -81,28 +79,6 @@
   - 手册：`assets/hexcasting/patchouli_books/thehexbook/en_us/entries/greatwork/vindicator_ambit.json`（`sortnum: 7`）
 
 ---
-
-## 3. 新会话优先待办（重点！）
-
-### 3.1 重做美术资产：贴图与模型（用户明确认为当前版本太粗糙）
-请先参考本模组已有精细方块模型与贴图的风格（如 `models/block/wave_receiver.json`、`wave_repeater.json`、`multi_directrix_p.json`、`media_pool.json` 及对应贴图），重新制作以下占位/粗制资产：
-
-- **塑界卫道石（`ambit_switch`）**
-  - 当前文件：
-    - `common/src/main/resources/assets/abadoned_greatwork/blockstates/ambit_switch.json`
-    - `common/src/main/resources/assets/abadoned_greatwork/models/block/ambit_switch.json`
-    - `common/src/main/resources/assets/abadoned_greatwork/models/block/ambit_switch_energized.json`
-    - `common/src/main/resources/assets/abadoned_greatwork/models/item/ambit_switch.json`
-    - `common/src/main/resources/assets/abadoned_greatwork/textures/block/ambit_switch.png`（及 `ambit_switch_energized.png`；另有拼写错误的 `ambit_swich.png`，当前无引用，可删）
-  - **当前状态**：`models/block/ambit_switch.json` 与 `ambit_switch_energized.json` 的 `textures` 段仍指向 `multi_directrix_1` / `multi_directrix_0`（及对应 `_energized`），所以游戏内外观与 `multi_directrix` 相同——上面三张专用贴图已画好但尚未接入 model。
-  - **视觉目标**：沿用板岩法术环方砖底材；不要只画简单纯 `cube` 格子，应结合镂空凹槽/斜切斧刃折角铁质镶边与中心菱形紫晶核（`energized` 时菱形刻槽与棱线亮起亮紫/冷银光），可参考 Blockbench 多元素立体结构。
-- **道引标（`ambit_anchor`）**
-  - 当前文件：
-    - `common/src/main/resources/assets/abadoned_greatwork/blockstates/ambit_anchor.json`
-    - `common/src/main/resources/assets/abadoned_greatwork/models/block/ambit_anchor.json`
-    - `common/src/main/resources/assets/abadoned_greatwork/models/item/ambit_anchor.json`
-    - `common/src/main/resources/assets/abadoned_greatwork/textures/block/ambit_anchor.png`
-  - **视觉目标**：纤细不挡视线的界桩（深板岩底座 + 铁箍卡扣 + 顶部斧刃状紫水晶尖锥）；如有大改高度/轮廓，同步检查 `AmbitAnchorBlock.SHAPE` 碰撞箱及 `models/item/ambit_anchor.json` 的 GUI 展示角度（`display`）。
 
 ### 3.2 建议新会话顺手检查的实机项
 1. 启动客户端测试 `ambit_switch` 由 `hexcasting:directrix/empty` 剥离卫道士转化后的 `FACING` 朝向与石板接驳效果。

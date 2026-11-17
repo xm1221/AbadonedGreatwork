@@ -45,6 +45,7 @@ object Abadoned_greatworkClient {
             Abadoned_greatworkBlocks.WAVE_RECEIVER.value,
             Abadoned_greatworkBlocks.WAVE_REPEATER.value,
             Abadoned_greatworkBlocks.MEDIA_POOL.value,
+            Abadoned_greatworkBlocks.AMBIT_SWITCH.value,
             Abadoned_greatworkBlocks.AMBIT_ANCHOR.value,
         )
     }
