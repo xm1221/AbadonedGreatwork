@@ -31,6 +31,7 @@ forge-dependency = "47" # for mods.toml
 
 hexcasting = "0.11.4"
 ioticblocks = "1.0.2"
+mielib = "0.0.2.1+1.20.1"
 paucal = "0.6.0-pre-118"
 pkpcpbp = "0.2.0-pre-95"
 
@@ -89,6 +90,10 @@ hexcasting-forge  = { module="at.petra-k.hexcasting:hexcasting-forge-1.20.1", ve
 # 多 loader 项目拿不到另一个，所以按本项目既有的 libs: flatDir 约定走本地 jar。
 ioticblocks-fabric = { module="libs:IoticBlocks-fabric-1.20.1", version.ref="ioticblocks" }
 ioticblocks-forge  = { module="libs:IoticBlocks-forge-1.20.1", version.ref="ioticblocks" }
+
+mielib-common = { module="cn.xm1221.MieLib:mielib-common", version.ref="mielib" }
+mielib-fabric = { module="cn.xm1221.MieLib:mielib-fabric", version.ref="mielib" }
+mielib-forge  = { module="cn.xm1221.MieLib:mielib-forge", version.ref="mielib" }
 
 paucal-common = { module="at.petra-k.paucal:paucal-common-1.20.1", version.ref="paucal" }
 paucal-fabric = { module="at.petra-k.paucal:paucal-fabric-1.20.1", version.ref="paucal" }

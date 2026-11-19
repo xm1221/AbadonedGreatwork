@@ -1,0 +1,18 @@
+{
+  "hexcasting:get_caster": { "origin": [-1, 2] },
+  "hexcasting:entity_pos/eye": { "origin": [-1, 1] },
+  "hexcasting:get_entity_look": { "origin": [-1, 2] },
+  "hexcasting:raycast": { "origin": [-2, 1] },
+  "hexcasting:raycast/axis": { "origin": [-2, 1] },
+  "hexcasting:empty_list": { "origin": [-2, 1] },
+  "hexcasting:duplicate": { "origin": [-1, 1] },
+  "hexcasting:if": { "origin": [-1, 2] },
+  "hexcasting:eval": { "origin": [0, 1] },
+  "hexcasting:for_each": { "origin": [-1, 1] },
+  "hexcasting:halt": { "origin": [0, 0] },
+  "hexcasting:eval/cc": { "origin": [0, 1] },
+  "hexcasting:print": { "origin": [-1, 1] },
+  "hexcasting:splat": { "origin": [0, 0] },
+  "hexcasting:over": { "origin": [-1, 1] },
+  "hexcasting:replace": { "origin": [-1, 1] }
+}

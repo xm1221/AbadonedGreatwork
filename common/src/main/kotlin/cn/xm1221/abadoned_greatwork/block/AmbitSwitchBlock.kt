@@ -115,13 +115,6 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
         if (!level.isClientSide) {
             val delta = if (player.isShiftKeyDown) -1 else 1
             val ch = be.channelState.cycleChannel(delta)
-            player.displayClientMessage(
-                Component.translatable(
-                    "text.abadoned_greatwork.wireless.channel",
-                    be.channelState.channelDisplay(),
-                ),
-                true,
-            )
             level.playSound(
                 null,
                 pos,
@@ -237,7 +230,6 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
                         pigmentTag = customPigmentTag,
                         fallbackColor = fallbackColor,
                     )
-                    AmbitNetwork.spawnPolygonOutlineParticles(world, anchors)
                 }
             }
         }

@@ -51,6 +51,17 @@ repositories {
             flatDir { dir(rootProject.file("libs")) }
         }
     }
+    exclusiveContent {
+        filter {
+            includeGroup("cn.xm1221.MieLib")
+        }
+        forRepository {
+            maven {
+                name = "xm1221Maven"
+                url = uri("https://xm1221.github.io/maven")
+            }
+        }
+    }
 }
 
 java {

@@ -1,14 +1,21 @@
 package cn.xm1221.abadoned_greatwork
 
 import at.petrak.hexcasting.api.client.ScryingLensOverlayRegistry
+import cn.xm1221.MieLib.registry.DrawPatternHook
 import cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.AmbitSwitchBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MultiDirectrixPBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.WaveRepeaterBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.WaveTransmitterBlockEntity
+import cn.xm1221.abadoned_greatwork.client.ponder.PonderClientState
+import cn.xm1221.abadoned_greatwork.client.ponder.PonderDrawPatternWorker
+import cn.xm1221.abadoned_greatwork.client.ponder.PonderPatchouliCompat
+import cn.xm1221.abadoned_greatwork.client.ponder.PonderScryingTrigger
+import cn.xm1221.abadoned_greatwork.client.renderer.AmbitBoundaryRenderer
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkClientConfig
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlocks
+import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry
 import dev.architectury.registry.client.rendering.RenderTypeRegistry
 import me.shedaniel.autoconfig.AutoConfig
@@ -23,6 +30,16 @@ object Abadoned_greatworkClient {
         registerBlockRenderTypes()
         registerBlockTints()
         registerScryingLensOverlays()
+
+        // 注册 MieLib 问天图案渲染钩子与探知透镜按图案检索触发器
+        DrawPatternHook.register(Abadoned_greatwork.id("ponder_pattern_color"), PonderDrawPatternWorker)
+        PonderScryingTrigger.init()
+
+        ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {
+            AmbitBoundaryRenderer.clear()
+            PonderClientState.clear()
+            PonderPatchouliCompat.invalidateCache()
+        }
     }
 
     fun getConfigScreen(parent: Screen): Screen {

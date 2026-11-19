@@ -4,9 +4,12 @@ import net.minecraft.resources.ResourceLocation
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import cn.xm1221.abadoned_greatwork.block.Abadoned_greatworkLootInjector
+import cn.xm1221.abadoned_greatwork.casting.circles.AmbitNetwork
 import cn.xm1221.abadoned_greatwork.casting.circles.AmbitReshapeHook
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkServerConfig
 import cn.xm1221.abadoned_greatwork.networking.Abadoned_greatworkNetworking
+import cn.xm1221.abadoned_greatwork.ponder.PonderCommands
+import cn.xm1221.abadoned_greatwork.ponder.data.PonderSceneLoader
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkActions
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlocks
@@ -48,10 +51,24 @@ object Abadoned_greatwork {
             net.minecraft.server.packs.PackType.SERVER_DATA,
             net.minecraft.server.packs.resources.ResourceManagerReloadListener { rm ->
                 cn.xm1221.abadoned_greatwork.block.Abadoned_greatworkRiddleLoader.reload(rm)
+                PonderSceneLoader.reload(rm)
             }
         )
+        dev.architectury.event.events.common.LifecycleEvent.SERVER_STARTED.register { server ->
+            PonderSceneLoader.latestServer = server
+        }
+        dev.architectury.event.events.common.LifecycleEvent.SERVER_STOPPED.register { _ ->
+            PonderSceneLoader.latestServer = null
+        }
+        dev.architectury.event.events.common.PlayerEvent.PLAYER_JOIN.register { player ->
+            PonderSceneLoader.syncIndexTo(player)
+        }
+        dev.architectury.event.events.common.CommandRegistrationEvent.EVENT.register { dispatcher, _, _ ->
+            PonderCommands.register(dispatcher)
+        }
         // 需要「玩家能往方块里写 iota」的方块（可编程分流器）走 IoticBlocks 的入口
         Abadoned_greatworkIotaHolders.init()
+        AmbitNetwork.init()
         AmbitReshapeHook.init()
     }
 

@@ -44,3 +44,10 @@ mandatory = true
 versionRange = "[${versions.hexcasting},)"
 ordering = "NONE"
 side = "BOTH"
+
+[[dependencies.abadoned_greatwork]]
+modId = "mielib"
+mandatory = true
+versionRange = "[${versions.mielib},)"
+ordering = "AFTER"
+side = "BOTH"

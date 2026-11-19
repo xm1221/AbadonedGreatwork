@@ -1,0 +1,7 @@
+{
+  "id": "spells",
+  "title": "hexponder.category.spells",
+  "description": "hexponder.category.spells.desc",
+  "icon": "hexcasting:focus",
+  "sort_order": 2
+}

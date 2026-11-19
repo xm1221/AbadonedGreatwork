@@ -1,0 +1,124 @@
+{
+  "id": "abadoned_greatwork:escape_and_parens",
+  "title": "hexponder.scene.escape_and_parens.title",
+  "subtitle": "hexponder.scene.escape_and_parens.subtitle",
+  "category": "control_flow",
+  "sort_order": 0,
+  "icon": "hexcasting:slate",
+  "cursor_item": "hexcasting:staff/oak",
+  "hex_size": 22,
+  "interval": 44,
+  "stroke_ticks": 15,
+  "clear_before": true,
+  "start_dir": "NORTH_EAST",
+  "triggers": {
+    "items": [
+      "hexcasting:scroll_small",
+      "hexcasting:scroll_medium",
+      "hexcasting:scroll_large"
+    ],
+    "actions": [
+      "hexcasting:escape",
+      "hexcasting:open_paren",
+      "hexcasting:close_paren"
+    ]
+  },
+  "knowledge_cards": [
+    {
+      "title": "hexponder.scene.escape_and_parens.k0.title",
+      "body": "hexponder.scene.escape_and_parens.k0.body"
+    },
+    {
+      "title": "hexponder.scene.escape_and_parens.k1.title",
+      "body": "hexponder.scene.escape_and_parens.k1.body"
+    }
+  ],
+  "steps": [
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.escape_and_parens.ch0",
+      "action": "hexcasting:escape",
+      "origin": [
+        -1,
+        1
+      ],
+      "callout": {
+        "anchor": "hud",
+        "color": "#FFD166",
+        "text": "hexponder.scene.escape_and_parens.s0.tip"
+      }
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:add",
+      "origin": [
+        1,
+        0
+      ],
+      "clear_before": false,
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#D7B8FF",
+        "text": "hexponder.scene.escape_and_parens.s1.tip"
+      }
+    },
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.escape_and_parens.ch1",
+      "action": "hexcasting:thanatos",
+      "origin": [
+        -1,
+        1
+      ],
+      "clear_before": true
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:open_paren",
+      "origin": [
+        -2,
+        1
+      ],
+      "clear_before": true,
+      "callout": {
+        "anchor": "hud",
+        "color": "#D7B8FF",
+        "text": "hexponder.scene.escape_and_parens.s3.tip"
+      }
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:get_caster",
+      "origin": [
+        -1,
+        1
+      ],
+      "clear_before": false
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:entity_pos/eye",
+      "origin": [
+        0,
+        1
+      ],
+      "clear_before": false
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:close_paren",
+      "origin": [
+        1,
+        1
+      ],
+      "clear_before": false,
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#6BCB77",
+        "text": "hexponder.scene.escape_and_parens.s6.tip"
+      }
+    }
+  ]
+}

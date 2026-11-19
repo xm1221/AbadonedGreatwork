@@ -77,6 +77,10 @@ object TruthCrystalPuzzles {
             tag.putBoolean(ItemTruthCrystal.CAN_WRITE, false)
         }
 
+        if (!riddle.ponder_hints.isNullOrEmpty()) {
+            ItemTruthCrystal.setPonderHints(stack, riddle.ponder_hints)
+        }
+
         return stack
     }
 }

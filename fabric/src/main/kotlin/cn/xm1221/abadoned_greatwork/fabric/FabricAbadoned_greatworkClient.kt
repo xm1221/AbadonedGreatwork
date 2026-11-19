@@ -1,20 +1,27 @@
 package cn.xm1221.abadoned_greatwork.fabric
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatworkClient
+import cn.xm1221.abadoned_greatwork.client.ponder.PonderKeybinds
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.WaveTransmitterBlockEntity
+import cn.xm1221.abadoned_greatwork.client.renderer.AmbitBoundaryRenderer
 import cn.xm1221.abadoned_greatwork.client.renderer.TruthCrystalBlockEntityRenderer
 import cn.xm1221.abadoned_greatwork.client.renderer.WaveTransmitterBlockEntityRenderer
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 import net.minecraft.client.renderer.entity.ThrownItemRenderer
 import net.minecraft.world.level.block.entity.BlockEntityType
 
 object FabricAbadoned_greatworkClient : ClientModInitializer {
     override fun onInitializeClient() {
+        for (bind in PonderKeybinds.allBinds()) {
+            KeyBindingHelper.registerKeyBinding(bind)
+        }
         Abadoned_greatworkClient.init()
         // 各探察之眼复用原版末影之眼的渲染方式（渲染实体持有的物品模型）
         for (type in listOf(
@@ -44,5 +51,15 @@ object FabricAbadoned_greatworkClient : ClientModInitializer {
         BlockEntityRendererRegistry.register(
             Abadoned_greatworkBlockEntities.AMBIT_ANCHOR.value as BlockEntityType<cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity>,
         ) { ctx -> cn.xm1221.abadoned_greatwork.client.renderer.AmbitAnchorBlockEntityRenderer(ctx) }
+
+        WorldRenderEvents.AFTER_ENTITIES.register { ctx ->
+            val consumers = ctx.consumers() ?: return@register
+            AmbitBoundaryRenderer.render(
+                poseStack = ctx.matrixStack(),
+                bufferSource = consumers,
+                cameraPos = ctx.camera().position,
+                partialTick = ctx.tickDelta(),
+            )
+        }
     }
 }

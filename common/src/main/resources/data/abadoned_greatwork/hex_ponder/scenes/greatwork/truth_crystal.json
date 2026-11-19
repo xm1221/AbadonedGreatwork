@@ -1,0 +1,158 @@
+{
+  "id": "abadoned_greatwork:truth_crystal",
+  "title": "hexponder.scene.truth_crystal.title",
+  "subtitle": "hexponder.scene.truth_crystal.subtitle",
+  "category": "greatwork",
+  "sort_order": 0,
+  "icon": "abadoned_greatwork:item_truth_crystal_0",
+  "cursor_item": "abadoned_greatwork:item_truth_crystal_0",
+  "hex_size": 22,
+  "interval": 46,
+  "stroke_ticks": 15,
+  "clear_before": true,
+  "start_dir": "NORTH_EAST",
+  "triggers": {
+    "items": [
+      "abadoned_greatwork:truth_crystal",
+      "abadoned_greatwork:item_truth_crystal_0",
+      "abadoned_greatwork:item_truth_crystal_1",
+      "abadoned_greatwork:item_truth_crystal_2"
+    ],
+    "blocks": [
+      "abadoned_greatwork:truth_crystal"
+    ],
+    "actions": [
+      "abadoned_greatwork:test",
+      "abadoned_greatwork:check"
+    ],
+    "riddles": [
+      "midpoint",
+      "manhattan",
+      "list_reverse",
+      "projection",
+      "reflection",
+      "list_sum",
+      "collinear",
+      "clamp",
+      "axial_neighbors",
+      "filter_positive",
+      "apply_twice"
+    ]
+  },
+  "knowledge_cards": [
+    {
+      "title": "hexponder.scene.truth_crystal.k0.title",
+      "body": "hexponder.scene.truth_crystal.k0.body"
+    },
+    {
+      "title": "hexponder.scene.truth_crystal.k1.title",
+      "body": "hexponder.scene.truth_crystal.k1.body"
+    }
+  ],
+  "steps": [
+    {
+      "type": "push",
+      "chapter": "hexponder.scene.truth_crystal.ch0",
+      "pattern": "qqaeaae",
+      "start_dir": "NORTH_EAST",
+      "origin": [
+        -1,
+        1
+      ],
+      "push": "vec:{0,0,0}",
+      "title": "hexponder.scene.truth_crystal.s0.title",
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#56E0C8",
+        "text": "hexponder.scene.truth_crystal.s0.tip"
+      }
+    },
+    {
+      "type": "push",
+      "pattern": "qqqqqea",
+      "start_dir": "NORTH_WEST",
+      "origin": [
+        0,
+        0
+      ],
+      "push": "vec:{4,6,8}",
+      "title": "hexponder.scene.truth_crystal.s1.title"
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:add",
+      "origin": [
+        -1,
+        1
+      ]
+    },
+    {
+      "type": "push",
+      "pattern": "aqaa",
+      "start_dir": "SOUTH_EAST",
+      "origin": [
+        0,
+        0
+      ],
+      "push": "double:0.5",
+      "title": "hexponder.scene.truth_crystal.s3.title"
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:mul",
+      "origin": [
+        0,
+        1
+      ],
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#6BCB77",
+        "text": "hexponder.scene.truth_crystal.s4.tip"
+      }
+    },
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.truth_crystal.ch1",
+      "action": "hexcasting:open_paren",
+      "origin": [
+        -2,
+        1
+      ]
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:add",
+      "origin": [
+        -1,
+        1
+      ],
+      "clear_before": false
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:mul",
+      "origin": [
+        1,
+        1
+      ],
+      "clear_before": false
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:close_paren",
+      "origin": [
+        2,
+        1
+      ],
+      "clear_before": false,
+      "cursor_item": "hexcasting:focus",
+      "callout": {
+        "anchor": "hud",
+        "color": "#FFD166",
+        "text": "hexponder.scene.truth_crystal.s8.tip"
+      }
+    }
+  ]
+}

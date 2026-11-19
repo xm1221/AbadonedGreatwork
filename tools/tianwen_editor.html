@@ -1,0 +1,2376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>问天 · 咒法演示工作台 (Tianwen Studio)</title>
+<style>
+  :root {
+    --bg: #0c0913;
+    --panel: #191423;
+    --panel-light: #4b3d69;
+    --panel-dark: #0e0b15;
+    --slot: #100c19;
+    --slot-border: #342a4a;
+    --stage-frame: #231c32;
+    --amethyst: #b886ff;
+    --amethyst-dark: #6a3fb5;
+    --gold: #ffd93d;
+    --cyan: #64c8ff;
+    --green: #6bcb77;
+    --err: #ff6b6b;
+    --escaped: #ddcc73;
+    --text: #f2eefa;
+    --body: #d4cbe8;
+    --muted: #9c8fc0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", "Microsoft YaHei", Consolas, monospace;
+    font-size: 12px;
+  }
+  .app {
+    display: grid;
+    grid-template-rows: 42px 1fr;
+    height: 100vh;
+    gap: 6px;
+    padding: 6px;
+  }
+  .bevel {
+    background: var(--panel);
+    border: 2px solid #08060d;
+    box-shadow: inset 1px 1px 0 var(--panel-light), inset -1px -1px 0 var(--panel-dark);
+  }
+  .recessed {
+    background: var(--slot);
+    border: 1px solid #07050b;
+    box-shadow: inset 1px 1px 0 #07050b, inset -1px -1px 0 var(--slot-border);
+  }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px; gap: 8px;
+  }
+  .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .brand h1 { margin: 0; font-size: 14px; color: var(--gold); letter-spacing: 0.4px; white-space: nowrap; }
+  .status-pill {
+    font-size: 11px; padding: 2px 7px; border-radius: 2px;
+    background: #141020; border: 1px solid #352b4a; color: var(--muted); white-space: nowrap;
+  }
+  .status-pill.online { border-color: #2f6b41; color: var(--green); background: #102016; }
+  .dirty-pill {
+    font-size: 11px; padding: 2px 6px; border-radius: 2px;
+    background: #2b1e10; border: 1px solid #a86c20; color: var(--gold); display: none; white-space: nowrap;
+  }
+  .top-actions { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  button, select, input, textarea {
+    background: #211a30; color: var(--text);
+    border: 1px solid #08060d;
+    box-shadow: inset 1px 1px 0 var(--panel-light), inset -1px -1px 0 var(--panel-dark);
+    padding: 4px 8px; font-size: 12px; font-family: inherit;
+    outline: none;
+  }
+  input, select, textarea {
+    background: var(--slot);
+    box-shadow: inset 1px 1px 0 #07050b, inset -1px -1px 0 var(--slot-border);
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--amethyst); }
+  button { cursor: pointer; user-select: none; white-space: nowrap; }
+  button:hover:not(:disabled) { background: #2d2342; border-color: #7b63ae; }
+  button.active { background: #33244f; color: var(--gold); border-color: var(--amethyst); }
+  button.primary { border-color: var(--amethyst-dark); color: var(--amethyst); }
+  button.save-btn { border-color: #2d7a47; background: #182b20; color: var(--green); font-weight: 600; }
+  button.save-btn:hover:not(:disabled) { background: #213c2c; border-color: var(--green); color: #fff; }
+  button.save-btn.needs-save { box-shadow: 0 0 0 1px var(--gold), inset 1px 1px 0 #3f8a58; color: var(--gold); }
+  button.danger:hover:not(:disabled) { border-color: var(--err); color: var(--err); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.mini { padding: 2px 6px; font-size: 11px; }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 305px 1fr 390px;
+    gap: 6px;
+    min-height: 0;
+  }
+  .col { display: flex; flex-direction: column; min-height: 0; padding: 6px; gap: 6px; }
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    font-weight: bold; color: var(--gold); font-size: 12px; gap: 4px;
+  }
+  .muted { color: var(--muted); }
+  .key-hint { font-size: 10px; color: #706490; font-family: Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .px-icon {
+    width: 16px; height: 16px; image-rendering: pixelated; flex-shrink: 0;
+    background: #141021; border: 1px solid #2b2240; object-fit: contain;
+  }
+  .px-icon.lg { width: 22px; height: 22px; }
+
+  /* Left column: Chapter Tree / Pattern Catalog + Steps */
+  .left-top-box { display: flex; flex-direction: column; height: 47%; min-height: 175px; gap: 4px; }
+  .left-subpane { flex: 1; min-height: 0; display: none; flex-direction: column; gap: 4px; }
+  .left-subpane.active { display: flex; }
+  .catalog-list { flex: 1; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 3px; }
+  .cat-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    padding: 4px 6px; background: #151021; border: 1px solid #261e38;
+  }
+  .cat-item:hover { border-color: var(--amethyst-dark); background: #1b152a; }
+  .cat-meta { min-width: 0; flex: 1; }
+  .cat-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-sub { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-btns { display: flex; gap: 3px; }
+  .cat-btns button { padding: 2px 5px; font-size: 11px; }
+
+  .cat-group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+  .cat-header {
+    display: flex; align-items: center; gap: 6px; padding: 4px 6px;
+    background: #1d172c; border: 1px solid #32284a;
+  }
+  .cat-header .ctitle { flex: 1; font-weight: bold; color: var(--gold); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .scene-row {
+    display: flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px;
+    background: #130f1e; border: 1px solid #231b36; cursor: pointer;
+  }
+  .scene-row:hover { border-color: #5d4a8a; background: #1a1428; }
+  .scene-row.active { background: #291f42; border-color: var(--amethyst); }
+  .scene-row .stitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .steps-box { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 4px; }
+  .step-toolbar { display: flex; gap: 3px; flex-wrap: wrap; }
+  .step-toolbar button { padding: 3px 6px; font-size: 11px; }
+  .step-list { flex: 1; overflow-y: auto; padding: 3px; display: flex; flex-direction: column; gap: 3px; }
+  .step-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    padding: 5px 6px; background: #151021; border: 1px solid #261e38; cursor: pointer;
+  }
+  .step-row:hover { border-color: #5d4a8a; }
+  .step-row.selected { background: #291f42; border-color: var(--amethyst); }
+  .step-badge { font-size: 10px; padding: 1px 4px; background: #261f38; color: var(--cyan); border-radius: 2px; }
+  .step-badge.push { color: var(--escaped); }
+  .step-badge.peek { color: #ff9f43; }
+  .step-badge.clear, .step-badge.note { color: var(--muted); }
+  .step-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .step-ops { display: flex; gap: 2px; }
+  .step-ops button { padding: 1px 4px; font-size: 10px; }
+
+  /* Center column: interactive hex stage */
+  .stage-col { display: flex; flex-direction: column; min-height: 0; gap: 6px; }
+  .mode-bar {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    padding: 5px 8px; gap: 6px;
+  }
+  .mode-group { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .stage-wrap {
+    position: relative; flex: 1; min-height: 0;
+    background: var(--stage-frame);
+    border: 2px solid #08060d;
+    box-shadow: inset 1px 1px 0 #635287, inset -1px -1px 0 #120d1c;
+    padding: 5px;
+    display: flex;
+  }
+  .stage-inner {
+    position: relative; flex: 1; overflow: hidden;
+    background: linear-gradient(180deg, #141021 0%, #0a0812 100%);
+    border: 1px solid #08060d;
+  }
+  canvas#hexCanvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+  .rivet {
+    position: absolute; width: 6px; height: 6px; background: var(--amethyst);
+    border: 1px solid #08060d; pointer-events: none; z-index: 4;
+  }
+  .rivet.tl { top: 2px; left: 2px; } .rivet.tr { top: 2px; right: 2px; }
+  .rivet.bl { bottom: 2px; left: 2px; } .rivet.br { bottom: 2px; right: 2px; }
+
+  .stage-hud-top {
+    position: absolute; top: 8px; left: 8px; z-index: 6;
+    background: rgba(16, 12, 25, 0.86); border: 1px solid #342a4a;
+    padding: 3px 8px; font-size: 12px; color: var(--text); pointer-events: none;
+  }
+  .stage-stack-mini {
+    position: absolute; top: 34px; left: 8px; z-index: 6; width: 150px; max-height: 46%;
+    overflow: hidden; background: rgba(16, 12, 25, 0.84); border: 1px solid #342a4a;
+    padding: 4px 6px; font-size: 11px; pointer-events: none;
+  }
+  .stack-chip {
+    display: flex; align-items: center; gap: 4px; padding: 1px 4px; margin-top: 2px;
+    background: #130f1d; border-left: 2px solid var(--cyan); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stage-parens-mini {
+    position: absolute; bottom: 8px; left: 8px; z-index: 8; width: 175px;
+    background: rgba(17, 13, 27, 0.9); border: 1px solid var(--escaped);
+    padding: 4px 6px; font-size: 11px; pointer-events: none;
+  }
+  .stage-parens-mini .hdr { color: var(--escaped); font-weight: bold; margin-bottom: 2px; }
+  .draw-match-banner {
+    position: absolute; top: 8px; right: 8px; z-index: 12;
+    background: rgba(17, 13, 27, 0.92); border: 1px solid var(--amethyst-dark);
+    padding: 5px 8px; display: flex; flex-direction: column; gap: 4px; max-width: 245px;
+  }
+  .transport-bar { display: flex; flex-direction: column; gap: 5px; padding: 6px 8px; }
+  .timeline-row { display: flex; align-items: center; gap: 8px; }
+  .timeline-row input[type=range] { flex: 1; padding: 0; box-shadow: none; }
+  .transport-btns { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+
+  /* Right column: inspector tabs */
+  .tabs { display: flex; gap: 4px; }
+  .tabs button { flex: 1; }
+  .tab-pane { flex: 1; overflow-y: auto; padding-right: 2px; display: none; flex-direction: column; gap: 6px; }
+  .tab-pane.active { display: flex; }
+  .form-group { padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+  .form-row { display: grid; grid-template-columns: 82px 1fr; align-items: center; gap: 6px; }
+  .form-row label { color: var(--muted); font-size: 11px; }
+  .icon-input-row { display: flex; align-items: center; gap: 4px; }
+  .icon-input-row input { flex: 1; min-width: 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  textarea { resize: vertical; min-height: 54px; font-family: inherit; font-size: 12px; }
+  textarea.code { font-family: Consolas, monospace; font-size: 11px; }
+  .card-box { background: #141020; border: 1px solid #2b2240; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+
+  /* Modals */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 100; background: rgba(6, 4, 11, 0.78);
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-card {
+    width: min(520px, 95vw); max-height: 88vh; display: flex; flex-direction: column; gap: 8px;
+    padding: 10px;
+  }
+  .modal-card.wide { width: min(720px, 96vw); }
+  .modal-body { overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 6px; padding-top: 4px; border-top: 1px solid #2a213d; }
+
+  .icon-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 4px;
+    max-height: 390px; overflow-y: auto; padding: 4px;
+  }
+  .icon-cell {
+    display: flex; align-items: center; gap: 6px; padding: 4px 6px; cursor: pointer;
+    background: #141021; border: 1px solid #271f3b; text-align: left;
+  }
+  .icon-cell:hover { border-color: var(--amethyst); background: #221a35; }
+  .icon-cell .iname { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+
+  .val-item { padding: 4px 6px; border-left: 3px solid var(--err); background: #1c1018; font-size: 11px; }
+  .val-item.warn { border-left-color: var(--gold); background: #1d1910; }
+  .val-item.ok { border-left-color: var(--green); background: #102016; }
+
+  .toast {
+    position: fixed; bottom: 14px; right: 14px; z-index: 999;
+    background: #231938; border: 1px solid var(--amethyst); color: var(--gold);
+    padding: 7px 14px; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0e0b15; }
+  ::-webkit-scrollbar-thumb { background: #3e3059; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar bevel">
+    <div class="brand">
+      <h1>问天 · Studio</h1>
+      <span id="studioStatusBadge" class="status-pill">正在连接工程...</span>
+      <span id="dirtyBadge" class="dirty-pill">* 有未保存修改</span>
+      <span id="catalogCountTag" class="muted" style="font-size:11px;"></span>
+    </div>
+    <div class="top-actions">
+      <button id="btnSaveStudio" class="save-btn" style="display:none" onclick="saveCurrentSceneToStudio()">💾 保存章节 (Ctrl+S)</button>
+      <button id="btnValidateStudio" style="display:none" onclick="runStudioValidate()">✓ 校验工程</button>
+      <button id="btnRefreshStudio" style="display:none" onclick="refreshStudioWorkspace()">↻ 重载工程</button>
+      <button id="btnOpenFile">导入文件</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none" />
+      <button id="btnCopyJson" class="primary">复制 JSON</button>
+      <button id="btnDownloadJson" class="primary">下载 JSON</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Left Column: Chapter Directory / Pattern Catalog & Step Sequence -->
+    <section class="col bevel">
+      <div class="left-top-box">
+        <div class="tabs">
+          <button id="leftTabCatalogBtn" class="active" onclick="switchLeftTab('catalog')">章节目录</button>
+          <button id="leftTabPatternsBtn" onclick="switchLeftTab('patterns')">图案库 (198)</button>
+        </div>
+
+        <div id="leftPaneCatalog" class="left-subpane active">
+          <div style="display:flex;gap:4px;align-items:center;">
+            <input id="treeSearch" type="text" placeholder="搜索分类或章节..." style="flex:1;min-width:0;padding:3px 5px;" oninput="renderChapterTree()" />
+            <button class="mini primary" id="btnNewCat" onclick="openCategoryModal(null)">+分类</button>
+            <button class="mini primary" id="btnNewScene" onclick="openNewSceneModal()">+章节</button>
+          </div>
+          <div id="chapterTree" class="catalog-list recessed"></div>
+        </div>
+
+        <div id="leftPanePatterns" class="left-subpane">
+          <div style="display:flex;gap:4px;align-items:center;">
+            <input id="catSearch" type="text" placeholder="搜索图案名称 / ID / 笔顺..." style="flex:1;padding:3px 5px;" />
+          </div>
+          <div id="catalogList" class="catalog-list recessed"></div>
+        </div>
+      </div>
+
+      <div class="steps-box">
+        <div class="section-head">
+          <span>步骤序列 (<span id="stepCountLabel">0</span>)</span>
+        </div>
+        <div class="step-toolbar">
+          <button onclick="addNewStep('execute')">+执行</button>
+          <button onclick="addNewStep('push')">+压栈</button>
+          <button onclick="addNewStep('peek')">+弹栈</button>
+          <button onclick="addNewStep('clear')">+清画布</button>
+          <button onclick="addNewStep('note')">+注解</button>
+        </div>
+        <div id="stepList" class="step-list recessed"></div>
+      </div>
+    </section>
+
+    <!-- Center Column: Hex Stage & Live Animation -->
+    <section class="stage-col">
+      <div class="mode-bar bevel">
+        <div class="mode-group">
+          <button id="modePlay" class="active" onclick="setStageMode('play')">▶ 预览演示</button>
+          <button id="modeDraw" onclick="setStageMode('draw')">✏ 手绘图案</button>
+          <button id="modeDrag" onclick="setStageMode('drag')">✥ 拖拽起点</button>
+          <button id="modeAnchor" onclick="setStageMode('anchor')">◎ 标点坐标</button>
+        </div>
+        <div class="mode-group">
+          <span class="muted" id="coordReadout">q: 0, r: 0</span>
+        </div>
+      </div>
+
+      <div class="stage-wrap" id="dropZone">
+        <div class="rivet tl"></div><div class="rivet tr"></div>
+        <div class="rivet bl"></div><div class="rivet br"></div>
+        <div class="stage-inner">
+          <canvas id="hexCanvas"></canvas>
+          <div class="stage-hud-top" id="stageTitleBadge">-</div>
+          <div class="stage-stack-mini" id="stageStackMini"></div>
+          <div class="stage-parens-mini" id="stageParensMini" style="display:none"></div>
+          <div class="draw-match-banner" id="drawBanner" style="display:none">
+            <div style="color:var(--gold);font-weight:bold;">手绘捕捉</div>
+            <div id="drawSigText" class="muted">在网格节点间按下拖动...</div>
+            <div id="drawMatchText" style="color:var(--cyan);"></div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              <button onclick="applyDrawnToStep(false)" class="primary">覆盖当前步</button>
+              <button onclick="applyDrawnToStep(true)" class="primary">+插入新步</button>
+              <button onclick="clearDrawn()">重画</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transport-bar bevel">
+        <div class="timeline-row">
+          <span id="stepIndexText" style="min-width:52px;color:var(--cyan);">0 / 0</span>
+          <input id="stepSlider" type="range" min="0" max="0" value="0" />
+        </div>
+        <div class="transport-btns">
+          <div class="mode-group">
+            <button onclick="restartPlay()">|&lt;</button>
+            <button onclick="stepBy(-1)">&lt;&lt;</button>
+            <button id="btnPlayPause" class="active" onclick="togglePlay()">暂停</button>
+            <button onclick="stepBy(1)">&gt;&gt;</button>
+            <button id="spd05" onclick="setSpeed(0.5)">0.5x</button>
+            <button id="spd10" class="active" onclick="setSpeed(1)">1x</button>
+            <button id="spd20" onclick="setSpeed(2)">2x</button>
+          </div>
+          <div class="mode-group">
+            <label class="muted"><input type="checkbox" id="chkShowCallout" checked onchange="renderCanvas()"> 显示浮窗</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Step Inspector / Scene & Notes / Export -->
+    <section class="col bevel">
+      <div class="tabs">
+        <button class="active" id="tabBtnStep" onclick="switchRightTab('step')">步骤属性</button>
+        <button id="tabBtnScene" onclick="switchRightTab('scene')">章节与札记</button>
+        <button id="tabBtnIo" onclick="switchRightTab('io')">导入 / 导出</button>
+      </div>
+
+      <!-- Tab 1: Current Step Inspector -->
+      <div id="paneStep" class="tab-pane active">
+        <div id="noStepHint" class="muted" style="padding:12px;">请先选择或添加一个步骤。</div>
+        <div id="stepEditorFields" style="display:none;flex-direction:column;gap:6px;">
+          <div class="form-group recessed">
+            <div class="section-head"><span>基础动作</span></div>
+            <div class="form-row">
+              <label>步骤类型</label>
+              <select id="fType" onchange="updateStepField('type', this.value)">
+                <option value="execute">execute (执行图案)</option>
+                <option value="push">push (直接压栈)</option>
+                <option value="push_in">push_in (推入并执行)</option>
+                <option value="peek">peek (移除栈项)</option>
+                <option value="clear">clear (清空画布)</option>
+                <option value="note">note (仅讲解)</option>
+              </select>
+            </div>
+            <div class="form-row"><label>动作 Action</label><input id="fAction" placeholder="hexcasting:get_caster" oninput="updateStepField('action', this.value)" /></div>
+            <div class="grid-2">
+              <div class="form-row" style="grid-template-columns:46px 1fr;"><label>笔顺</label><input id="fPattern" placeholder="qaq" oninput="updateStepField('pattern', this.value)" /></div>
+              <div class="form-row" style="grid-template-columns:42px 1fr;"><label>朝向</label>
+                <select id="fDir" onchange="updateStepField('start_dir', this.value)">
+                  <option value="">(继承)</option>
+                  <option>NORTH_EAST</option><option>EAST</option><option>SOUTH_EAST</option>
+                  <option>SOUTH_WEST</option><option>WEST</option><option>NORTH_WEST</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row" style="grid-template-columns:46px 1fr;"><label>起点 Q</label><input id="fOrigQ" type="number" oninput="updateStepOrigin()" /></div>
+              <div class="form-row" style="grid-template-columns:42px 1fr;"><label>起点 R</label><input id="fOrigR" type="number" oninput="updateStepOrigin()" /></div>
+            </div>
+            <div class="grid-2">
+              <div class="form-row" style="grid-template-columns:46px 1fr;"><label>笔画刻</label><input id="fStroke" type="number" placeholder="继承" oninput="updateStepNum('stroke_ticks', this.value)" /></div>
+              <div class="form-row" style="grid-template-columns:42px 1fr;"><label>停留刻</label><input id="fHold" type="number" placeholder="继承" oninput="updateStepNum('hold_ticks', this.value)" /></div>
+            </div>
+            <div class="form-row">
+              <label>前清画布</label>
+              <select id="fClearBefore" onchange="updateStepClearBefore(this.value)">
+                <option value="inherit">继承场景默认</option>
+                <option value="true">true（清屏）</option>
+                <option value="false">false（保留前图）</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>光标物品</label>
+              <div class="icon-input-row">
+                <img id="fCursorPreview" class="px-icon" alt="" />
+                <input id="fCursorItem" placeholder="留空继承；none 隐藏" oninput="updateStepField('cursor_item', this.value, true); updateIconPreview('fCursorPreview', this.value || scene.cursor_item);" />
+                <button class="mini" onclick="openIconPicker(id => { document.getElementById('fCursorItem').value = id; updateStepField('cursor_item', id, true); updateIconPreview('fCursorPreview', id); })">选</button>
+              </div>
+            </div>
+            <div class="form-row"><label>图案染色</label><input id="fColor" placeholder="留空=Hex原生；可填 #64C8FF" oninput="updateStepField('color', this.value)" /></div>
+          </div>
+
+          <div class="form-group recessed">
+            <div class="section-head"><span>压栈 / 弹栈与自然语言标题</span></div>
+            <div class="form-row">
+              <label>压栈 Push</label>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <input id="fPush" placeholder="double:3.14 / iota:truth_riddle_0.json" oninput="updateStepField('push', this.value)" />
+                <select id="fPushPresetSelect" onchange="if(this.value){ document.getElementById('fPush').value='iota:'+this.value; updateStepField('push','iota:'+this.value); this.value=''; }">
+                  <option value="">▾ 快速填入预设 Iota (40)...</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row"><label>弹栈下标</label><input id="fPeek" placeholder="0 或 0,1" oninput="updateStepPeek(this.value)" /></div>
+
+            <div class="form-row"><label>开启小节 (中文)</label><input id="fChapterZh" placeholder="留空则不开启新小节" oninput="updateStepText('chapter_zh', this.value)" /></div>
+            <div class="form-row"><label>小节 (EN)</label><input id="fChapterEn" placeholder="留空自动同步中文" oninput="updateStepText('chapter_en', this.value)" /></div>
+
+            <div class="form-row">
+              <label>步骤标题模式</label>
+              <select id="fTitleMode" onchange="updateStepTitleMode(this.value)">
+                <option value="auto">自动取动作译名</option>
+                <option value="custom">自定义文案 (中/英)</option>
+                <option value="key">引用已有动作 Key</option>
+              </select>
+            </div>
+            <div id="fTitleCustomBox" style="display:none;flex-direction:column;gap:4px;">
+              <div class="form-row"><label>标题 (中文)</label><input id="fTitleZh" placeholder="例：压入数字 5" oninput="updateStepText('title_zh', this.value)" /></div>
+              <div class="form-row"><label>标题 (EN)</label><input id="fTitleEn" placeholder="留空自动同步中文" oninput="updateStepText('title_en', this.value)" /></div>
+            </div>
+            <div id="fTitleKeyBox" style="display:none;flex-direction:column;gap:3px;">
+              <div class="form-row"><label>动作 Key</label><input id="fTitleKey" placeholder="hexcasting.action.book.hexcasting:mask" oninput="updateStepText('title_key', this.value)" /></div>
+              <div id="fTitleKeyPreview" class="key-hint"></div>
+            </div>
+          </div>
+
+          <div class="form-group recessed">
+            <div class="section-head">
+              <span>浮动提示文本 (Callout)</span>
+              <label><input type="checkbox" id="fCalloutOn" onchange="toggleCallout(this.checked)" /> 启用</label>
+            </div>
+            <div id="calloutFields" style="display:none;flex-direction:column;gap:5px;">
+              <div class="grid-2">
+                <div class="form-row" style="grid-template-columns:46px 1fr;"><label>锚点</label>
+                  <select id="fCallAnchor" onchange="updateCallout('anchor', this.value)">
+                    <option value="canvas">canvas (画布)</option>
+                    <option value="stack">stack (栈槽)</option>
+                    <option value="hud">hud (映像条)</option>
+                    <option value="coord">coord (网格坐标)</option>
+                  </select>
+                </div>
+                <div class="form-row" style="grid-template-columns:46px 1fr;"><label>强调色</label><input id="fCallColor" value="#64C8FF" oninput="updateCallout('color', this.value)" /></div>
+              </div>
+              <div class="grid-2">
+                <div class="form-row" style="grid-template-columns:46px 1fr;"><label>栈下标</label><input id="fCallIdx" type="number" value="0" oninput="updateCalloutNum('anchor_index', this.value)" /></div>
+                <div class="form-row" style="grid-template-columns:46px 1fr;"><label>坐标</label><input id="fCallCoord" placeholder="q,r" oninput="updateCalloutCoord(this.value)" /></div>
+              </div>
+              <div class="form-row" style="align-items:start;">
+                <label style="padding-top:4px;">提示 (中文)</label>
+                <textarea id="fCallTextZh" placeholder="直接填写自然语言提示..." oninput="updateStepText('callout_zh', this.value)"></textarea>
+              </div>
+              <div class="form-row" style="align-items:start;">
+                <label style="padding-top:4px;">提示 (EN)</label>
+                <textarea id="fCallTextEn" placeholder="留空自动同步中文" oninput="updateStepText('callout_en', this.value)" style="min-height:38px;"></textarea>
+              </div>
+              <div id="fCallKeyHint" class="key-hint"></div>
+              <div class="form-row">
+                <label>内联 Iota</label>
+                <div style="display:flex;flex-direction:column;gap:3px;">
+                  <input id="fCallIotas" placeholder="double:3.14, iota:vec_target.json" oninput="updateCalloutIotas(this.value)" />
+                  <select id="fCallIotaPreset" onchange="if(this.value){ appendIotaField('fCallIotas', 'iota:'+this.value, v => updateCalloutIotas(v)); this.value=''; }">
+                    <option value="">▾ 追加预设 Iota...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row"><label>演示暂停</label><label><input type="checkbox" id="fCallPause" onchange="updateCalloutBool('pause', this.checked)" /> 到此步自动暂停</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Scene Meta & Knowledge Cards (Natural Language) -->
+      <div id="paneScene" class="tab-pane">
+        <div class="form-group recessed">
+          <div class="section-head"><span>章节信息 (自动生成语言键)</span></div>
+          <div class="form-row"><label>章节标识 slug</label><input id="sSlug" placeholder="stack_and_grid" oninput="updateSlug(this.value)" /></div>
+          <div id="sIdPreview" class="key-hint">ID: abadoned_greatwork:custom_demo</div>
+
+          <div class="form-row"><label>标题 (中文)</label><input id="sTitleZh" placeholder="输入章节中文标题" oninput="updateSceneText('title', 'zh', this.value)" /></div>
+          <div class="form-row"><label>标题 (EN)</label><input id="sTitleEn" placeholder="留空自动同步中文" oninput="updateSceneText('title', 'en', this.value)" /></div>
+          <div id="sTitleKeyHint" class="key-hint"></div>
+
+          <div class="form-row"><label>副标题 (中文)</label><input id="sSubZh" placeholder="可选简短副标题" oninput="updateSceneText('subtitle', 'zh', this.value)" /></div>
+          <div class="form-row"><label>副标题 (EN)</label><input id="sSubEn" placeholder="留空自动同步中文" oninput="updateSceneText('subtitle', 'en', this.value)" /></div>
+
+          <div class="grid-2">
+            <div class="form-row" style="grid-template-columns:46px 1fr;"><label>分类</label>
+              <select id="sCat" onchange="updateScene('category', this.value)"></select>
+            </div>
+            <div class="form-row" style="grid-template-columns:42px 1fr;"><label>排序</label><input id="sSort" type="number" oninput="updateSceneNum('sort_order', this.value)" /></div>
+          </div>
+
+          <div class="form-row">
+            <label>章节图标</label>
+            <div class="icon-input-row">
+              <img id="sIconPreview" class="px-icon" alt="" />
+              <input id="sIcon" oninput="updateScene('icon', this.value); updateIconPreview('sIconPreview', this.value);" />
+              <button class="mini" onclick="openIconPicker(id => { document.getElementById('sIcon').value=id; updateScene('icon', id); updateIconPreview('sIconPreview', id); })">选图标</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>默认光标</label>
+            <div class="icon-input-row">
+              <img id="sCursorPreview" class="px-icon" alt="" />
+              <input id="sCursor" oninput="updateScene('cursor_item', this.value); updateIconPreview('sCursorPreview', this.value);" />
+              <button class="mini" onclick="openIconPicker(id => { document.getElementById('sCursor').value=id; updateScene('cursor_item', id); updateIconPreview('sCursorPreview', id); })">选</button>
+              <button class="mini" onclick="document.getElementById('sCursor').value='none'; updateScene('cursor_item', 'none'); updateIconPreview('sCursorPreview', 'none');">隐藏</button>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-row" style="grid-template-columns:52px 1fr;"><label>六角尺寸</label><input id="sHexSize" type="number" oninput="updateSceneNum('hex_size', this.value)" /></div>
+            <div class="form-row" style="grid-template-columns:52px 1fr;"><label>默认停留</label><input id="sInterval" type="number" oninput="updateSceneNum('interval', this.value)" /></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-row" style="grid-template-columns:52px 1fr;"><label>默认笔画</label><input id="sStroke" type="number" oninput="updateSceneNum('stroke_ticks', this.value)" /></div>
+            <div class="form-row" style="grid-template-columns:52px 1fr;"><label>起笔方向</label>
+              <select id="sDir" onchange="updateScene('start_dir', this.value)">
+                <option>NORTH_EAST</option><option>EAST</option><option>SOUTH_EAST</option>
+                <option>SOUTH_WEST</option><option>WEST</option><option>NORTH_WEST</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row"><label>默认清画布</label><label><input type="checkbox" id="sClearBefore" onchange="updateSceneBool('clear_before', this.checked)" /> 每步前清空</label></div>
+          <div class="form-row"><label>关联动作</label><input id="sTrigActions" placeholder="hexcasting:eval, ..." oninput="updateSceneTriggers('actions', this.value)" /></div>
+          <div class="form-row"><label>关联物品</label><input id="sTrigItems" placeholder="hexcasting:staff/oak, ..." oninput="updateSceneTriggers('items', this.value)" /></div>
+        </div>
+
+        <div class="form-group recessed">
+          <div class="section-head">
+            <span>札记卡片 (自然语言编辑)</span>
+            <button onclick="addKnowledgeCard()">+ 添加卡片</button>
+          </div>
+          <div id="cardsList" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+
+        <div id="sceneDangerZone" class="form-group recessed" style="display:none;flex-direction:row;justify-content:space-between;align-items:center;">
+          <span class="muted" id="sceneFileHint"></span>
+          <button class="danger" onclick="deleteCurrentSceneFromStudio()">删除此章节</button>
+        </div>
+      </div>
+
+      <!-- Tab 3: Compiled JSON & Auto-generated Lang Preview -->
+      <div id="paneIo" class="tab-pane">
+        <div class="form-group recessed">
+          <div class="section-head">
+            <span>导入场景 JSON</span>
+            <button onclick="importFromText()">解析导入</button>
+          </div>
+          <textarea id="importBox" class="code" placeholder="可粘贴或直接把场景 JSON 拖到中央画布"></textarea>
+        </div>
+        <div class="form-group recessed">
+          <div class="section-head">
+            <span>编译场景 JSON 预览</span>
+            <button onclick="copyText('exportBox')" class="primary">复制</button>
+          </div>
+          <textarea id="exportBox" class="code" readonly style="min-height:145px;"></textarea>
+        </div>
+        <div class="form-group recessed">
+          <div class="section-head">
+            <span>自动生成语言键 (zh_cn / en_us)</span>
+            <div style="display:flex;gap:4px;">
+              <button class="mini" onclick="copyText('langBoxZh')">复制中文</button>
+              <button class="mini" onclick="copyText('langBoxEn')">复制英文</button>
+            </div>
+          </div>
+          <textarea id="langBoxZh" class="code" readonly style="min-height:95px;"></textarea>
+          <textarea id="langBoxEn" class="code" readonly style="min-height:75px;"></textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal 1: Category Create / Edit -->
+<div class="modal-backdrop" id="modalCategory">
+  <div class="modal-card bevel">
+    <div class="section-head">
+      <span id="catModalHeading">新建分类</span>
+      <button class="mini" onclick="closeModal('modalCategory')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>分类 ID</label><input id="catModalId" placeholder="小写英文/数字/下划线，如 alchemy" /></div>
+      <div class="form-row"><label>中文名称</label><input id="catModalTitleZh" placeholder="如：进阶法术" /></div>
+      <div class="form-row"><label>English</label><input id="catModalTitleEn" placeholder="留空自动同步中文" /></div>
+      <div class="form-row"><label>简介 (中文)</label><input id="catModalDescZh" placeholder="一句话说明" /></div>
+      <div class="form-row"><label>简介 (EN)</label><input id="catModalDescEn" placeholder="留空自动同步中文" /></div>
+      <div class="form-row">
+        <label>分类图标</label>
+        <div class="icon-input-row">
+          <img id="catModalIconPreview" class="px-icon" alt="" />
+          <input id="catModalIcon" oninput="updateIconPreview('catModalIconPreview', this.value)" />
+          <button class="mini" onclick="openIconPicker(id => { document.getElementById('catModalIcon').value=id; updateIconPreview('catModalIconPreview', id); })">选图标</button>
+        </div>
+      </div>
+      <div class="form-row"><label>排序权重</label><input id="catModalSort" type="number" value="10" /></div>
+      <div class="form-row" id="catModalMoveRow" style="display:none;">
+        <label>删除时迁移至</label>
+        <select id="catModalMoveTo"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btnCatDelete" class="danger" style="margin-right:auto;display:none;" onclick="deleteCategorySubmit()">删除分类</button>
+      <button onclick="closeModal('modalCategory')">取消</button>
+      <button class="save-btn" onclick="saveCategorySubmit()">保存分类</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 2: New Scene -->
+<div class="modal-backdrop" id="modalNewScene">
+  <div class="modal-card bevel">
+    <div class="section-head">
+      <span>新建演示章节</span>
+      <button class="mini" onclick="closeModal('modalNewScene')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row"><label>中文标题</label><input id="newScTitleZh" placeholder="例：法术坐标偏移详解" /></div>
+      <div class="form-row"><label>English</label><input id="newScTitleEn" placeholder="留空自动同步中文" /></div>
+      <div class="form-row"><label>章节 slug</label><input id="newScSlug" placeholder="coord_offset_guide (仅 a-z0-9_)" /></div>
+      <div class="form-row"><label>所属分类</label><select id="newScCat"></select></div>
+      <div class="form-row">
+        <label>章节图标</label>
+        <div class="icon-input-row">
+          <img id="newScIconPreview" class="px-icon" alt="" />
+          <input id="newScIcon" value="hexcasting:staff/oak" oninput="updateIconPreview('newScIconPreview', this.value)" />
+          <button class="mini" onclick="openIconPicker(id => { document.getElementById('newScIcon').value=id; updateIconPreview('newScIconPreview', id); })">选图标</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('modalNewScene')">取消</button>
+      <button class="save-btn" onclick="createNewSceneSubmit()">创建并打开</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 3: Icon Picker -->
+<div class="modal-backdrop" id="modalIconPicker">
+  <div class="modal-card wide bevel">
+    <div class="section-head">
+      <span>选择物品图标 (16×16 实机贴图)</span>
+      <button class="mini" onclick="closeModal('modalIconPicker')">✕</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <select id="iconGroupFilter" onchange="renderIconGrid()">
+        <option value="all">全部来源</option>
+        <option value="abw">卓伟之作 (AbadonedGreatwork)</option>
+        <option value="hex">咒法学 (Hex Casting)</option>
+        <option value="mc">原版 (Minecraft)</option>
+      </select>
+      <input id="iconSearchInput" type="text" placeholder="搜索物品中文名 / 英文名 / ID..." style="flex:1;" oninput="renderIconGrid()" />
+    </div>
+    <div id="iconGrid" class="icon-grid recessed"></div>
+  </div>
+</div>
+
+<!-- Modal 4: Validation Result -->
+<div class="modal-backdrop" id="modalValidate">
+  <div class="modal-card wide bevel">
+    <div class="section-head">
+      <span>工程校验报告</span>
+      <button class="mini" onclick="closeModal('modalValidate')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="valSummary" class="val-item ok"></div>
+      <div id="valList" style="display:flex;flex-direction:column;gap:4px;"></div>
+      <textarea id="valScriptOut" class="code" readonly style="min-height:170px;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('modalValidate')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const HEX_CATALOG = [{"id": "hexcasting:get_caster", "sig": "qaq", "dir": "NORTH_EAST", "zh": "意识之精思", "en": "Mind's Reflection"}, {"id": "hexcasting:entity_pos/eye", "sig": "aa", "dir": "EAST", "zh": "指南针之纯化", "en": "Compass' Purification"}, {"id": "hexcasting:entity_pos/foot", "sig": "dd", "dir": "NORTH_EAST", "zh": "指南针之纯化，第二型", "en": "Compass' Purification II"}, {"id": "hexcasting:get_entity_look", "sig": "wa", "dir": "EAST", "zh": "照准仪之纯化", "en": "Alidade's Purification"}, {"id": "hexcasting:get_entity_height", "sig": "awq", "dir": "NORTH_EAST", "zh": "测高仪之纯化", "en": "Stadiometer's Purification"}, {"id": "hexcasting:get_entity_velocity", "sig": "wq", "dir": "EAST", "zh": "步伐之纯化", "en": "Pace Purification"}, {"id": "hexcasting:raycast", "sig": "wqaawdd", "dir": "EAST", "zh": "弓箭手之馏化", "en": "Archer's Distillation"}, {"id": "hexcasting:raycast/axis", "sig": "weddwaa", "dir": "EAST", "zh": "建筑师之馏化", "en": "Architect's Distillation"}, {"id": "hexcasting:raycast/entity", "sig": "weaqa", "dir": "EAST", "zh": "侦查员之馏化", "en": "Scout's Distillation"}, {"id": "hexcasting:get_media", "sig": "dde", "dir": "WEST", "zh": "媒质之精思", "en": "Media Reflection"}, {"id": "hexcasting:circle/impetus_pos", "sig": "eaqwqae", "dir": "SOUTH_WEST", "zh": "指路石之精思", "en": "Waystone Reflection"}, {"id": "hexcasting:circle/impetus_dir", "sig": "eaqwqaewede", "dir": "SOUTH_WEST", "zh": "磁石之精思", "en": "Lodestone Reflection"}, {"id": "hexcasting:circle/bounds/min", "sig": "eaqwqaewdd", "dir": "SOUTH_WEST", "zh": "次要折角之精思", "en": "Lesser Fold Reflection"}, {"id": "hexcasting:circle/bounds/max", "sig": "aqwqawaaqa", "dir": "WEST", "zh": "主要折角之精思", "en": "Greater Fold Reflection"}, {"id": "hexcasting:swap", "sig": "aawdd", "dir": "EAST", "zh": "弄臣之策略", "en": "Jester's Gambit"}, {"id": "hexcasting:rotate", "sig": "aaeaa", "dir": "EAST", "zh": "轮换之策略", "en": "Rotation Gambit"}, {"id": "hexcasting:rotate_reverse", "sig": "ddqdd", "dir": "NORTH_EAST", "zh": "轮换之策略，第二型", "en": "Rotation Gambit II"}, {"id": "hexcasting:duplicate", "sig": "aadaa", "dir": "EAST", "zh": "双子之分解", "en": "Gemini Decomposition"}, {"id": "hexcasting:over", "sig": "aaedd", "dir": "EAST", "zh": "勘探者之策略", "en": "Prospector's Gambit"}, {"id": "hexcasting:tuck", "sig": "ddqaa", "dir": "EAST", "zh": "送葬者之策略", "en": "Undertaker's Gambit"}, {"id": "hexcasting:2dup", "sig": "aadadaaw", "dir": "EAST", "zh": "狄俄斯库里之策略", "en": "Dioscuri Gambit"}, {"id": "hexcasting:stack_len", "sig": "qwaeawqaeaqa", "dir": "NORTH_WEST", "zh": "群体之精思", "en": "Flock's Reflection"}, {"id": "hexcasting:duplicate_n", "sig": "aadaadaa", "dir": "EAST", "zh": "双子之策略", "en": "Gemini Gambit"}, {"id": "hexcasting:fisherman", "sig": "ddad", "dir": "WEST", "zh": "渔夫之策略", "en": "Fisherman's Gambit"}, {"id": "hexcasting:fisherman/copy", "sig": "aada", "dir": "EAST", "zh": "渔夫之策略，第二型", "en": "Fisherman's Gambit II"}, {"id": "hexcasting:swizzle", "sig": "qaawdde", "dir": "SOUTH_EAST", "zh": "骗徒之策略", "en": "Swindler's Gambit"}, {"id": "hexcasting:add", "sig": "waaw", "dir": "NORTH_EAST", "zh": "加法之馏化", "en": "Additive Distillation"}, {"id": "hexcasting:sub", "sig": "wddw", "dir": "NORTH_WEST", "zh": "减法之馏化", "en": "Subtractive Distillation"}, {"id": "hexcasting:mul", "sig": "waqaw", "dir": "SOUTH_EAST", "zh": "乘法之馏化", "en": "Multiplicative Distillation"}, {"id": "hexcasting:div", "sig": "wdedw", "dir": "NORTH_EAST", "zh": "除法之馏化", "en": "Division Distillation"}, {"id": "hexcasting:abs", "sig": "wqaqw", "dir": "NORTH_EAST", "zh": "长度之纯化", "en": "Length Purification"}, {"id": "hexcasting:pow", "sig": "wedew", "dir": "NORTH_WEST", "zh": "乘方之馏化", "en": "Power Distillation"}, {"id": "hexcasting:floor", "sig": "ewq", "dir": "EAST", "zh": "取底之纯化", "en": "Floor Purification"}, {"id": "hexcasting:ceil", "sig": "qwe", "dir": "EAST", "zh": "取顶之纯化", "en": "Ceiling Purification"}, {"id": "hexcasting:construct_vec", "sig": "eqqqqq", "dir": "EAST", "zh": "向量之提整", "en": "Vector Exaltation"}, {"id": "hexcasting:deconstruct_vec", "sig": "qeeeee", "dir": "EAST", "zh": "向量之拆解", "en": "Vector Disintegration"}, {"id": "hexcasting:coerce_axial", "sig": "qqqqqaww", "dir": "NORTH_WEST", "zh": "轴向之纯化", "en": "Axial Purification"}, {"id": "hexcasting:and", "sig": "wdw", "dir": "NORTH_EAST", "zh": "合取之馏化", "en": "Conjunction Distillation"}, {"id": "hexcasting:or", "sig": "waw", "dir": "SOUTH_EAST", "zh": "析取之馏化", "en": "Disjunction Distillation"}, {"id": "hexcasting:not", "sig": "dw", "dir": "NORTH_WEST", "zh": "取非之纯化", "en": "Negation Purification"}, {"id": "hexcasting:xor", "sig": "dwa", "dir": "NORTH_WEST", "zh": "互斥之馏化", "en": "Exclusion Distillation"}, {"id": "hexcasting:greater", "sig": "e", "dir": "SOUTH_EAST", "zh": "至大之馏化", "en": "Maximus Distillation"}, {"id": "hexcasting:less", "sig": "q", "dir": "SOUTH_WEST", "zh": "至小之馏化", "en": "Minimus Distillation"}, {"id": "hexcasting:greater_eq", "sig": "ee", "dir": "SOUTH_EAST", "zh": "至大之馏化，第二型", "en": "Maximus Distillation II"}, {"id": "hexcasting:less_eq", "sig": "qq", "dir": "SOUTH_WEST", "zh": "至小之馏化，第二型", "en": "Minimus Distillation II"}, {"id": "hexcasting:equals", "sig": "ad", "dir": "EAST", "zh": "相等之馏化", "en": "Equality Distillation"}, {"id": "hexcasting:not_equals", "sig": "da", "dir": "EAST", "zh": "不等之馏化", "en": "Inequality Distillation"}, {"id": "hexcasting:type_equals", "sig": "wawdw", "dir": "EAST", "zh": "类似之馏化", "en": "Similarity Distillation"}, {"id": "hexcasting:type_not_equals", "sig": "wdwaw", "dir": "EAST", "zh": "相异之馏化", "en": "Dissimilarity Distillation"}, {"id": "hexcasting:bool_coerce", "sig": "aw", "dir": "NORTH_EAST", "zh": "占卜师之纯化", "en": "Augur's Purification"}, {"id": "hexcasting:if", "sig": "awdd", "dir": "SOUTH_EAST", "zh": "占卜师之提整", "en": "Augur's Exaltation"}, {"id": "hexcasting:random", "sig": "eqqq", "dir": "NORTH_WEST", "zh": "熵之精思", "en": "Entropy Reflection"}, {"id": "hexcasting:sin", "sig": "qqqqqaa", "dir": "SOUTH_EAST", "zh": "正弦之纯化", "en": "Sine Purification"}, {"id": "hexcasting:cos", "sig": "qqqqqad", "dir": "SOUTH_EAST", "zh": "余弦之纯化", "en": "Cosine Purification"}, {"id": "hexcasting:tan", "sig": "wqqqqqadq", "dir": "SOUTH_WEST", "zh": "正切之纯化", "en": "Tangent Purification"}, {"id": "hexcasting:arcsin", "sig": "ddeeeee", "dir": "SOUTH_EAST", "zh": "反正弦之纯化", "en": "Inverse Sine Purification"}, {"id": "hexcasting:arccos", "sig": "adeeeee", "dir": "NORTH_EAST", "zh": "反余弦之纯化", "en": "Inverse Cosine Purification"}, {"id": "hexcasting:arctan", "sig": "eadeeeeew", "dir": "NORTH_EAST", "zh": "反正切之纯化", "en": "Inverse Tangent Purification"}, {"id": "hexcasting:arctan2", "sig": "deadeeeeewd", "dir": "WEST", "zh": "反正切之馏化", "en": "Inverse Tangent Distillation"}, {"id": "hexcasting:logarithm", "sig": "eqaqe", "dir": "NORTH_WEST", "zh": "对数之馏化", "en": "Logarithmic Distillation"}, {"id": "hexcasting:modulo", "sig": "addwaad", "dir": "NORTH_EAST", "zh": "余数之馏化", "en": "Modulus Distillation"}, {"id": "hexcasting:unique", "sig": "aweaqa", "dir": "NORTH_EAST", "zh": "唯一之纯化", "en": "Uniqueness Purification"}, {"id": "hexcasting:print", "sig": "de", "dir": "NORTH_EAST", "zh": "揭示", "en": "Reveal"}, {"id": "hexcasting:explode", "sig": "aawaawaa", "dir": "EAST", "zh": "爆炸", "en": "Explosion"}, {"id": "hexcasting:explode/fire", "sig": "ddwddwdd", "dir": "EAST", "zh": "火球", "en": "Fireball"}, {"id": "hexcasting:add_motion", "sig": "awqqqwaqw", "dir": "SOUTH_WEST", "zh": "驱动", "en": "Impulse"}, {"id": "hexcasting:blink", "sig": "awqqqwaq", "dir": "SOUTH_WEST", "zh": "闪现", "en": "Blink"}, {"id": "hexcasting:break_block", "sig": "qaqqqqq", "dir": "EAST", "zh": "破坏方块", "en": "Break Block"}, {"id": "hexcasting:place_block", "sig": "eeeeede", "dir": "SOUTH_WEST", "zh": "放置方块", "en": "Place Block"}, {"id": "hexcasting:colorize", "sig": "awddwqawqwawq", "dir": "EAST", "zh": "内化染色剂", "en": "Internalize Pigment"}, {"id": "hexcasting:cycle_variant", "sig": "dwaawedwewdwe", "dir": "WEST", "zh": "施法者之魅力", "en": "Caster's Glamour"}, {"id": "hexcasting:create_water", "sig": "aqawqadaq", "dir": "SOUTH_EAST", "zh": "制造水源", "en": "Create Water"}, {"id": "hexcasting:destroy_water", "sig": "dedwedade", "dir": "SOUTH_WEST", "zh": "清除流体", "en": "Destroy Liquid"}, {"id": "hexcasting:ignite", "sig": "aaqawawa", "dir": "SOUTH_EAST", "zh": "点燃", "en": "Ignite"}, {"id": "hexcasting:extinguish", "sig": "ddedwdwd", "dir": "SOUTH_WEST", "zh": "广域熄灭", "en": "Extinguish Area"}, {"id": "hexcasting:conjure_block", "sig": "qqa", "dir": "NORTH_EAST", "zh": "构筑方块", "en": "Conjure Block"}, {"id": "hexcasting:conjure_light", "sig": "qqd", "dir": "NORTH_EAST", "zh": "构筑光源", "en": "Conjure Light"}, {"id": "hexcasting:bonemeal", "sig": "wqaqwawqaqw", "dir": "NORTH_EAST", "zh": "催生", "en": "Overgrow"}, {"id": "hexcasting:recharge", "sig": "qqqqqwaeaeaeaeaea", "dir": "NORTH_WEST", "zh": "重新充能", "en": "Recharge Item"}, {"id": "hexcasting:erase", "sig": "qdqawwaww", "dir": "EAST", "zh": "清除物品", "en": "Erase Item"}, {"id": "hexcasting:edify", "sig": "wqaqwd", "dir": "NORTH_EAST", "zh": "启迪树苗", "en": "Edify Sapling"}, {"id": "hexcasting:beep", "sig": "adaa", "dir": "WEST", "zh": "弹奏音符", "en": "Make Note"}, {"id": "hexcasting:craft/cypher", "sig": "waqqqqq", "dir": "EAST", "zh": "制作杂件", "en": "Craft Cypher"}, {"id": "hexcasting:craft/trinket", "sig": "wwaqqqqqeaqeaeqqqeaeq", "dir": "EAST", "zh": "制作缀品", "en": "Craft Trinket"}, {"id": "hexcasting:craft/artifact", "sig": "wwaqqqqqeawqwqwqwqwqwwqqeadaeqqeqqeadaeqq", "dir": "EAST", "zh": "制作造物", "en": "Craft Artifact"}, {"id": "hexcasting:craft/battery", "sig": "aqqqaqwwaqqqqqeqaqqqawwqwqwqwqwqw", "dir": "SOUTH_WEST", "zh": "制作试剂瓶", "en": "Craft Phial"}, {"id": "hexcasting:potion/weakness", "sig": "qqqqqaqwawaw", "dir": "NORTH_WEST", "zh": "白阳西沉", "en": "White Sun's Nadir"}, {"id": "hexcasting:potion/levitation", "sig": "qqqqqawwawawd", "dir": "WEST", "zh": "蓝阳西沉", "en": "Blue Sun's Nadir"}, {"id": "hexcasting:potion/wither", "sig": "qqqqqaewawawe", "dir": "SOUTH_WEST", "zh": "黑阳西沉", "en": "Black Sun's Nadir"}, {"id": "hexcasting:potion/poison", "sig": "qqqqqadwawaww", "dir": "SOUTH_EAST", "zh": "红阳西沉", "en": "Red Sun's Nadir"}, {"id": "hexcasting:potion/slowness", "sig": "qqqqqadwawaw", "dir": "SOUTH_EAST", "zh": "绿阳西沉", "en": "Green Sun's Nadir"}, {"id": "hexcasting:potion/regeneration", "sig": "qqqqaawawaedd", "dir": "NORTH_WEST", "zh": "白阳当空", "en": "White Sun's Zenith"}, {"id": "hexcasting:potion/night_vision", "sig": "qqqaawawaeqdd", "dir": "WEST", "zh": "蓝阳当空", "en": "Blue Sun's Zenith"}, {"id": "hexcasting:potion/absorption", "sig": "qqaawawaeqqdd", "dir": "SOUTH_WEST", "zh": "黑阳当空", "en": "Black Sun's Zenith"}, {"id": "hexcasting:potion/haste", "sig": "qaawawaeqqqdd", "dir": "SOUTH_EAST", "zh": "红阳当空", "en": "Red Sun's Zenith"}, {"id": "hexcasting:potion/strength", "sig": "aawawaeqqqqdd", "dir": "EAST", "zh": "绿阳当空", "en": "Green Sun's Zenith"}, {"id": "hexcasting:flight/range", "sig": "awawaawq", "dir": "SOUTH_WEST", "zh": "隐士之飞行", "en": "Anchorite's Flight"}, {"id": "hexcasting:flight/time", "sig": "dwdwdewq", "dir": "NORTH_EAST", "zh": "旅者之飞行", "en": "Wayfarer's Flight"}, {"id": "hexcasting:flight/can_fly", "sig": "dwdwdeweaqa", "dir": "NORTH_EAST", "zh": "飞行员之纯化", "en": "Aviator's Purification"}, {"id": "hexcasting:sentinel/create", "sig": "waeawae", "dir": "EAST", "zh": "召唤哨卫", "en": "Summon Sentinel"}, {"id": "hexcasting:sentinel/destroy", "sig": "qdwdqdw", "dir": "NORTH_EAST", "zh": "驱除哨卫", "en": "Banish Sentinel"}, {"id": "hexcasting:sentinel/get_pos", "sig": "waeawaede", "dir": "EAST", "zh": "定位哨卫", "en": "Locate Sentinel"}, {"id": "hexcasting:sentinel/wayfind", "sig": "waeawaedwa", "dir": "EAST", "zh": "寻路至哨卫", "en": "Wayfind Sentinel"}, {"id": "hexcasting:lightning", "sig": "waadwawdaaweewq", "dir": "EAST", "zh": "召雷", "en": "Summon Lightning"}, {"id": "hexcasting:flight", "sig": "eawwaeawawaa", "dir": "NORTH_WEST", "zh": "翱翔", "en": "Altiora"}, {"id": "hexcasting:create_lava", "sig": "eaqawqadaqd", "dir": "EAST", "zh": "制造熔岩", "en": "Create Lava"}, {"id": "hexcasting:teleport/great", "sig": "wwwqqqwwwqqeqqwwwqqwqqdqqqqqdqq", "dir": "EAST", "zh": "卓越传送", "en": "Greater Teleport"}, {"id": "hexcasting:sentinel/create/great", "sig": "waeawaeqqqwqwqqwq", "dir": "EAST", "zh": "召唤卓越哨卫", "en": "Summon Greater Sentinel"}, {"id": "hexcasting:dispel_rain", "sig": "eeewwweeewwaqqddqdqd", "dir": "EAST", "zh": "驱雨", "en": "Dispel Rain"}, {"id": "hexcasting:summon_rain", "sig": "wwweeewwweewdawdwad", "dir": "WEST", "zh": "召雨", "en": "Summon Rain"}, {"id": "hexcasting:brainsweep", "sig": "qeqwqwqwqwqeqaeqeaqeqaeqaqded", "dir": "NORTH_EAST", "zh": "剥离意识", "en": "Flay Mind"}, {"id": "hexcasting:akashic/read", "sig": "qqqwqqqqqaq", "dir": "WEST", "zh": "阿卡夏之馏化", "en": "Akasha's Distillation"}, {"id": "hexcasting:akashic/write", "sig": "eeeweeeeede", "dir": "EAST", "zh": "阿卡夏之策略", "en": "Akasha's Gambit"}, {"id": "hexcasting:escape", "sig": "qqqaw", "dir": "WEST", "zh": "考察", "en": "Consideration"}, {"id": "hexcasting:runtime_escape", "sig": "wdeee", "dir": "SOUTH_EAST", "zh": "深思", "en": "Contemplation"}, {"id": "hexcasting:open_paren", "sig": "qqq", "dir": "WEST", "zh": "内省", "en": "Introspection"}, {"id": "hexcasting:close_paren", "sig": "eee", "dir": "EAST", "zh": "反思", "en": "Retrospection"}, {"id": "hexcasting:open_n_parens", "sig": "qdaqadq", "dir": "WEST", "zh": "冥想", "en": "Meditation"}, {"id": "hexcasting:close_all_parens", "sig": "eadedae", "dir": "EAST", "zh": "回想", "en": "Recollection"}, {"id": "hexcasting:read_into_parens", "sig": "aqqqqqwded", "dir": "EAST", "zh": "插嵌", "en": "Interjection"}, {"id": "hexcasting:undo", "sig": "eeedw", "dir": "EAST", "zh": "消解", "en": "Evanition"}, {"id": "hexcasting:eval", "sig": "deaqq", "dir": "SOUTH_EAST", "zh": "赫尔墨斯之策略", "en": "Hermes' Gambit"}, {"id": "hexcasting:eval/cc", "sig": "qwaqde", "dir": "NORTH_WEST", "zh": "伊里斯之策略", "en": "Iris' Gambit"}, {"id": "hexcasting:halt", "sig": "aqdee", "dir": "SOUTH_WEST", "zh": "卡戎之策略", "en": "Charon's Gambit"}, {"id": "hexcasting:read", "sig": "aqqqqq", "dir": "EAST", "zh": "书吏之精思", "en": "Scribe's Reflection"}, {"id": "hexcasting:read/entity", "sig": "wawqwqwqwqwqw", "dir": "EAST", "zh": "编年史家之纯化", "en": "Chronicler's Purification"}, {"id": "hexcasting:write", "sig": "deeeee", "dir": "EAST", "zh": "书吏之策略", "en": "Scribe's Gambit"}, {"id": "hexcasting:write/entity", "sig": "wdwewewewewew", "dir": "EAST", "zh": "编年史家之策略", "en": "Chronicler's Gambit"}, {"id": "hexcasting:readable", "sig": "aqqqqqe", "dir": "EAST", "zh": "审计员之精思", "en": "Auditor's Reflection"}, {"id": "hexcasting:readable/entity", "sig": "wawqwqwqwqwqwew", "dir": "EAST", "zh": "审计员之纯化", "en": "Auditor's Purification"}, {"id": "hexcasting:writable", "sig": "deeeeeq", "dir": "EAST", "zh": "估价员之精思", "en": "Assessor's Reflection"}, {"id": "hexcasting:writable/entity", "sig": "wdwewewewewewqw", "dir": "EAST", "zh": "估价员之纯化", "en": "Assessor's Purification"}, {"id": "hexcasting:read/local", "sig": "qeewdweddw", "dir": "NORTH_EAST", "zh": "雾尼之精思", "en": "Muninn's Reflection"}, {"id": "hexcasting:write/local", "sig": "eqqwawqaaw", "dir": "NORTH_WEST", "zh": "福金之策略", "en": "Huginn's Gambit"}, {"id": "hexcasting:thanatos", "sig": "qqaed", "dir": "SOUTH_EAST", "zh": "塔纳托斯之精思", "en": "Thanatos' Reflection"}, {"id": "hexcasting:const/null", "sig": "d", "dir": "EAST", "zh": "空元之精思", "en": "Nullary Reflection"}, {"id": "hexcasting:const/true", "sig": "aqae", "dir": "SOUTH_EAST", "zh": "真之精思", "en": "True Reflection"}, {"id": "hexcasting:const/false", "sig": "dedq", "dir": "NORTH_EAST", "zh": "假之精思", "en": "False Reflection"}, {"id": "hexcasting:const/vec/px", "sig": "qqqqqea", "dir": "NORTH_WEST", "zh": "向量之精思，+X型", "en": "Vector Reflection +X"}, {"id": "hexcasting:const/vec/py", "sig": "qqqqqew", "dir": "NORTH_WEST", "zh": "向量之精思，+Y型", "en": "Vector Reflection +Y"}, {"id": "hexcasting:const/vec/pz", "sig": "qqqqqed", "dir": "NORTH_WEST", "zh": "向量之精思，+Z型", "en": "Vector Reflection +Z"}, {"id": "hexcasting:const/vec/nx", "sig": "eeeeeqa", "dir": "SOUTH_WEST", "zh": "向量之精思，-X型", "en": "Vector Reflection -X"}, {"id": "hexcasting:const/vec/ny", "sig": "eeeeeqw", "dir": "SOUTH_WEST", "zh": "向量之精思，-Y型", "en": "Vector Reflection -Y"}, {"id": "hexcasting:const/vec/nz", "sig": "eeeeeqd", "dir": "SOUTH_WEST", "zh": "向量之精思，-Z型", "en": "Vector Reflection -Z"}, {"id": "hexcasting:const/vec/0", "sig": "qqqqq", "dir": "NORTH_WEST", "zh": "向量之精思，零型", "en": "Vector Reflection Zero"}, {"id": "hexcasting:const/double/pi", "sig": "qdwdq", "dir": "NORTH_EAST", "zh": "弧之精思", "en": "Arc's Reflection"}, {"id": "hexcasting:const/double/tau", "sig": "eawae", "dir": "NORTH_WEST", "zh": "圆之精思", "en": "Circle's Reflection"}, {"id": "hexcasting:const/double/e", "sig": "aaq", "dir": "EAST", "zh": "欧拉之精思", "en": "Euler's Reflection"}, {"id": "hexcasting:const/double/phi", "sig": "wdded", "dir": "NORTH_EAST", "zh": "和谐之精思", "en": "Harmony Reflection"}, {"id": "hexcasting:get_entity", "sig": "qqqqqdaqa", "dir": "SOUTH_EAST", "zh": "实体之纯化", "en": "Entity Purification"}, {"id": "hexcasting:get_entity/animal", "sig": "qqqqqdaqaawa", "dir": "SOUTH_EAST", "zh": "实体之纯化：动物", "en": "Entity Purification: Animal"}, {"id": "hexcasting:get_entity/monster", "sig": "qqqqqdaqaawq", "dir": "SOUTH_EAST", "zh": "实体之纯化：怪物", "en": "Entity Purification: Monster"}, {"id": "hexcasting:get_entity/item", "sig": "qqqqqdaqaaww", "dir": "SOUTH_EAST", "zh": "实体之纯化：物品", "en": "Entity Purification: Item"}, {"id": "hexcasting:get_entity/player", "sig": "qqqqqdaqaawe", "dir": "SOUTH_EAST", "zh": "实体之纯化：玩家", "en": "Entity Purification: Player"}, {"id": "hexcasting:get_entity/living", "sig": "qqqqqdaqaawd", "dir": "SOUTH_EAST", "zh": "实体之纯化：生物", "en": "Entity Purification: Living"}, {"id": "hexcasting:zone_entity", "sig": "qqqqqwded", "dir": "SOUTH_EAST", "zh": "区域之馏化：任意", "en": "Zone Distillation: Any"}, {"id": "hexcasting:zone_entity/animal", "sig": "qqqqqwdeddwa", "dir": "SOUTH_EAST", "zh": "区域之馏化：动物", "en": "Zone Distillation: Animal"}, {"id": "hexcasting:zone_entity/not_animal", "sig": "eeeeewaqaawa", "dir": "NORTH_EAST", "zh": "区域之馏化：非动物", "en": "Zone Distillation: Non-Animal"}, {"id": "hexcasting:zone_entity/monster", "sig": "qqqqqwdeddwq", "dir": "SOUTH_EAST", "zh": "区域之馏化：怪物", "en": "Zone Distillation: Monster"}, {"id": "hexcasting:zone_entity/not_monster", "sig": "eeeeewaqaawq", "dir": "NORTH_EAST", "zh": "区域之馏化：非怪物", "en": "Zone Distillation: Non-Monster"}, {"id": "hexcasting:zone_entity/item", "sig": "qqqqqwdeddww", "dir": "SOUTH_EAST", "zh": "区域之馏化：物品", "en": "Zone Distillation: Item"}, {"id": "hexcasting:zone_entity/not_item", "sig": "eeeeewaqaaww", "dir": "NORTH_EAST", "zh": "区域之馏化：非物品", "en": "Zone Distillation: Non-Item"}, {"id": "hexcasting:zone_entity/player", "sig": "qqqqqwdeddwe", "dir": "SOUTH_EAST", "zh": "区域之馏化：玩家", "en": "Zone Distillation: Player"}, {"id": "hexcasting:zone_entity/not_player", "sig": "eeeeewaqaawe", "dir": "NORTH_EAST", "zh": "区域之馏化：非玩家", "en": "Zone Distillation: Non-Player"}, {"id": "hexcasting:zone_entity/living", "sig": "qqqqqwdeddwd", "dir": "SOUTH_EAST", "zh": "区域之馏化：生物", "en": "Zone Distillation: Living"}, {"id": "hexcasting:zone_entity/not_living", "sig": "eeeeewaqaawd", "dir": "NORTH_EAST", "zh": "区域之馏化：非生物", "en": "Zone Distillation: Non-Living"}, {"id": "hexcasting:compare_block/lenient", "sig": "qqqqqeqeeeee", "dir": "NORTH_WEST", "zh": "测量员之馏化", "en": "Surveyor's Distillation"}, {"id": "hexcasting:compare_block/strict", "sig": "qwawqwadadwewdwe", "dir": "NORTH_WEST", "zh": "检验员之馏化", "en": "Inspector's Distillation"}, {"id": "hexcasting:compare_entity", "sig": "aqaeqded", "dir": "NORTH_WEST", "zh": "分类学家之馏化", "en": "Taxonomer's Distillation"}, {"id": "hexcasting:compare_item/lenient", "sig": "qaeaqeqedqde", "dir": "NORTH_WEST", "zh": "分拣员之馏化", "en": "Sorter's Distillation"}, {"id": "hexcasting:compare_item/strict", "sig": "qaeaqewqedqde", "dir": "NORTH_WEST", "zh": "堆叠之馏化", "en": "Stacking Distillation"}, {"id": "hexcasting:append", "sig": "edqde", "dir": "SOUTH_WEST", "zh": "整合之馏化", "en": "Integration Distillation"}, {"id": "hexcasting:unappend", "sig": "qaeaq", "dir": "NORTH_WEST", "zh": "派生之分解", "en": "Derivation Decomposition"}, {"id": "hexcasting:index", "sig": "deeed", "dir": "NORTH_WEST", "zh": "选择之馏化", "en": "Selection Distillation"}, {"id": "hexcasting:for_each", "sig": "dadad", "dir": "NORTH_EAST", "zh": "托特之策略", "en": "Thoth's Gambit"}, {"id": "hexcasting:singleton", "sig": "adeeed", "dir": "EAST", "zh": "单体之纯化", "en": "Single's Purification"}, {"id": "hexcasting:empty_list", "sig": "qqaeaae", "dir": "NORTH_EAST", "zh": "空无之精思", "en": "Vacant Reflection"}, {"id": "hexcasting:reverse", "sig": "qqqaede", "dir": "EAST", "zh": "逆行之纯化", "en": "Retrograde Purification"}, {"id": "hexcasting:last_n_list", "sig": "ewdqdwe", "dir": "SOUTH_WEST", "zh": "群体之策略", "en": "Flock's Gambit"}, {"id": "hexcasting:splat", "sig": "qwaeawq", "dir": "NORTH_WEST", "zh": "群体之拆解", "en": "Flock's Disintegration"}, {"id": "hexcasting:index_of", "sig": "dedqde", "dir": "EAST", "zh": "定位器之馏化", "en": "Locator's Distillation"}, {"id": "hexcasting:remove_from", "sig": "edqdewaqa", "dir": "SOUTH_WEST", "zh": "切除器之馏化", "en": "Excisor's Distillation"}, {"id": "hexcasting:slice", "sig": "qaeaqwded", "dir": "NORTH_WEST", "zh": "选择之提整", "en": "Selection Exaltation"}, {"id": "hexcasting:replace", "sig": "wqaeaqw", "dir": "NORTH_WEST", "zh": "外科医师之提整", "en": "Surgeon's Exaltation"}, {"id": "hexcasting:construct", "sig": "ddewedd", "dir": "SOUTH_EAST", "zh": "演讲者之馏化", "en": "Speaker's Distillation"}, {"id": "hexcasting:deconstruct", "sig": "aaqwqaa", "dir": "SOUTH_WEST", "zh": "演讲者之分解", "en": "Speaker's Decomposition"}, {"id": "hexcasting:interop/pehkui/get", "sig": "aawawwawwa", "dir": "NORTH_WEST", "zh": "格列佛之纯化", "en": "Gulliver's Purification"}, {"id": "hexcasting:interop/pehkui/set", "sig": "ddwdwwdwwd", "dir": "NORTH_EAST", "zh": "改变大小", "en": "Alter Scale"}, {"id": "abadoned_greatwork:test", "sig": "qaqw", "dir": "SOUTH_EAST", "zh": "test", "en": "test"}, {"id": "abadoned_greatwork:check", "sig": "qqqaqw", "dir": "SOUTH_EAST", "zh": "解析水晶", "en": "Crystal Analysis"}, {"id": "abadoned_greatwork:sort", "sig": "awaq", "dir": "NORTH_EAST", "zh": "忒弥斯之纯化", "en": "Themistian Purification"}, {"id": "abadoned_greatwork:locate", "sig": "qqqqaqwawawww", "dir": "WEST", "zh": "探古寻迹", "en": "Locate"}, {"id": "abadoned_greatwork:random_biome", "sig": "wwwawaeqqqq", "dir": "SOUTH_WEST", "zh": "随缘之精思", "en": "Random Target"}, {"id": "abadoned_greatwork:current_biome", "sig": "qqqqeawa", "dir": "NORTH_EAST", "zh": "所在之精思", "en": "Current Whereabouts"}, {"id": "abadoned_greatwork:tracking_eye", "sig": "qqqqaqwawawwwqded", "dir": "WEST", "zh": "召唤追踪之眼", "en": "Summon Tracking Eye"}, {"id": "abadoned_greatwork:waypoint_eye", "sig": "qqqqaqwawawwweddwaa", "dir": "WEST", "zh": "召唤路标之眼", "en": "Summon Waypoint Eye"}, {"id": "hexcasting:mask", "sig": "a", "dir": "SOUTH_EAST", "zh": "簿记员之策略", "en": "Bookkeeper's Gambit"}, {"id": "hexcasting:number", "sig": "aqaa", "dir": "SOUTH_EAST", "zh": "数字之精思", "en": "Numerical Reflection"}];
+
+const DIRS = ["NORTH_EAST", "EAST", "SOUTH_EAST", "SOUTH_WEST", "WEST", "NORTH_WEST"];
+const DIR_DELTA = [[1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1]];
+const DELTA_TO_CHAR = ["w", "e", "d", "s", "a", "q"];
+const CHAR_TO_DELTA = { w: 0, e: 1, d: 2, s: 3, a: 4, q: 5 };
+const SQRT3 = Math.sqrt(3);
+
+// ==================== Studio Backend State ====================
+let studioConnected = false;
+let studioData = null; // { categories, scenes, zh_cn, en_us, action_zh, action_en, iotas, items }
+let activeSceneSlug = "custom_demo";
+let oldSceneSlug = null;
+let oldSceneFile = null;
+let dirty = false;
+let editingCatOldId = null;
+let iconPickerCallback = null;
+const iconImgCache = new Map();
+
+let scene = makeDefaultScene();
+let sceneTexts = makeDefaultTexts();
+let selectedStepIdx = 0;
+let playTick = 0;
+let playing = true;
+let speed = 1;
+let stageMode = "play";
+let lastRaf = performance.now();
+
+let drawnCoords = [];
+let isDrawingMouse = false;
+let isDraggingOrigin = false;
+let dragStartCoord = null;
+let dragOrigStart = null;
+let hoverCoord = null;
+
+function makeDefaultStepText() {
+  return {
+    chapter_zh: "", chapter_en: "",
+    title_mode: "auto", title_key: "",
+    title_zh: "", title_en: "",
+    callout_zh: "", callout_en: ""
+  };
+}
+
+function makeDefaultTexts() {
+  return {
+    title: { zh: "新演示章节", en: "New Ponder Scene" },
+    subtitle: { zh: "基础施法演示", en: "Basic Casting Demo" },
+    cards: [{ title_zh: "要点记录", title_en: "", body_zh: "可在右侧用自然语言编写札记。", body_en: "" }],
+    steps: [
+      { ...makeDefaultStepText(), chapter_zh: "第一节", callout_zh: "获取施法者并压入栈顶" },
+      { ...makeDefaultStepText(), callout_zh: "消耗顶端实体并返回其眼部坐标" }
+    ]
+  };
+}
+
+function makeDefaultScene() {
+  return {
+    id: "abadoned_greatwork:custom_demo",
+    title: "hexponder.scene.custom_demo.title",
+    subtitle: "hexponder.scene.custom_demo.subtitle",
+    category: "basics",
+    sort_order: 10,
+    icon: "hexcasting:staff/oak",
+    cursor_item: "hexcasting:staff/oak",
+    hex_size: 22,
+    interval: 42,
+    stroke_ticks: 15,
+    clear_before: true,
+    start_dir: "NORTH_EAST",
+    triggers: { actions: ["hexcasting:get_caster", "hexcasting:entity_pos/eye"] },
+    knowledge_cards: [
+      { title: "hexponder.scene.custom_demo.k0.title", body: "hexponder.scene.custom_demo.k0.body" }
+    ],
+    steps: [
+      {
+        type: "execute",
+        action: "hexcasting:get_caster",
+        origin: [-1, 2],
+        callout: { anchor: "stack", anchor_index: 0, color: "#64C8FF", text: "" }
+      },
+      {
+        type: "execute",
+        action: "hexcasting:entity_pos/eye",
+        origin: [0, 1],
+        clear_before: false,
+        callout: { anchor: "stack", anchor_index: 0, color: "#6BCB77", text: "" }
+      }
+    ]
+  };
+}
+
+function ensureSceneTextsSync() {
+  scene.knowledge_cards = scene.knowledge_cards || [];
+  scene.steps = scene.steps || [];
+  while (sceneTexts.cards.length < scene.knowledge_cards.length) {
+    sceneTexts.cards.push({ title_zh: "", title_en: "", body_zh: "", body_en: "" });
+  }
+  sceneTexts.cards.length = scene.knowledge_cards.length;
+  while (sceneTexts.steps.length < scene.steps.length) {
+    sceneTexts.steps.push(makeDefaultStepText());
+  }
+  sceneTexts.steps.length = scene.steps.length;
+}
+
+function setDirty(v) {
+  dirty = !!v;
+  document.getElementById("dirtyBadge").style.display = (studioConnected && dirty) ? "inline-block" : "none";
+  const sb = document.getElementById("btnSaveStudio");
+  if (sb) sb.classList.toggle("needs-save", dirty);
+}
+
+// ==================== Studio Connection & Workspace Load ====================
+async function apiFetch(url, opts = {}) {
+  const res = await fetch(url, opts);
+  const txt = await res.text();
+  let data = null;
+  try { data = JSON.parse(txt); } catch { data = { error: txt }; }
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  return data;
+}
+
+async function initStudio(preserveCurrentScene = false) {
+  try {
+    const ws = await apiFetch("/api/workspace");
+    if (!ws || ws.mode !== "studio") throw new Error("not studio");
+    studioConnected = true;
+    studioData = ws;
+
+    const pill = document.getElementById("studioStatusBadge");
+    pill.textContent = `● 已连接工程 (${ws.categories.length}分类 / ${ws.scenes.length}章节)`;
+    pill.classList.add("online");
+    ["btnSaveStudio", "btnValidateStudio", "btnRefreshStudio"].forEach(id => {
+      document.getElementById(id).style.display = "inline-block";
+    });
+    document.getElementById("btnNewCat").disabled = false;
+    document.getElementById("btnNewScene").disabled = false;
+
+    populatePresetSelects();
+    populateCategorySelects();
+    renderChapterTree();
+
+    if (!preserveCurrentScene && ws.scenes.length > 0) {
+      const def = ws.scenes.find(s => s.slug === "stack_and_grid") || ws.scenes[0];
+      loadStudioScene(def, true);
+    } else if (preserveCurrentScene) {
+      syncSceneFields();
+    }
+  } catch (err) {
+    studioConnected = false;
+    const pill = document.getElementById("studioStatusBadge");
+    pill.textContent = "○ 离线单机 (运行 start_editor.bat 直连工程)";
+    pill.classList.remove("online");
+    switchLeftTab("patterns");
+    populateCategorySelects();
+    renderChapterTree();
+  }
+}
+
+async function refreshStudioWorkspace() {
+  if (dirty && !confirm("当前章节有未保存的修改，确定要重新从磁盘载入吗？")) return;
+  await initStudio(false);
+  toast("已从磁盘刷新工程");
+}
+
+function populatePresetSelects() {
+  const iotas = studioData?.iotas || [];
+  for (const id of ["fPushPresetSelect", "fCallIotaPreset"]) {
+    const sel = document.getElementById(id);
+    const first = sel.options[0].text;
+    sel.innerHTML = `<option value="">${esc(first)}</option>`;
+    for (const f of iotas) {
+      const opt = document.createElement("option");
+      opt.value = f; opt.textContent = f;
+      sel.appendChild(opt);
+    }
+  }
+}
+
+function populateCategorySelects() {
+  const cats = studioData?.categories || [
+    { id: "basics", title_zh: "基础入门" },
+    { id: "control_flow", title_zh: "流程控制" },
+    { id: "spells", title_zh: "实用法术" },
+    { id: "greatwork", title_zh: "卓伟之作" }
+  ];
+  for (const selId of ["sCat", "newScCat"]) {
+    const sel = document.getElementById(selId);
+    if (!sel) continue;
+    const prev = sel.value;
+    sel.innerHTML = "";
+    for (const c of cats) {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = `${c.title_zh || c.id} (${c.id})`;
+      sel.appendChild(opt);
+    }
+    if (prev && cats.some(c => c.id === prev)) sel.value = prev;
+  }
+}
+
+function resolveLangPair(rawKeyOrVal, zhDict, enDict) {
+  if (!rawKeyOrVal) return { zh: "", en: "" };
+  const s = String(rawKeyOrVal);
+  if (zhDict && (s in zhDict)) {
+    return { zh: zhDict[s] || "", en: (enDict && enDict[s]) || "" };
+  }
+  return { zh: s, en: "" };
+}
+
+function loadStudioScene(entry, skipConfirm = false) {
+  if (!skipConfirm && dirty && !confirm(`当前章节「${sceneTexts.title.zh}」尚未保存，确定切换到「${entry.title_zh}」吗？`)) {
+    return;
+  }
+  const sc = JSON.parse(JSON.stringify(entry.data));
+  const zh = studioData?.zh_cn || {};
+  const en = studioData?.en_us || {};
+  const az = studioData?.action_zh || {};
+
+  scene = sc;
+  activeSceneSlug = entry.slug;
+  oldSceneSlug = entry.slug;
+  oldSceneFile = entry.file;
+
+  const tPair = resolveLangPair(sc.title, zh, en);
+  const subPair = resolveLangPair(sc.subtitle, zh, en);
+
+  sceneTexts = {
+    title: tPair,
+    subtitle: subPair,
+    cards: (sc.knowledge_cards || []).map(c => {
+      const kt = resolveLangPair(c.title, zh, en);
+      const kb = resolveLangPair(c.body, zh, en);
+      return { title_zh: kt.zh, title_en: kt.en, body_zh: kb.zh, body_en: kb.en };
+    }),
+    steps: (sc.steps || []).map(st => {
+      const tx = makeDefaultStepText();
+      if (st.chapter) {
+        const ch = resolveLangPair(st.chapter, zh, en);
+        tx.chapter_zh = ch.zh; tx.chapter_en = ch.en;
+      }
+      if (st.title) {
+        if (st.title.startsWith("hexponder.")) {
+          const sp = resolveLangPair(st.title, zh, en);
+          tx.title_mode = "custom";
+          tx.title_zh = sp.zh; tx.title_en = sp.en;
+        } else {
+          tx.title_mode = "key";
+          tx.title_key = st.title;
+        }
+      } else {
+        tx.title_mode = "auto";
+      }
+      if (st.callout && st.callout.text) {
+        const cp = resolveLangPair(st.callout.text, zh, en);
+        tx.callout_zh = cp.zh; tx.callout_en = cp.en;
+      }
+      return tx;
+    })
+  };
+
+  selectedStepIdx = 0; playTick = 0; playing = true;
+  setDirty(false);
+  updatePlayButton();
+  renderChapterTree();
+  syncAllViews();
+  toast(`已载入：${tPair.zh || entry.slug}`);
+}
+
+function updateIconPreview(imgId, itemId) {
+  const el = document.getElementById(imgId);
+  if (!el) return;
+  const iid = (itemId || "").trim();
+  if (!studioConnected || !iid || iid.toLowerCase() === "none") {
+    el.removeAttribute("src");
+    el.style.opacity = "0.25";
+    return;
+  }
+  el.style.opacity = "1";
+  el.src = `/api/icon?id=${encodeURIComponent(iid)}`;
+}
+
+function getCanvasCursorImg(itemId) {
+  if (!studioConnected || !itemId || itemId.toLowerCase() === "none") return null;
+  if (iconImgCache.has(itemId)) {
+    const im = iconImgCache.get(itemId);
+    return (im && im.complete && im.naturalWidth > 0) ? im : null;
+  }
+  const img = new Image();
+  img.onload = () => renderCanvas();
+  img.onerror = () => iconImgCache.set(itemId, null);
+  img.src = `/api/icon?id=${encodeURIComponent(itemId)}`;
+  iconImgCache.set(itemId, img);
+  return null;
+}
+
+// ==================== Compiled Output (Natural Language -> Canonical Keys) ====================
+function buildCompiledPayload() {
+  ensureSceneTextsSync();
+  const slug = (activeSceneSlug || "scene").trim() || "scene";
+  const out = JSON.parse(JSON.stringify(scene));
+  out.id = `abadoned_greatwork:${slug}`;
+  const pref = `hexponder.scene.${slug}.`;
+  const zhOut = {};
+  const enOut = {};
+
+  function addPair(k, zhVal, enVal) {
+    const z = (zhVal || "").trim();
+    const e = (enVal || "").trim() || z;
+    zhOut[k] = z;
+    enOut[k] = e;
+    return k;
+  }
+
+  out.title = addPair(`${pref}title`, sceneTexts.title.zh || slug, sceneTexts.title.en);
+  if ((sceneTexts.subtitle.zh || "").trim() || (sceneTexts.subtitle.en || "").trim()) {
+    const sb = (sceneTexts.subtitle.zh || "").trim() || sceneTexts.subtitle.en;
+    out.subtitle = addPair(`${pref}subtitle`, sb, sceneTexts.subtitle.en || sb);
+  } else {
+    delete out.subtitle;
+  }
+
+  out.knowledge_cards = (out.knowledge_cards || []).map((c, idx) => {
+    const ct = sceneTexts.cards[idx] || {};
+    const cOut = { ...c };
+    cOut.title = addPair(`${pref}k${idx}.title`, ct.title_zh || `札记 ${idx + 1}`, ct.title_en);
+    cOut.body = addPair(`${pref}k${idx}.body`, ct.body_zh || ct.title_zh || `札记正文 ${idx + 1}`, ct.body_en);
+    if (!cOut.inline_iotas || !cOut.inline_iotas.length) delete cOut.inline_iotas;
+    return cOut;
+  });
+
+  const chMap = new Map();
+  out.steps = (out.steps || []).map((st, idx) => {
+    const sOut = { ...st };
+    const tx = sceneTexts.steps[idx] || makeDefaultStepText();
+
+    const chZ = (tx.chapter_zh || "").trim();
+    const chE = (tx.chapter_en || "").trim();
+    if (chZ || chE) {
+      const z = chZ || chE;
+      const e = chE || z;
+      const pairKey = `${z}\u0000${e}`;
+      if (!chMap.has(pairKey)) {
+        const k = `${pref}ch${chMap.size}`;
+        chMap.set(pairKey, k);
+        addPair(k, z, e);
+      }
+      sOut.chapter = chMap.get(pairKey);
+    } else {
+      delete sOut.chapter;
+    }
+
+    if (tx.title_mode === "key" && (tx.title_key || "").trim() && !tx.title_key.startsWith("hexponder.")) {
+      sOut.title = tx.title_key.trim();
+    } else if (tx.title_mode === "custom" && ((tx.title_zh || "").trim() || (tx.title_en || "").trim())) {
+      const tz = (tx.title_zh || "").trim() || tx.title_en;
+      sOut.title = addPair(`${pref}s${idx}.title`, tz, tx.title_en || tz);
+    } else {
+      delete sOut.title;
+    }
+
+    if (sOut.callout) {
+      const co = { ...sOut.callout };
+      const cz = (tx.callout_zh || "").trim();
+      const ce = (tx.callout_en || "").trim();
+      if (cz || ce) {
+        const tipZ = cz || ce;
+        co.text = addPair(`${pref}s${idx}.tip`, tipZ, ce || tipZ);
+        sOut.callout = co;
+      } else {
+        delete sOut.callout;
+      }
+    }
+    return sOut;
+  });
+
+  return { slug, scene: out, zhOut, enOut };
+}
+
+async function saveCurrentSceneToStudio() {
+  if (!studioConnected) return;
+  ensureSceneTextsSync();
+  const slug = activeSceneSlug.trim();
+  if (!/^[a-z0-9_]+$/.test(slug)) {
+    toast("章节 slug 仅允许小写字母、数字、下划线");
+    return;
+  }
+  try {
+    const res = await apiFetch("/api/scene/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        old_file: oldSceneFile || "",
+        old_slug: oldSceneSlug || "",
+        slug,
+        scene,
+        texts: sceneTexts
+      })
+    });
+    oldSceneFile = res.file;
+    oldSceneSlug = res.slug;
+    scene = res.scene;
+    setDirty(false);
+    await initStudio(true);
+    toast(`已保存 ${res.file} · 同步语言键 (${res.zh_count} 条)`);
+  } catch (err) {
+    alert("保存失败: " + err.message);
+  }
+}
+
+async function deleteCurrentSceneFromStudio() {
+  if (!studioConnected || !oldSceneFile) return;
+  if (!confirm(`确定删除章节「${sceneTexts.title.zh}」(${oldSceneFile}) 及其全部语言键吗？此操作不可撤销！`)) return;
+  try {
+    await apiFetch("/api/scene/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file: oldSceneFile, slug: oldSceneSlug })
+    });
+    toast(`已删除 ${oldSceneFile}`);
+    setDirty(false);
+    await initStudio(false);
+  } catch (err) {
+    alert("删除失败: " + err.message);
+  }
+}
+
+async function runStudioValidate() {
+  if (!studioConnected) return;
+  if (dirty && confirm("当前有未保存修改，是否先保存再校验？")) {
+    await saveCurrentSceneToStudio();
+  }
+  try {
+    const res = await apiFetch("/api/validate", { method: "POST" });
+    const sumEl = document.getElementById("valSummary");
+    sumEl.className = "val-item " + (res.ok ? "ok" : "");
+    sumEl.textContent = (res.ok ? "✓ 校验全部通过 · " : "✕ 发现错误 · ") + res.summary;
+
+    const listEl = document.getElementById("valList");
+    listEl.innerHTML = "";
+    for (const e of (res.errors || [])) {
+      const d = document.createElement("div"); d.className = "val-item"; d.textContent = "错误: " + e;
+      listEl.appendChild(d);
+    }
+    for (const w of (res.warnings || [])) {
+      const d = document.createElement("div"); d.className = "val-item warn"; d.textContent = "警告: " + w;
+      listEl.appendChild(d);
+    }
+    document.getElementById("valScriptOut").value = res.script_output || "";
+    openModal("modalValidate");
+  } catch (err) {
+    alert("校验请求失败: " + err.message);
+  }
+}
+
+// ==================== Category & New Scene Modals ====================
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+function openCategoryModal(catObj) {
+  if (!studioConnected) return;
+  editingCatOldId = catObj ? catObj.id : null;
+  document.getElementById("catModalHeading").textContent = catObj ? `编辑分类：${catObj.title_zh}` : "新建分类";
+  document.getElementById("catModalId").value = catObj ? catObj.id : "";
+  document.getElementById("catModalTitleZh").value = catObj ? (catObj.title_zh || "") : "";
+  document.getElementById("catModalTitleEn").value = catObj ? (catObj.title_en || "") : "";
+  document.getElementById("catModalDescZh").value = catObj ? (catObj.desc_zh || "") : "";
+  document.getElementById("catModalDescEn").value = catObj ? (catObj.desc_en || "") : "";
+  const ic = catObj ? (catObj.icon || "hexcasting:staff/oak") : "hexcasting:staff/oak";
+  document.getElementById("catModalIcon").value = ic;
+  updateIconPreview("catModalIconPreview", ic);
+  document.getElementById("catModalSort").value = catObj ? catObj.sort_order : (studioData.categories.length);
+
+  const delBtn = document.getElementById("btnCatDelete");
+  const moveRow = document.getElementById("catModalMoveRow");
+  if (catObj) {
+    delBtn.style.display = "inline-block";
+    const others = (studioData?.categories || []).filter(c => c.id !== catObj.id);
+    const hasScenes = (studioData?.scenes || []).some(s => s.category === catObj.id);
+    moveRow.style.display = (hasScenes && others.length > 0) ? "grid" : "none";
+    const mSel = document.getElementById("catModalMoveTo");
+    mSel.innerHTML = "";
+    for (const o of others) {
+      const opt = document.createElement("option");
+      opt.value = o.id; opt.textContent = `${o.title_zh} (${o.id})`;
+      mSel.appendChild(opt);
+    }
+  } else {
+    delBtn.style.display = "none";
+    moveRow.style.display = "none";
+  }
+  openModal("modalCategory");
+}
+
+async function saveCategorySubmit() {
+  try {
+    await apiFetch("/api/category/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        old_id: editingCatOldId || "",
+        id: document.getElementById("catModalId").value.trim(),
+        title_zh: document.getElementById("catModalTitleZh").value.trim(),
+        title_en: document.getElementById("catModalTitleEn").value.trim(),
+        desc_zh: document.getElementById("catModalDescZh").value.trim(),
+        desc_en: document.getElementById("catModalDescEn").value.trim(),
+        icon: document.getElementById("catModalIcon").value.trim(),
+        sort_order: Number(document.getElementById("catModalSort").value) || 0
+      })
+    });
+    closeModal("modalCategory");
+    await initStudio(true);
+    toast("分类已保存并同步语言文件");
+  } catch (err) {
+    alert("保存分类失败: " + err.message);
+  }
+}
+
+async function deleteCategorySubmit() {
+  if (!editingCatOldId) return;
+  const moveTo = document.getElementById("catModalMoveTo").value || "";
+  if (!confirm(`确定删除分类 '${editingCatOldId}' 吗？`)) return;
+  try {
+    await apiFetch("/api/category/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editingCatOldId, move_scenes_to: moveTo })
+    });
+    closeModal("modalCategory");
+    await initStudio(true);
+    toast("分类已删除");
+  } catch (err) {
+    alert("删除分类失败: " + err.message);
+  }
+}
+
+function openNewSceneModal() {
+  if (!studioConnected) return;
+  populateCategorySelects();
+  document.getElementById("newScTitleZh").value = "";
+  document.getElementById("newScTitleEn").value = "";
+  document.getElementById("newScSlug").value = "new_lesson_" + ((studioData?.scenes?.length || 0) + 1);
+  document.getElementById("newScIcon").value = "hexcasting:staff/oak";
+  updateIconPreview("newScIconPreview", "hexcasting:staff/oak");
+  openModal("modalNewScene");
+}
+
+async function createNewSceneSubmit() {
+  const titleZh = document.getElementById("newScTitleZh").value.trim();
+  const titleEn = document.getElementById("newScTitleEn").value.trim();
+  const slug = document.getElementById("newScSlug").value.trim();
+  const cat = document.getElementById("newScCat").value;
+  const icon = document.getElementById("newScIcon").value.trim() || "hexcasting:staff/oak";
+  if (!titleZh) { alert("请填写章节中文标题"); return; }
+  if (!/^[a-z0-9_]+$/.test(slug)) { alert("章节 slug 仅允许小写字母、数字和下划线"); return; }
+
+  const blankScene = makeDefaultScene();
+  blankScene.id = `abadoned_greatwork:${slug}`;
+  blankScene.category = cat;
+  blankScene.icon = icon;
+  blankScene.sort_order = (studioData?.scenes || []).filter(s => s.category === cat).length;
+
+  const blankTexts = makeDefaultTexts();
+  blankTexts.title = { zh: titleZh, en: titleEn || titleZh };
+  blankTexts.subtitle = { zh: "", en: "" };
+  blankTexts.steps = [
+    { ...makeDefaultStepText(), chapter_zh: "基础演示", callout_zh: "在这里编写引导说明" },
+    { ...makeDefaultStepText(), callout_zh: "" }
+  ];
+
+  try {
+    const res = await apiFetch("/api/scene/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, scene: blankScene, texts: blankTexts })
+    });
+    closeModal("modalNewScene");
+    await initStudio(true);
+    const created = studioData.scenes.find(s => s.slug === res.slug);
+    if (created) loadStudioScene(created, true);
+    toast(`已创建新章节：${titleZh}`);
+  } catch (err) {
+    alert("创建失败: " + err.message);
+  }
+}
+
+// ==================== Icon Picker Modal ====================
+function openIconPicker(onPick) {
+  if (!studioConnected || !studioData?.items?.length) {
+    toast("需要运行本地 Studio 后端以加载 16×16 实机图标库");
+    return;
+  }
+  iconPickerCallback = onPick;
+  document.getElementById("iconSearchInput").value = "";
+  renderIconGrid();
+  openModal("modalIconPicker");
+  setTimeout(() => document.getElementById("iconSearchInput").focus(), 40);
+}
+
+function renderIconGrid() {
+  const grp = document.getElementById("iconGroupFilter").value;
+  const q = document.getElementById("iconSearchInput").value.trim().toLowerCase();
+  const items = (studioData?.items || []).filter(it => {
+    if (grp !== "all" && it.group !== grp) return false;
+    if (!q) return true;
+    return it.name_zh.toLowerCase().includes(q) || it.name_en.toLowerCase().includes(q) || it.id.toLowerCase().includes(q);
+  }).slice(0, 120);
+
+  const grid = document.getElementById("iconGrid");
+  grid.innerHTML = "";
+  for (const it of items) {
+    const btn = document.createElement("button");
+    btn.className = "icon-cell";
+    btn.title = `${it.name_zh} (${it.id})`;
+    btn.innerHTML = `<img class="px-icon" loading="lazy" src="/api/icon?id=${encodeURIComponent(it.id)}" alt="" /><div class="iname">${esc(it.name_zh)}</div>`;
+    btn.onclick = () => {
+      closeModal("modalIconPicker");
+      if (iconPickerCallback) iconPickerCallback(it.id);
+    };
+    grid.appendChild(btn);
+  }
+}
+
+// ==================== Hex Math ====================
+function coordToPx(q, r, hexSize, ox, oy) {
+  return {
+    x: (SQRT3 * q + (SQRT3 / 2) * r) * hexSize + ox,
+    y: 1.5 * r * hexSize + oy
+  };
+}
+function pxToCoord(px, py, hexSize, ox, oy) {
+  const dx = (px - ox) / hexSize;
+  const dy = (py - oy) / hexSize;
+  return axialRound((SQRT3 / 3) * dx - (1 / 3) * dy, (2 / 3) * dy);
+}
+function axialRound(qf, rf) {
+  const sf = -qf - rf;
+  let q = Math.round(qf), r = Math.round(rf), s = Math.round(sf);
+  const dq = Math.abs(q - qf), dr = Math.abs(r - rf), ds = Math.abs(s - sf);
+  if (dq > dr && dq > ds) q = -r - s;
+  else if (dr > ds) r = -q - s;
+  return { q, r };
+}
+
+function resolveCatalogEntry(actionId) {
+  return actionId ? (HEX_CATALOG.find(x => x.id === actionId) || null) : null;
+}
+
+function resolveNaturalActionName(actionId) {
+  if (!actionId) return "";
+  const k = `hexcasting.action.${actionId}`;
+  if (studioData?.action_zh?.[k]) return studioData.action_zh[k];
+  const cat = resolveCatalogEntry(actionId);
+  return cat ? cat.zh : actionId;
+}
+
+function tracePatternCoords(sig, startDirName, originQ, originR) {
+  let dir = Math.max(0, DIRS.indexOf((startDirName || "NORTH_EAST").toUpperCase()));
+  let q = originQ, r = originR;
+  const pts = [{ q, r }];
+  q += DIR_DELTA[dir][0]; r += DIR_DELTA[dir][1];
+  pts.push({ q, r });
+  for (const ch of (sig || "")) {
+    const d = CHAR_TO_DELTA[ch];
+    if (d === undefined) continue;
+    dir = (dir + d) % 6;
+    q += DIR_DELTA[dir][0]; r += DIR_DELTA[dir][1];
+    pts.push({ q, r });
+  }
+  return pts;
+}
+
+function findMatchingActionBySig(sig, dirName) {
+  return HEX_CATALOG.find(c => c.sig === sig && c.dir === dirName) || HEX_CATALOG.find(c => c.sig === sig) || null;
+}
+
+function resolveStepNaturalTitle(idx) {
+  ensureSceneTextsSync();
+  const st = scene.steps[idx];
+  const tx = sceneTexts.steps[idx];
+  if (tx.title_mode === "custom" && (tx.title_zh || tx.title_en)) return tx.title_zh || tx.title_en;
+  if (tx.title_mode === "key" && tx.title_key) {
+    return studioData?.action_zh?.[tx.title_key] || studioData?.zh_cn?.[tx.title_key] || tx.title_key;
+  }
+  if (st.action) return resolveNaturalActionName(st.action);
+  if (st.type === "push") return `压栈 ${st.push || ""}`;
+  return st.type || "execute";
+}
+
+function getEffectiveStepMeta(idx) {
+  ensureSceneTextsSync();
+  let lastChapter = "", lastColor = "";
+  for (let i = 0; i <= idx; i++) {
+    const s = scene.steps[i];
+    const tx = sceneTexts.steps[i];
+    if (s.color !== undefined) lastColor = s.color;
+    if (tx.chapter_zh || tx.chapter_en) lastChapter = tx.chapter_zh || tx.chapter_en;
+  }
+  const s = scene.steps[idx];
+  const tx = sceneTexts.steps[idx];
+  const entry = resolveCatalogEntry(s.action);
+  const sig = s.pattern || (entry ? entry.sig : "");
+  const dir = s.start_dir || (entry ? entry.dir : (scene.start_dir || "NORTH_EAST"));
+  const orig = Array.isArray(s.origin) && s.origin.length >= 2 ? s.origin : [-1, 2];
+  const strokeTicks = Math.max(1, s.stroke_ticks ?? scene.stroke_ticks ?? 14);
+  const holdTicks = Math.max(1, s.hold_ticks ?? s.interval ?? scene.interval ?? 40);
+  const clearBefore = s.clear_before !== undefined ? s.clear_before : (scene.clear_before !== false);
+  const titleText = resolveStepNaturalTitle(idx);
+  const calloutText = tx.callout_zh || tx.callout_en || (s.callout?.text || "");
+  return {
+    sig, dir, origQ: orig[0], origR: orig[1],
+    strokeTicks, holdTicks, clearBefore, color: lastColor,
+    chapter: lastChapter, title: titleText, calloutText,
+    hasExplicitChapter: !!(tx.chapter_zh || tx.chapter_en),
+    cursorItem: s.cursor_item !== undefined ? s.cursor_item : (scene.cursor_item || "hexcasting:staff/oak")
+  };
+}
+
+// ==================== Lightweight Stack & Bracket Preview ====================
+function simulateUpTo(targetIdx) {
+  const stack = [];
+  let openParens = 0, parenBuf = [], escapeNext = false, raven = null, errored = false;
+  for (let i = 0; i <= targetIdx && i < scene.steps.length; i++) {
+    const st = scene.steps[i];
+    const meta = getEffectiveStepMeta(i);
+    errored = false;
+    if (st.type === "push") {
+      const lbl = String(st.push ?? "Iota");
+      if (openParens > 0) parenBuf.push(lbl); else stack.push(lbl);
+      continue;
+    }
+    if (st.type === "peek") {
+      const idxs = Array.isArray(st.indices) ? st.indices : (typeof st.index === "number" ? [st.index] : []);
+      const real = idxs.map(k => stack.length - 1 - k).filter(k => k >= 0 && k < stack.length).sort((a,b) => b - a);
+      for (const ri of real) stack.splice(ri, 1);
+      continue;
+    }
+    if (st.type === "clear" || st.type === "note") continue;
+    const act = st.action || "";
+    if (escapeNext) { escapeNext = false; if (openParens > 0) parenBuf.push(meta.title); else stack.push(meta.title); continue; }
+    if (act === "hexcasting:open_paren") { if (openParens > 0) parenBuf.push("{"); openParens++; continue; }
+    if (act === "hexcasting:close_paren") {
+      if (openParens > 0) {
+        openParens--;
+        if (openParens === 0) { stack.push(`[${parenBuf.length} 项列表]`); parenBuf = []; }
+        else parenBuf.push("}");
+      }
+      continue;
+    }
+    if (openParens > 0) { parenBuf.push(meta.title); continue; }
+    if (act === "hexcasting:escape") { escapeNext = true; continue; }
+    if (act === "hexcasting:get_caster") { stack.push("施法者实体"); continue; }
+    if (act === "hexcasting:entity_pos/eye" || act === "hexcasting:entity_pos/foot") {
+      if (stack.length < 1) errored = true; else { stack.pop(); stack.push("位置向量"); } continue;
+    }
+    if (act === "hexcasting:get_entity_look") {
+      if (stack.length < 1) errored = true; else { stack.pop(); stack.push("视线向量"); } continue;
+    }
+    if (act === "hexcasting:raycast" || act === "hexcasting:raycast/axis") {
+      if (stack.length < 2) errored = true; else { stack.pop(); stack.pop(); stack.push("命中坐标 / Null"); } continue;
+    }
+    if (act === "hexcasting:const/null") { stack.push("Null"); continue; }
+    if (act === "hexcasting:empty_list") { stack.push("[]"); continue; }
+    if (act === "hexcasting:duplicate") { if (stack.length < 1) errored = true; else stack.push(stack[stack.length - 1]); continue; }
+    if (act === "hexcasting:swap") { if (stack.length < 2) errored = true; else { const a = stack.pop(), b = stack.pop(); stack.push(a, b); } continue; }
+    if (act === "hexcasting:over") { if (stack.length < 2) errored = true; else stack.push(stack[stack.length - 2]); continue; }
+    if (act === "hexcasting:thanatos") { stack.pop(); continue; }
+    if (act === "hexcasting:singleton") { if (stack.length < 1) errored = true; else { const x = stack.pop(); stack.push(`[${x}]`); } continue; }
+    if (act === "hexcasting:add" || act === "hexcasting:sub" || act === "hexcasting:mul" || act === "hexcasting:equals" || act === "hexcasting:not_equals") {
+      if (stack.length < 2) errored = true; else { stack.pop(); stack.pop(); stack.push(act.includes("equals") ? "Boolean" : "运算结果"); } continue;
+    }
+    if (act === "hexcasting:if") { if (stack.length < 3) errored = true; else { const f = stack.pop(), t = stack.pop(); stack.pop(); stack.push(`${t}/${f}`); } continue; }
+    if (act === "hexcasting:eval" || act === "hexcasting:eval/cc") { if (stack.length < 1) errored = true; else stack.pop(); continue; }
+    if (act === "hexcasting:for_each") { if (stack.length < 2) errored = true; else { stack.pop(); stack.pop(); stack.push("[结果列表]"); } continue; }
+    if (act === "hexcasting:write/local") { if (stack.length < 1) errored = true; else raven = stack.pop(); continue; }
+    if (act === "hexcasting:read/local") { stack.push(raven ?? "Null"); continue; }
+    if (act === "hexcasting:print") { if (stack.length < 1) errored = true; continue; }
+  }
+  return { stack, openParens, parenBuf, escapeNext, raven, errored };
+}
+
+// ==================== Canvas Rendering ====================
+const canvas = document.getElementById("hexCanvas");
+const ctx = canvas.getContext("2d");
+
+function getViewportTransform() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  const visible = collectVisibleSteps();
+  const baseHex = Number(scene.hex_size) || 22;
+  if (stageMode === "draw" || visible.length === 0) {
+    return { hex: Math.max(18, Math.min(34, baseHex)), ox: w * 0.5, oy: h * 0.5 };
+  }
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const item of visible) {
+    const coords = tracePatternCoords(item.meta.sig, item.meta.dir, item.meta.origQ, item.meta.origR);
+    for (const c of coords) {
+      const p = coordToPx(c.q, c.r, baseHex, 0, 0);
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x);
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y);
+    }
+  }
+  const rawW = Math.max(1, maxX - minX);
+  const rawH = Math.max(1, maxY - minY);
+  const scale = Math.max(0.5, Math.min(1.15, Math.min(Math.max(120, w - 160) / rawW, Math.max(120, h - 120) / rawH)));
+  const fitHex = baseHex * scale;
+  return { hex: fitHex, ox: w * 0.5 - (minX + maxX) * 0.5 * scale, oy: h * 0.52 - (minY + maxY) * 0.5 * scale };
+}
+
+function collectVisibleSteps() {
+  if (!scene.steps.length || selectedStepIdx < 0) return [];
+  let start = selectedStepIdx;
+  while (start > 0) {
+    const m = getEffectiveStepMeta(start);
+    if (m.clearBefore || scene.steps[start].type === "clear") break;
+    start--;
+  }
+  const out = [];
+  for (let i = start; i <= selectedStepIdx; i++) {
+    const st = scene.steps[i];
+    const meta = getEffectiveStepMeta(i);
+    if (!meta.sig) continue;
+    out.push({ idx: i, step: st, meta });
+  }
+  return out;
+}
+
+function resolveNativeColors(step, meta, isDrawing) {
+  if (isDrawing) return { tail: "#64c8ff", head: "#fecbe6", success: true };
+  if (meta.color && /^#?[0-9a-fA-F]{6}$/.test(meta.color)) {
+    const hex = meta.color.startsWith("#") ? meta.color : "#" + meta.color;
+    return { tail: hex, head: "#ffffff", success: true };
+  }
+  const idx = scene.steps.indexOf(step);
+  const sim = simulateUpTo(idx);
+  if (sim.errored) return { tail: "#de6262", head: "#ffcae0", success: false };
+  const prevSim = simulateUpTo(Math.max(-1, idx - 1));
+  if (step.type === "push" || prevSim.escapeNext || prevSim.openParens > 0) return { tail: "#ddcc73", head: "#fffce5", success: true };
+  return { tail: "#7385de", head: "#fecbe6", success: true };
+}
+
+function drawZappyPattern(pts, tailCol, headCol, selectedHighlight) {
+  if (pts.length < 2) return;
+  const grad = ctx.createLinearGradient(pts[0].x, pts[0].y, pts[pts.length - 1].x, pts[pts.length - 1].y);
+  grad.addColorStop(0, tailCol); grad.addColorStop(1, headCol);
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = selectedHighlight ? 3.5 : 2.6;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.stroke();
+  ctx.fillStyle = tailCol;
+  ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, 3.5, 0, Math.PI * 2); ctx.fill();
+}
+
+function renderCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const { hex, ox, oy } = getViewportTransform();
+  for (let r = -7; r <= 7; r++) {
+    for (let q = -9; q <= 9; q++) {
+      const p = coordToPx(q, r, hex, ox, oy);
+      if (p.x < 10 || p.x > w - 10 || p.y < 10 || p.y > h - 10) continue;
+      ctx.fillStyle = (q === 0 && r === 0) ? "rgba(184, 134, 255, 0.5)" : "rgba(157, 142, 196, 0.25)";
+      ctx.fillRect(p.x - 1.2, p.y - 1.2, 2.4, 2.4);
+    }
+  }
+
+  if (stageMode === "draw") {
+    if (drawnCoords.length > 0) {
+      const px = drawnCoords.map(c => coordToPx(c.q, c.r, hex, ox, oy));
+      if (hoverCoord && isDrawingMouse) px.push(coordToPx(hoverCoord.q, hoverCoord.r, hex, ox, oy));
+      drawZappyPattern(px, "#64c8ff", "#fecbe6", true);
+    }
+    return;
+  }
+
+  const visible = collectVisibleSteps();
+  const curMeta = scene.steps[selectedStepIdx] ? getEffectiveStepMeta(selectedStepIdx) : null;
+  const drawProg = curMeta && stageMode === "play" ? Math.min(1, Math.max(0, playTick / curMeta.strokeTicks)) : 1;
+
+  let cursorTip = null, cursorColor = "#64c8ff";
+  for (const item of visible) {
+    const coords = tracePatternCoords(item.meta.sig, item.meta.dir, item.meta.origQ, item.meta.origR);
+    const fullPts = coords.map(c => coordToPx(c.q, c.r, hex, ox, oy));
+    const isCur = item.idx === selectedStepIdx;
+    const isDrawing = isCur && drawProg < 1;
+    let ptsToDraw = fullPts;
+    if (isDrawing && fullPts.length > 1) {
+      const segs = fullPts.length - 1;
+      const exact = drawProg * segs;
+      const fullSegs = Math.floor(exact);
+      const frac = exact - fullSegs;
+      ptsToDraw = fullPts.slice(0, fullSegs + 1);
+      if (fullSegs < segs) {
+        const a = fullPts[fullSegs], b = fullPts[fullSegs + 1];
+        ptsToDraw.push({ x: a.x + (b.x - a.x) * frac, y: a.y + (b.y - a.y) * frac });
+      }
+    }
+    const cols = resolveNativeColors(item.step, item.meta, isDrawing);
+    drawZappyPattern(ptsToDraw, cols.tail, cols.head, isCur);
+    if (isCur && ptsToDraw.length > 0) { cursorTip = ptsToDraw[ptsToDraw.length - 1]; cursorColor = cols.tail; }
+  }
+
+  if (cursorTip && curMeta) {
+    ctx.fillStyle = cursorColor;
+    ctx.beginPath(); ctx.arc(cursorTip.x, cursorTip.y, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(cursorTip.x - 1.5, cursorTip.y - 1.5, 3, 3);
+    if (curMeta.cursorItem && curMeta.cursorItem.toLowerCase() !== "none") {
+      const sprite = getCanvasCursorImg(curMeta.cursorItem);
+      if (sprite) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(sprite, Math.round(cursorTip.x - 22), Math.round(cursorTip.y - 4), 24, 24);
+        ctx.restore();
+      } else {
+        const shortItem = curMeta.cursorItem.split(":").pop();
+        ctx.font = "11px Consolas, monospace";
+        const tw = ctx.measureText(shortItem).width;
+        ctx.fillStyle = "rgba(16,12,25,0.88)";
+        ctx.fillRect(cursorTip.x - 18, cursorTip.y - 20, tw + 8, 13);
+        ctx.strokeStyle = cursorColor;
+        ctx.strokeRect(cursorTip.x - 18, cursorTip.y - 20, tw + 8, 13);
+        ctx.fillStyle = "#ffd93d";
+        ctx.fillText(shortItem, cursorTip.x - 14, cursorTip.y - 10);
+      }
+    }
+  }
+
+  const curStep = scene.steps[selectedStepIdx];
+  const calloutTxt = curMeta ? curMeta.calloutText : "";
+  if (curStep && curStep.callout && calloutTxt && document.getElementById("chkShowCallout").checked) {
+    drawCalloutOnCanvas(curStep.callout, calloutTxt, w, h, hex, ox, oy, curMeta);
+  }
+}
+
+function drawCalloutOnCanvas(co, txt, w, h, hex, ox, oy, meta) {
+  const accent = co.color || "#64c8ff";
+  const boxW = Math.min(240, Math.max(150, Math.round(w * 0.37)));
+  ctx.font = "12px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+  const lines = wrapCanvasText(txt, boxW - 14);
+  const boxH = 12 + lines.length * 16;
+  const boxX = w - boxW - 12, boxY = h - boxH - 12;
+
+  let tx = w * 0.45, ty = h * 0.45;
+  if (co.anchor === "stack") { tx = 152; ty = Math.min(h - 70, 44 + (co.anchor_index || 0) * 18); }
+  else if (co.anchor === "hud") { tx = 95; ty = Math.max(80, h - 85); }
+  else if (co.anchor === "coord") {
+    const p = coordToPx(co.anchor_q ?? meta.origQ, co.anchor_r ?? meta.origR, hex, ox, oy);
+    tx = Math.max(8, Math.min(w - 8, p.x)); ty = Math.max(8, Math.min(h - 8, p.y));
+  }
+
+  const ax = boxX, ay = boxY + boxH * 0.5, ex = Math.round((tx + ax) * 0.5);
+  ctx.strokeStyle = accent; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(ex, ty); ctx.lineTo(ex, ay); ctx.lineTo(ax, ay); ctx.stroke();
+  ctx.fillStyle = "#08060d"; ctx.fillRect(tx - 3, ty - 3, 6, 6);
+  ctx.fillStyle = accent; ctx.fillRect(tx - 2, ty - 2, 4, 4);
+
+  ctx.fillStyle = "rgba(18, 14, 29, 0.96)"; ctx.fillRect(boxX, boxY, boxW, boxH);
+  ctx.strokeStyle = "#08060d"; ctx.lineWidth = 2; ctx.strokeRect(boxX, boxY, boxW, boxH);
+  ctx.fillStyle = accent; ctx.fillRect(boxX + 1, boxY + 1, 2, boxH - 2); ctx.fillRect(boxX + 1, boxY + 1, boxW - 2, 1.5);
+  ctx.fillStyle = "#f2eefa";
+  lines.forEach((ln, idx) => ctx.fillText(ln, boxX + 8, boxY + 16 + idx * 16));
+}
+
+function wrapCanvasText(str, maxW) {
+  const out = []; let cur = "";
+  for (const ch of str) {
+    if (ch === "\n") { out.push(cur); cur = ""; continue; }
+    if (ctx.measureText(cur + ch).width > maxW && cur.length > 0) { out.push(cur); cur = ch; }
+    else cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out.length ? out : [""];
+}
+
+// ==================== Interactive Canvas Events ====================
+canvas.addEventListener("contextmenu", e => e.preventDefault());
+canvas.addEventListener("mousedown", e => {
+  const rect = canvas.getBoundingClientRect();
+  const { hex, ox, oy } = getViewportTransform();
+  const c = pxToCoord(e.clientX - rect.left, e.clientY - rect.top, hex, ox, oy);
+  if (e.button === 2) { if (stageMode === "draw") clearDrawn(); return; }
+  if (stageMode === "draw") {
+    isDrawingMouse = true;
+    if (!drawnCoords.length) drawnCoords = [c];
+    renderCanvas();
+  } else if (stageMode === "drag" && scene.steps[selectedStepIdx]) {
+    isDraggingOrigin = true; dragStartCoord = c;
+    const m = getEffectiveStepMeta(selectedStepIdx);
+    dragOrigStart = [m.origQ, m.origR];
+  } else if (stageMode === "anchor" && scene.steps[selectedStepIdx]) {
+    const st = scene.steps[selectedStepIdx];
+    st.callout = st.callout || { anchor: "coord", color: "#64C8FF", text: "" };
+    st.callout.anchor = "coord"; st.callout.anchor_q = c.q; st.callout.anchor_r = c.r;
+    setDirty(true); syncAllViews(); toast(`已设定坐标锚点 (${c.q}, ${c.r})`);
+  }
+});
+canvas.addEventListener("mousemove", e => {
+  const rect = canvas.getBoundingClientRect();
+  const { hex, ox, oy } = getViewportTransform();
+  const c = pxToCoord(e.clientX - rect.left, e.clientY - rect.top, hex, ox, oy);
+  hoverCoord = c;
+  document.getElementById("coordReadout").textContent = `q: ${c.q}, r: ${c.r}`;
+  if (stageMode === "draw" && isDrawingMouse && drawnCoords.length > 0) {
+    const last = drawnCoords[drawnCoords.length - 1];
+    if (c.q === last.q && c.r === last.r) return;
+    const stepDir = DIR_DELTA.findIndex(d => d[0] === c.q - last.q && d[1] === c.r - last.r);
+    if (stepDir !== -1) {
+      let used = false;
+      for (let i = 0; i < drawnCoords.length - 1; i++) {
+        const a = drawnCoords[i], b = drawnCoords[i + 1];
+        if ((a.q === last.q && a.r === last.r && b.q === c.q && b.r === c.r) ||
+            (b.q === last.q && b.r === last.r && a.q === c.q && a.r === c.r)) { used = true; break; }
+      }
+      if (!used) { drawnCoords.push(c); updateDrawnBanner(); }
+    }
+    renderCanvas();
+  } else if (stageMode === "drag" && isDraggingOrigin && scene.steps[selectedStepIdx]) {
+    scene.steps[selectedStepIdx].origin = [dragOrigStart[0] + (c.q - dragStartCoord.q), dragOrigStart[1] + (c.r - dragStartCoord.r)];
+    setDirty(true); syncInspectorOnly(); refreshExports(); renderCanvas();
+  }
+});
+window.addEventListener("mouseup", () => { isDrawingMouse = false; isDraggingOrigin = false; });
+
+function extractDrawnSignature() {
+  if (drawnCoords.length < 2) return null;
+  const orig = drawnCoords[0];
+  let prevDir = DIR_DELTA.findIndex(d => d[0] === drawnCoords[1].q - orig.q && d[1] === drawnCoords[1].r - orig.r);
+  const startDir = DIRS[prevDir];
+  let sig = "";
+  for (let i = 2; i < drawnCoords.length; i++) {
+    const curDir = DIR_DELTA.findIndex(d => d[0] === drawnCoords[i].q - drawnCoords[i - 1].q && d[1] === drawnCoords[i].r - drawnCoords[i - 1].r);
+    sig += DELTA_TO_CHAR[(curDir - prevDir + 6) % 6];
+    prevDir = curDir;
+  }
+  return { origin: [orig.q, orig.r], start_dir: startDir, pattern: sig };
+}
+function updateDrawnBanner() {
+  const res = extractDrawnSignature();
+  const sigEl = document.getElementById("drawSigText"), matchEl = document.getElementById("drawMatchText");
+  if (!res) { sigEl.textContent = "在网格节点间按下拖动..."; matchEl.textContent = ""; return; }
+  sigEl.textContent = `起点 [${res.origin[0]}, ${res.origin[1]}] · ${res.start_dir} · [${res.pattern}]`;
+  const hit = findMatchingActionBySig(res.pattern, res.start_dir);
+  matchEl.textContent = hit ? `匹配：${hit.zh} (${hit.id})` : "未匹配注册图案（自由图形或数/策略）";
+}
+function clearDrawn() { drawnCoords = []; updateDrawnBanner(); renderCanvas(); }
+function applyDrawnToStep(insertNew) {
+  const res = extractDrawnSignature(); if (!res) return;
+  ensureSceneTextsSync();
+  const hit = findMatchingActionBySig(res.pattern, res.start_dir);
+  const patch = {
+    type: "execute",
+    action: hit ? hit.id : undefined,
+    pattern: hit ? undefined : res.pattern,
+    start_dir: res.start_dir,
+    origin: res.origin
+  };
+  if (insertNew || !scene.steps.length) {
+    const at = scene.steps.length ? selectedStepIdx + 1 : 0;
+    scene.steps.splice(at, 0, patch);
+    sceneTexts.steps.splice(at, 0, makeDefaultStepText());
+    selectedStepIdx = at;
+  } else {
+    Object.assign(scene.steps[selectedStepIdx], patch);
+    if (hit) delete scene.steps[selectedStepIdx].pattern; else delete scene.steps[selectedStepIdx].action;
+  }
+  setDirty(true); setStageMode("play"); syncAllViews();
+  toast(hit ? `已写入 ${hit.zh}` : `已写入图案 [${res.pattern}]`);
+}
+function setStageMode(mode) {
+  stageMode = mode;
+  ["play", "draw", "drag", "anchor"].forEach(m => document.getElementById("mode" + m[0].toUpperCase() + m.slice(1)).classList.toggle("active", m === mode));
+  document.getElementById("drawBanner").style.display = mode === "draw" ? "flex" : "none";
+  if (mode === "draw") { playing = false; updatePlayButton(); updateDrawnBanner(); }
+  renderCanvas();
+}
+
+// ==================== Playback Loop ====================
+function animate(now) {
+  const dt = Math.min(0.1, (now - lastRaf) / 1000);
+  lastRaf = now;
+  const cur = scene.steps[selectedStepIdx];
+  if (stageMode === "play" && cur) {
+    const m = getEffectiveStepMeta(selectedStepIdx);
+    const total = m.strokeTicks + m.holdTicks;
+    if (playing || playTick < m.strokeTicks) {
+      playTick += dt * 20 * speed;
+      if (playing && playTick >= total) {
+        if (selectedStepIdx < scene.steps.length - 1) {
+          selectedStepIdx++; playTick = 0; syncAllViews(true);
+        } else { playing = false; playTick = total; updatePlayButton(); }
+      }
+      renderCanvas();
+    }
+  }
+  requestAnimationFrame(animate);
+}
+function togglePlay() {
+  if (stageMode !== "play") setStageMode("play");
+  const cur = scene.steps[selectedStepIdx];
+  if (!playing && cur && selectedStepIdx >= scene.steps.length - 1) {
+    const m = getEffectiveStepMeta(selectedStepIdx);
+    if (playTick >= m.strokeTicks + m.holdTicks) { restartPlay(); return; }
+  }
+  playing = !playing; updatePlayButton();
+}
+function restartPlay() { selectedStepIdx = 0; playTick = 0; playing = true; updatePlayButton(); syncAllViews(); }
+function stepBy(d) {
+  if (!scene.steps.length) return;
+  selectedStepIdx = Math.max(0, Math.min(scene.steps.length - 1, selectedStepIdx + d));
+  playTick = 0; playing = false; updatePlayButton(); syncAllViews();
+}
+function setSpeed(v) {
+  speed = v;
+  document.getElementById("spd05").classList.toggle("active", v === 0.5);
+  document.getElementById("spd10").classList.toggle("active", v === 1);
+  document.getElementById("spd20").classList.toggle("active", v === 2);
+}
+function updatePlayButton() {
+  const b = document.getElementById("btnPlayPause");
+  b.textContent = playing ? "暂停" : "播放";
+  b.classList.toggle("active", playing);
+}
+document.getElementById("stepSlider").addEventListener("input", e => {
+  selectedStepIdx = Number(e.target.value); playTick = 0; playing = false; updatePlayButton(); syncAllViews();
+});
+
+// ==================== Left Panel Tabs: Chapter Tree & Pattern Catalog ====================
+function switchLeftTab(tab) {
+  document.getElementById("leftTabCatalogBtn").classList.toggle("active", tab === "catalog");
+  document.getElementById("leftTabPatternsBtn").classList.toggle("active", tab === "patterns");
+  document.getElementById("leftPaneCatalog").classList.toggle("active", tab === "catalog");
+  document.getElementById("leftPanePatterns").classList.toggle("active", tab === "patterns");
+}
+
+function renderChapterTree() {
+  const container = document.getElementById("chapterTree");
+  if (!studioConnected || !studioData) {
+    container.innerHTML = `<div class="muted" style="padding:10px;line-height:1.5;">
+      当前为离线模式。<br>双击 <code>tools/start_editor.bat</code> 或运行 <code>python tools/tianwen_studio.py</code> 即可管理所有章节、分类与自动生成语言文件。
+    </div>`;
+    return;
+  }
+  const q = (document.getElementById("treeSearch").value || "").trim().toLowerCase();
+  container.innerHTML = "";
+  for (const cat of studioData.categories) {
+    const catScenes = studioData.scenes.filter(s => s.category === cat.id);
+    const matchingScenes = q ? catScenes.filter(s =>
+      (s.title_zh || "").toLowerCase().includes(q) || s.slug.toLowerCase().includes(q)
+    ) : catScenes;
+    const catMatch = !q || (cat.title_zh || "").toLowerCase().includes(q) || cat.id.toLowerCase().includes(q);
+    if (!catMatch && !matchingScenes.length) continue;
+
+    const grp = document.createElement("div");
+    grp.className = "cat-group";
+    const hdr = document.createElement("div");
+    hdr.className = "cat-header";
+    hdr.innerHTML = `
+      <img class="px-icon" src="/api/icon?id=${encodeURIComponent(cat.icon)}" alt="" />
+      <span class="ctitle" title="${esc(cat.id)}">${esc(cat.title_zh)} <span class="muted" style="font-weight:normal;">(${catScenes.length})</span></span>
+      <button class="mini" title="编辑分类">✎</button>`;
+    hdr.querySelector("button").onclick = () => openCategoryModal(cat);
+    grp.appendChild(hdr);
+
+    const listToShow = catMatch ? catScenes : matchingScenes;
+    for (const sc of listToShow) {
+      const row = document.createElement("div");
+      row.className = "scene-row" + (oldSceneFile === sc.file ? " active" : "");
+      row.innerHTML = `
+        <img class="px-icon" src="/api/icon?id=${encodeURIComponent(sc.icon)}" alt="" />
+        <span class="stitle" title="${esc(sc.id)}">${esc(sc.title_zh || sc.slug)}</span>
+        <span class="muted" style="font-size:10px;">${sc.data.steps?.length || 0}步</span>`;
+      row.onclick = () => loadStudioScene(sc);
+      grp.appendChild(row);
+    }
+    container.appendChild(grp);
+  }
+}
+
+function renderCatalog() {
+  const q = document.getElementById("catSearch").value.trim().toLowerCase();
+  const list = document.getElementById("catalogList");
+  const hits = HEX_CATALOG.filter(c =>
+    !q || c.zh.toLowerCase().includes(q) || c.en.toLowerCase().includes(q) || c.id.toLowerCase().includes(q) || c.sig.toLowerCase().includes(q)
+  ).slice(0, 80);
+  list.innerHTML = "";
+  for (const item of hits) {
+    const row = document.createElement("div");
+    row.className = "cat-item";
+    row.innerHTML = `
+      <div class="cat-meta">
+        <div class="cat-name">${esc(item.zh)} <span class="muted" style="font-weight:normal;">[${esc(item.sig)}]</span></div>
+        <div class="cat-sub">${esc(item.id)} · ${esc(item.dir)}</div>
+      </div>
+      <div class="cat-btns"><button class="btn-apply">套用</button><button class="btn-insert">+</button></div>`;
+    row.querySelector(".btn-apply").onclick = () => applyCatalog(item.id, false);
+    row.querySelector(".btn-insert").onclick = () => applyCatalog(item.id, true);
+    list.appendChild(row);
+  }
+}
+document.getElementById("catSearch").addEventListener("input", renderCatalog);
+
+function applyCatalog(id, insertNew) {
+  const item = HEX_CATALOG.find(x => x.id === id); if (!item) return;
+  ensureSceneTextsSync();
+  if (insertNew || !scene.steps.length) {
+    const at = scene.steps.length ? selectedStepIdx + 1 : 0;
+    scene.steps.splice(at, 0, { type: "execute", action: item.id, origin: [-1, 2] });
+    sceneTexts.steps.splice(at, 0, makeDefaultStepText());
+    selectedStepIdx = at;
+  } else {
+    const cur = scene.steps[selectedStepIdx];
+    cur.type = "execute"; cur.action = item.id; delete cur.pattern;
+  }
+  playTick = 0; setDirty(true); syncAllViews();
+}
+
+function addNewStep(type) {
+  ensureSceneTextsSync();
+  const s = { type };
+  if (type === "execute") { s.action = "hexcasting:get_caster"; s.origin = [-1, 2]; }
+  else if (type === "push") { s.push = "double:1"; s.pattern = "aqaa"; s.start_dir = "SOUTH_EAST"; s.origin = [-1, 1]; }
+  else if (type === "push_in") { s.push = "null"; }
+  else if (type === "peek") { s.index = 0; s.origin = [0, 0]; }
+  const at = scene.steps.length ? selectedStepIdx + 1 : 0;
+  scene.steps.splice(at, 0, s);
+  sceneTexts.steps.splice(at, 0, makeDefaultStepText());
+  selectedStepIdx = at; playTick = 0; setDirty(true); syncAllViews();
+}
+
+function moveStep(idx, d, e) {
+  e.stopPropagation();
+  ensureSceneTextsSync();
+  const ni = idx + d;
+  if (ni < 0 || ni >= scene.steps.length) return;
+  [scene.steps[idx], scene.steps[ni]] = [scene.steps[ni], scene.steps[idx]];
+  [sceneTexts.steps[idx], sceneTexts.steps[ni]] = [sceneTexts.steps[ni], sceneTexts.steps[idx]];
+  selectedStepIdx = ni; setDirty(true); syncAllViews();
+}
+
+function deleteStep(idx, e) {
+  e.stopPropagation();
+  ensureSceneTextsSync();
+  scene.steps.splice(idx, 1);
+  sceneTexts.steps.splice(idx, 1);
+  selectedStepIdx = Math.max(0, Math.min(scene.steps.length - 1, selectedStepIdx));
+  setDirty(true); syncAllViews();
+}
+
+function renderSteps() {
+  ensureSceneTextsSync();
+  document.getElementById("stepCountLabel").textContent = scene.steps.length;
+  const slider = document.getElementById("stepSlider");
+  slider.max = Math.max(0, scene.steps.length - 1);
+  slider.value = Math.min(selectedStepIdx, Math.max(0, scene.steps.length - 1));
+  document.getElementById("stepIndexText").textContent = scene.steps.length ? `${selectedStepIdx + 1} / ${scene.steps.length}` : "0 / 0";
+
+  const el = document.getElementById("stepList");
+  el.innerHTML = "";
+  scene.steps.forEach((st, idx) => {
+    const m = getEffectiveStepMeta(idx);
+    const row = document.createElement("div");
+    row.className = "step-row" + (idx === selectedStepIdx ? " selected" : "");
+    const coDot = (st.callout && m.calloutText) ? "💬" : (st.callout ? "🗨" : "");
+    const chDot = m.hasExplicitChapter ? "📖" : "";
+    row.innerHTML = `
+      <span class="step-badge ${esc(st.type || 'execute')}">${idx + 1} ${esc(st.type || 'exec')}</span>
+      <span class="step-title">${chDot}${coDot} ${esc(m.title)}</span>
+      <div class="step-ops">
+        <button onclick="moveStep(${idx},-1,event)">▲</button>
+        <button onclick="moveStep(${idx},1,event)">▼</button>
+        <button class="danger" onclick="deleteStep(${idx},event)">✕</button>
+      </div>`;
+    row.onclick = () => { selectedStepIdx = idx; playTick = 0; syncAllViews(); };
+    el.appendChild(row);
+  });
+}
+
+function renderStageHudOverlays() {
+  const cur = scene.steps[selectedStepIdx];
+  const meta = cur ? getEffectiveStepMeta(selectedStepIdx) : null;
+  document.getElementById("stageTitleBadge").textContent = meta ? meta.title : (sceneTexts.title.zh || "-");
+
+  const sim = cur ? simulateUpTo(selectedStepIdx) : { stack: [], openParens: 0, parenBuf: [] };
+  const sBox = document.getElementById("stageStackMini");
+  let sHtml = `<div style="color:var(--amethyst);font-weight:bold;">栈 (${sim.stack.length})</div>`;
+  if (!sim.stack.length) sHtml += `<div class="muted" style="margin-top:2px;">空栈</div>`;
+  else [...sim.stack].reverse().slice(0, 5).forEach((v, i) => {
+    sHtml += `<div class="stack-chip">${i === 0 ? "▲" : "#" + i} ${esc(v)}</div>`;
+  });
+  sBox.innerHTML = sHtml;
+
+  const pBox = document.getElementById("stageParensMini");
+  if (sim.openParens > 0 || sim.parenBuf.length > 0) {
+    pBox.style.display = "block";
+    let pHtml = `<div class="hdr">括号 [×${sim.openParens}] (${sim.parenBuf.length})</div>`;
+    if (!sim.parenBuf.length) pHtml += `<div class="muted">...</div>`;
+    else sim.parenBuf.slice(-4).forEach(x => { pHtml += `<div class="stack-chip" style="border-left-color:var(--escaped);">${esc(x)}</div>`; });
+    pBox.innerHTML = pHtml;
+  } else pBox.style.display = "none";
+}
+
+// ==================== Right Inspector Sync ====================
+function syncInspectorOnly() {
+  ensureSceneTextsSync();
+  const st = scene.steps[selectedStepIdx];
+  const tx = sceneTexts.steps[selectedStepIdx];
+  const has = !!st;
+  document.getElementById("noStepHint").style.display = has ? "none" : "block";
+  document.getElementById("stepEditorFields").style.display = has ? "flex" : "none";
+  if (!has) return;
+
+  document.getElementById("fType").value = st.type || "execute";
+  document.getElementById("fAction").value = st.action || "";
+  document.getElementById("fPattern").value = st.pattern || "";
+  document.getElementById("fDir").value = st.start_dir || "";
+  const orig = Array.isArray(st.origin) ? st.origin : [-1, 2];
+  document.getElementById("fOrigQ").value = orig[0];
+  document.getElementById("fOrigR").value = orig[1];
+  document.getElementById("fStroke").value = st.stroke_ticks ?? "";
+  document.getElementById("fHold").value = st.hold_ticks ?? "";
+  document.getElementById("fClearBefore").value = st.clear_before === undefined ? "inherit" : String(st.clear_before);
+  document.getElementById("fCursorItem").value = st.cursor_item ?? "";
+  updateIconPreview("fCursorPreview", st.cursor_item !== undefined ? st.cursor_item : scene.cursor_item);
+  document.getElementById("fColor").value = st.color ?? "";
+  document.getElementById("fPush").value = st.push ?? "";
+  document.getElementById("fPeek").value = Array.isArray(st.indices) ? st.indices.join(",") : (st.index ?? "");
+
+  document.getElementById("fChapterZh").value = tx.chapter_zh || "";
+  document.getElementById("fChapterEn").value = tx.chapter_en || "";
+
+  document.getElementById("fTitleMode").value = tx.title_mode || "auto";
+  document.getElementById("fTitleCustomBox").style.display = tx.title_mode === "custom" ? "flex" : "none";
+  document.getElementById("fTitleKeyBox").style.display = tx.title_mode === "key" ? "flex" : "none";
+  document.getElementById("fTitleZh").value = tx.title_zh || "";
+  document.getElementById("fTitleEn").value = tx.title_en || "";
+  document.getElementById("fTitleKey").value = tx.title_key || "";
+  document.getElementById("fTitleKeyPreview").textContent = tx.title_key
+    ? `当前译名: ${studioData?.action_zh?.[tx.title_key] || studioData?.zh_cn?.[tx.title_key] || "(未在词典找到)"}`
+    : "";
+
+  const co = st.callout;
+  document.getElementById("fCalloutOn").checked = !!co;
+  document.getElementById("calloutFields").style.display = co ? "flex" : "none";
+  if (co) {
+    document.getElementById("fCallAnchor").value = co.anchor || "canvas";
+    document.getElementById("fCallColor").value = co.color || "#64C8FF";
+    document.getElementById("fCallIdx").value = co.anchor_index ?? 0;
+    document.getElementById("fCallCoord").value = (co.anchor_q !== undefined && co.anchor_r !== undefined) ? `${co.anchor_q},${co.anchor_r}` : "";
+    document.getElementById("fCallTextZh").value = tx.callout_zh || "";
+    document.getElementById("fCallTextEn").value = tx.callout_en || "";
+    document.getElementById("fCallKeyHint").textContent = `自动键: hexponder.scene.${activeSceneSlug}.s${selectedStepIdx}.tip`;
+    document.getElementById("fCallIotas").value = Array.isArray(co.inline_iotas) ? co.inline_iotas.join(", ") : "";
+    document.getElementById("fCallPause").checked = !!co.pause;
+  }
+}
+
+function syncSceneFields() {
+  ensureSceneTextsSync();
+  populateCategorySelects();
+  document.getElementById("sSlug").value = activeSceneSlug || "";
+  document.getElementById("sIdPreview").textContent = `ID: abadoned_greatwork:${activeSceneSlug || "..."}  ·  目标语言键前缀: hexponder.scene.${activeSceneSlug}.*`;
+  document.getElementById("sTitleZh").value = sceneTexts.title.zh || "";
+  document.getElementById("sTitleEn").value = sceneTexts.title.en || "";
+  document.getElementById("sTitleKeyHint").textContent = `自动键: hexponder.scene.${activeSceneSlug}.title`;
+  document.getElementById("sSubZh").value = sceneTexts.subtitle.zh || "";
+  document.getElementById("sSubEn").value = sceneTexts.subtitle.en || "";
+
+  document.getElementById("sCat").value = scene.category || "basics";
+  document.getElementById("sSort").value = scene.sort_order ?? 0;
+  document.getElementById("sIcon").value = scene.icon || "";
+  updateIconPreview("sIconPreview", scene.icon);
+  document.getElementById("sCursor").value = scene.cursor_item ?? "";
+  updateIconPreview("sCursorPreview", scene.cursor_item);
+
+  document.getElementById("sHexSize").value = scene.hex_size ?? 22;
+  document.getElementById("sInterval").value = scene.interval ?? 42;
+  document.getElementById("sStroke").value = scene.stroke_ticks ?? 14;
+  document.getElementById("sDir").value = scene.start_dir || "NORTH_EAST";
+  document.getElementById("sClearBefore").checked = scene.clear_before !== false;
+  document.getElementById("sTrigActions").value = (scene.triggers?.actions || []).join(", ");
+  document.getElementById("sTrigItems").value = (scene.triggers?.items || []).join(", ");
+
+  const cBox = document.getElementById("cardsList");
+  cBox.innerHTML = "";
+  (scene.knowledge_cards || []).forEach((c, idx) => {
+    const ct = sceneTexts.cards[idx] || {};
+    const div = document.createElement("div");
+    div.className = "card-box";
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:var(--amethyst);">札记 #${idx + 1}</span>
+        <span class="key-hint">hexponder.scene.${esc(activeSceneSlug)}.k${idx}.*</span>
+        <button class="danger mini" onclick="removeCard(${idx})">删除</button>
+      </div>
+      <input value="${esc(ct.title_zh || "")}" placeholder="札记标题 (中文)" oninput="updateCardText(${idx},'title_zh',this.value)" />
+      <input value="${esc(ct.title_en || "")}" placeholder="札记标题 (EN，留空同步中文)" oninput="updateCardText(${idx},'title_en',this.value)" />
+      <textarea placeholder="札记正文 (中文)" oninput="updateCardText(${idx},'body_zh',this.value)">${esc(ct.body_zh || "")}</textarea>
+      <textarea placeholder="札记正文 (EN，留空同步中文)" style="min-height:36px;" oninput="updateCardText(${idx},'body_en',this.value)">${esc(ct.body_en || "")}</textarea>
+      <input value="${esc((c.inline_iotas || []).join(', '))}" placeholder="内联 Iota (逗号分隔，例: vec:{1,2,3}, iota:xx.json)" oninput="updateCardIotas(${idx},this.value)" />`;
+    cBox.appendChild(div);
+  });
+
+  const dz = document.getElementById("sceneDangerZone");
+  if (studioConnected && oldSceneFile) {
+    dz.style.display = "flex";
+    document.getElementById("sceneFileHint").textContent = `文件: scenes/${oldSceneFile}`;
+  } else {
+    dz.style.display = "none";
+  }
+}
+
+// ==================== Edit Mutators ====================
+function updateSlug(v) {
+  activeSceneSlug = v.trim();
+  scene.id = `abadoned_greatwork:${activeSceneSlug}`;
+  document.getElementById("sIdPreview").textContent = `ID: abadoned_greatwork:${activeSceneSlug}  ·  前缀: hexponder.scene.${activeSceneSlug}.*`;
+  document.getElementById("sTitleKeyHint").textContent = `自动键: hexponder.scene.${activeSceneSlug}.title`;
+  setDirty(true); refreshExports();
+}
+function updateSceneText(field, lang, v) {
+  sceneTexts[field][lang] = v;
+  setDirty(true); renderStageHudOverlays(); refreshExports();
+}
+function updateStepText(k, v) {
+  ensureSceneTextsSync();
+  sceneTexts.steps[selectedStepIdx][k] = v;
+  setDirty(true);
+  if (k === "title_key") {
+    document.getElementById("fTitleKeyPreview").textContent = v
+      ? `当前译名: ${studioData?.action_zh?.[v] || studioData?.zh_cn?.[v] || "(未在词典找到)"}`
+      : "";
+  }
+  syncAfterEdit();
+}
+function updateStepTitleMode(mode) {
+  ensureSceneTextsSync();
+  sceneTexts.steps[selectedStepIdx].title_mode = mode;
+  document.getElementById("fTitleCustomBox").style.display = mode === "custom" ? "flex" : "none";
+  document.getElementById("fTitleKeyBox").style.display = mode === "key" ? "flex" : "none";
+  setDirty(true); syncAfterEdit();
+}
+function updateStepField(k, v, allowEmpty) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  if (v === "" && !allowEmpty) delete st[k]; else st[k] = v;
+  setDirty(true); syncAfterEdit();
+}
+function updateStepNum(k, v) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  if (v === "") delete st[k]; else st[k] = Number(v);
+  setDirty(true); syncAfterEdit();
+}
+function updateStepOrigin() {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  st.origin = [Number(document.getElementById("fOrigQ").value) || 0, Number(document.getElementById("fOrigR").value) || 0];
+  setDirty(true); syncAfterEdit();
+}
+function updateStepClearBefore(v) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  if (v === "inherit") delete st.clear_before; else st.clear_before = v === "true";
+  setDirty(true); syncAfterEdit();
+}
+function updateStepPeek(v) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  delete st.index; delete st.indices;
+  const parts = v.split(",").map(s => s.trim()).filter(Boolean).map(Number).filter(n => !Number.isNaN(n));
+  if (parts.length === 1) st.index = parts[0]; else if (parts.length > 1) st.indices = parts;
+  setDirty(true); syncAfterEdit();
+}
+function toggleCallout(on) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  if (on && !st.callout) st.callout = { anchor: "canvas", color: "#64C8FF", text: "" };
+  else if (!on) delete st.callout;
+  setDirty(true); syncAllViews();
+}
+function updateCallout(k, v) {
+  const st = scene.steps[selectedStepIdx]; if (!st?.callout) return;
+  if (v === "" && k !== "text") delete st.callout[k]; else st.callout[k] = v;
+  setDirty(true); syncAfterEdit();
+}
+function updateCalloutNum(k, v) {
+  const st = scene.steps[selectedStepIdx]; if (!st?.callout) return;
+  if (v === "") delete st.callout[k]; else st.callout[k] = Number(v);
+  setDirty(true); syncAfterEdit();
+}
+function updateCalloutBool(k, v) {
+  const st = scene.steps[selectedStepIdx]; if (!st?.callout) return;
+  if (!v) delete st.callout[k]; else st.callout[k] = true;
+  setDirty(true); syncAfterEdit();
+}
+function updateCalloutCoord(v) {
+  const st = scene.steps[selectedStepIdx]; if (!st?.callout) return;
+  const parts = v.split(",").map(s => Number(s.trim()));
+  if (parts.length >= 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1])) {
+    st.callout.anchor_q = parts[0]; st.callout.anchor_r = parts[1];
+  } else { delete st.callout.anchor_q; delete st.callout.anchor_r; }
+  setDirty(true); syncAfterEdit();
+}
+function updateCalloutIotas(v) {
+  const st = scene.steps[selectedStepIdx]; if (!st?.callout) return;
+  const arr = v.split(",").map(s => s.trim()).filter(Boolean);
+  if (arr.length) st.callout.inline_iotas = arr; else delete st.callout.inline_iotas;
+  setDirty(true); syncAfterEdit();
+}
+function appendIotaField(inputId, token, applyFn) {
+  const el = document.getElementById(inputId);
+  const cur = el.value.trim();
+  el.value = cur ? `${cur}, ${token}` : token;
+  applyFn(el.value);
+}
+
+function updateScene(k, v) { scene[k] = v; setDirty(true); refreshExports(); renderCanvas(); renderStageHudOverlays(); }
+function updateSceneNum(k, v) { scene[k] = Number(v); setDirty(true); refreshExports(); renderCanvas(); }
+function updateSceneBool(k, v) { scene[k] = v; setDirty(true); refreshExports(); renderCanvas(); }
+function updateSceneTriggers(key, v) {
+  const arr = v.split(",").map(s => s.trim()).filter(Boolean);
+  scene.triggers = scene.triggers || {};
+  if (arr.length) scene.triggers[key] = arr; else delete scene.triggers[key];
+  setDirty(true); refreshExports();
+}
+function addKnowledgeCard() {
+  ensureSceneTextsSync();
+  scene.knowledge_cards.push({ title: "", body: "" });
+  sceneTexts.cards.push({ title_zh: "新札记标题", title_en: "", body_zh: "在这里填写自然语言札记内容", body_en: "" });
+  setDirty(true); syncSceneFields(); refreshExports();
+}
+function removeCard(i) {
+  ensureSceneTextsSync();
+  scene.knowledge_cards.splice(i, 1);
+  sceneTexts.cards.splice(i, 1);
+  setDirty(true); syncSceneFields(); refreshExports();
+}
+function updateCardText(i, k, v) {
+  ensureSceneTextsSync();
+  sceneTexts.cards[i][k] = v;
+  setDirty(true); refreshExports();
+}
+function updateCardIotas(i, v) {
+  const arr = v.split(",").map(s => s.trim()).filter(Boolean);
+  if (arr.length) scene.knowledge_cards[i].inline_iotas = arr; else delete scene.knowledge_cards[i].inline_iotas;
+  setDirty(true); refreshExports();
+}
+
+function syncAfterEdit() { renderSteps(); renderStageHudOverlays(); refreshExports(); renderCanvas(); }
+function syncAllViews(skipSceneFields) {
+  renderSteps(); syncInspectorOnly();
+  if (!skipSceneFields) syncSceneFields();
+  renderStageHudOverlays(); refreshExports(); renderCanvas();
+}
+function switchRightTab(tab) {
+  ["Step", "Scene", "Io"].forEach(t => {
+    const low = t.toLowerCase();
+    document.getElementById("tabBtn" + t).classList.toggle("active", low === tab);
+    document.getElementById("pane" + t).classList.toggle("active", low === tab);
+  });
+}
+
+// ==================== Import / Export ====================
+function refreshExports() {
+  const compiled = buildCompiledPayload();
+  document.getElementById("exportBox").value = JSON.stringify(compiled.scene, null, 2);
+  document.getElementById("langBoxZh").value = JSON.stringify(compiled.zhOut, null, 2);
+  document.getElementById("langBoxEn").value = JSON.stringify(compiled.enOut, null, 2);
+}
+
+function loadJsonObject(obj) {
+  if (!obj || !Array.isArray(obj.steps)) throw new Error("缺少 steps 数组");
+  const slug = String(obj.id || "custom_demo").split(":").pop();
+  oldSceneFile = null; oldSceneSlug = null;
+  loadStudioScene({ slug, id: obj.id || `abadoned_greatwork:${slug}`, file: "", data: obj }, true);
+  setDirty(true);
+}
+function importFromText() {
+  try { loadJsonObject(JSON.parse(document.getElementById("importBox").value)); }
+  catch (e) { toast("JSON 解析失败: " + e.message); }
+}
+
+document.getElementById("btnOpenFile").onclick = () => document.getElementById("fileInput").click();
+document.getElementById("fileInput").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { document.getElementById("importBox").value = rd.result; importFromText(); };
+  rd.readAsText(f, "utf-8");
+};
+const dz = document.getElementById("dropZone");
+dz.addEventListener("dragover", e => e.preventDefault());
+dz.addEventListener("drop", e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { document.getElementById("importBox").value = rd.result; importFromText(); };
+  rd.readAsText(f, "utf-8");
+});
+document.getElementById("btnCopyJson").onclick = () => copyText("exportBox");
+document.getElementById("btnDownloadJson").onclick = () => {
+  const compiled = buildCompiledPayload();
+  const blob = new Blob([JSON.stringify(compiled.scene, null, 2) + "\n"], { type: "application/json;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `${compiled.slug}.json`; a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+function copyText(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard?.writeText(el.value).then(() => toast("已复制到剪贴板"), () => {
+    el.select(); document.execCommand("copy"); toast("已复制到剪贴板");
+  });
+}
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.style.display = "block";
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => { el.style.display = "none"; }, 2400);
+}
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+window.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+    if (studioConnected) { e.preventDefault(); saveCurrentSceneToStudio(); }
+  }
+});
+
+// ==================== Boot ====================
+document.getElementById("catalogCountTag").textContent = `${HEX_CATALOG.length} 图案`;
+renderCatalog();
+syncAllViews();
+initStudio();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

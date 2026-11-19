@@ -19,6 +19,7 @@ dependencies {
     modApi(libs.architectury)
 
     modApi(libs.hexcasting.common)
+    modApi(libs.mielib.common) { isTransitive = false }
 
     // IoticBlocks：只借用它的 API（把方块登记成 iota 读写目标），运行时由各平台各自的 jar 提供
     modCompileOnly(libs.ioticblocks.fabric)

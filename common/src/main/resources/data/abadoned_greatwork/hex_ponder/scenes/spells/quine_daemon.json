@@ -1,0 +1,159 @@
+{
+  "id": "abadoned_greatwork:quine_daemon",
+  "title": "hexponder.scene.quine_daemon.title",
+  "subtitle": "hexponder.scene.quine_daemon.subtitle",
+  "category": "spells",
+  "sort_order": 1,
+  "icon": "hexcasting:focus",
+  "cursor_item": "hexcasting:focus",
+  "hex_size": 22,
+  "interval": 46,
+  "stroke_ticks": 15,
+  "clear_before": true,
+  "start_dir": "NORTH_EAST",
+  "triggers": {
+    "actions": [
+      "hexcasting:splat",
+      "hexcasting:over",
+      "hexcasting:replace"
+    ]
+  },
+  "knowledge_cards": [
+    {
+      "title": "hexponder.scene.quine_daemon.k0.title",
+      "body": "hexponder.scene.quine_daemon.k0.body"
+    },
+    {
+      "title": "hexponder.scene.quine_daemon.k1.title",
+      "body": "hexponder.scene.quine_daemon.k1.body",
+      "inline_iotas": [
+        "iota:quine.json"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "type": "push",
+      "chapter": "hexponder.scene.quine_daemon.ch0",
+      "pattern": "qqq",
+      "start_dir": "WEST",
+      "origin": [
+        -1,
+        1
+      ],
+      "push": "iota:quine.json",
+      "title": "hexponder.scene.quine_daemon.s0.title",
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#D7B8FF",
+        "text": "hexponder.scene.quine_daemon.s0.tip"
+      }
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:splat",
+      "origin": [
+        0,
+        0
+      ],
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#64C8FF",
+        "text": "hexponder.scene.quine_daemon.s1.tip"
+      }
+    },
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.quine_daemon.ch1",
+      "action": "hexcasting:over",
+      "origin": [
+        -1,
+        1
+      ],
+      "clear_before": true,
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#64C8FF",
+        "text": "hexponder.scene.quine_daemon.s2.tip"
+      }
+    },
+    {
+      "type": "push",
+      "pattern": "aqaa",
+      "start_dir": "SOUTH_EAST",
+      "origin": [
+        0,
+        0
+      ],
+      "push": "double:2",
+      "title": "hexponder.scene.quine_daemon.s3.title"
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:last_n_list",
+      "origin": [
+        1,
+        0
+      ]
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:thanatos",
+      "origin": [
+        -1,
+        1
+      ]
+    },
+    {
+      "type": "push",
+      "chapter": "hexponder.scene.quine_daemon.ch2",
+      "pattern": "qqaeaae",
+      "start_dir": "NORTH_EAST",
+      "origin": [
+        -1,
+        1
+      ],
+      "push": "iota:list0.json",
+      "title": "hexponder.scene.quine_daemon.s7.title"
+    },
+    {
+      "type": "push",
+      "pattern": "aqaa",
+      "start_dir": "SOUTH_EAST",
+      "origin": [
+        0,
+        0
+      ],
+      "push": "double:0",
+      "title": "hexponder.scene.quine_daemon.s8.title"
+    },
+    {
+      "type": "push",
+      "pattern": "qqaeaae",
+      "start_dir": "NORTH_EAST",
+      "origin": [
+        1,
+        0
+      ],
+      "push": "vec:{1,2,3}",
+      "title": "hexponder.scene.quine_daemon.s9.title"
+    },
+    {
+      "type": "execute",
+      "action": "hexcasting:replace",
+      "origin": [
+        0,
+        1
+      ],
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#6BCB77",
+        "text": "hexponder.scene.quine_daemon.s10.tip"
+      }
+    }
+  ]
+}

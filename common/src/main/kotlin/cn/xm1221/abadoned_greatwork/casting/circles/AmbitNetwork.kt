@@ -6,8 +6,9 @@ import at.petrak.hexcasting.api.casting.eval.CastingEnvironmentComponent
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
 import at.petrak.hexcasting.common.lib.HexAttributes
 import cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity
+import cn.xm1221.abadoned_greatwork.networking.msg.MsgSyncAmbitLinesS2C
+import dev.architectury.event.events.common.PlayerEvent
 import net.minecraft.core.BlockPos
-import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.Tag
 import net.minecraft.server.level.ServerLevel
@@ -342,11 +343,48 @@ object AmbitNetwork {
          * `EntityCreationType.IMMEDIATE`，在 `setRemoved` 期间反查可能顺手把一个新 BE 建出来。
          */
         val ownerByPos = HashMap<BlockPos, AmbitAnchorBlockEntity>()
-        val activeAnchorsByImpetus = HashMap<BlockPos, HashSet<BlockPos>>()
+        val activeVisualsByImpetus = HashMap<BlockPos, ActiveVisual>()
         val holdersByAnchor = HashMap<BlockPos, HashSet<BlockPos>>()
     }
 
+    private data class ActiveVisual(
+        val orderedAnchors: List<BlockPos>,
+        val anchorSet: HashSet<BlockPos>,
+        val pigmentTag: CompoundTag?,
+        val fallbackColor: Int,
+    ) {
+        fun toPacketLoop(): MsgSyncAmbitLinesS2C.AmbitLineLoop =
+            MsgSyncAmbitLinesS2C.AmbitLineLoop(orderedAnchors, pigmentTag?.copy(), fallbackColor)
+    }
+
     private val worlds = WeakHashMap<ServerLevel, WorldBucket>()
+
+    fun init() {
+        PlayerEvent.PLAYER_JOIN.register { player ->
+            syncToPlayer(player)
+        }
+        PlayerEvent.CHANGE_DIMENSION.register { player, _, _ ->
+            syncToPlayer(player)
+        }
+    }
+
+    fun syncToPlayer(player: ServerPlayer) {
+        val level = player.serverLevel()
+        val wb = worlds[level]
+        val loops = wb?.let(::snapshotLoops) ?: emptyList()
+        MsgSyncAmbitLinesS2C(level.dimension().location(), loops).sendToPlayer(player)
+    }
+
+    private fun snapshotLoops(wb: WorldBucket): List<MsgSyncAmbitLinesS2C.AmbitLineLoop> =
+        wb.activeVisualsByImpetus.values
+            .filter { it.orderedAnchors.size >= 2 }
+            .map { it.toPacketLoop() }
+
+    private fun broadcastActiveLines(level: ServerLevel, wb: WorldBucket) {
+        val players = level.players()
+        if (players.isEmpty()) return
+        MsgSyncAmbitLinesS2C(level.dimension().location(), snapshotLoops(wb)).sendToPlayers(players)
+    }
 
     private fun bucket(level: ServerLevel): WorldBucket = worlds.getOrPut(level) { WorldBucket() }
 
@@ -388,11 +426,24 @@ object AmbitNetwork {
         }
         wb.ownerByPos.remove(pos)
         wb.orderByPos.remove(pos)
+        var visualsChanged = false
         wb.holdersByAnchor.remove(pos)?.forEach { impPos ->
-            wb.activeAnchorsByImpetus[impPos]?.let { set ->
-                set.remove(pos)
-                if (set.isEmpty()) wb.activeAnchorsByImpetus.remove(impPos)
+            val oldVisual = wb.activeVisualsByImpetus[impPos]
+            if (oldVisual != null) {
+                val remaining = oldVisual.orderedAnchors.filter { it != pos }
+                if (remaining.size < 2) {
+                    wb.activeVisualsByImpetus.remove(impPos)
+                } else {
+                    wb.activeVisualsByImpetus[impPos] = oldVisual.copy(
+                        orderedAnchors = remaining,
+                        anchorSet = remaining.toHashSet(),
+                    )
+                }
+                visualsChanged = true
             }
+        }
+        if (visualsChanged) {
+            broadcastActiveLines(level, wb)
         }
         val oldKey = wb.channelByPos.remove(pos) ?: return
         wb.posByChannel[oldKey]?.let { set ->
@@ -402,8 +453,8 @@ object AmbitNetwork {
     }
 
     /**
-     * 当法术环经过 `AmbitSwitchBlock` 并成功切换为 [anchors] 围出的范围时点亮这批道引标，
-     * 并自动熄灭同一促动石此前持有的其它道引标。
+     * 当法术环经过 `AmbitSwitchBlock` 并成功切换为 [anchors] 围出的范围时点亮这批道引标及闭环标定线，
+     * 并自动熄灭同一促动石此前持有的其它道引标与标定线。
      */
     fun activateAnchorsForImpetus(
         level: ServerLevel,
@@ -414,11 +465,12 @@ object AmbitNetwork {
     ) {
         val imp = impetusPos.immutable()
         val wb = bucket(level)
-        val newSet = anchors.map { it.immutable() }.toHashSet()
+        val ordered = anchors.map { it.immutable() }
+        val newSet = ordered.toHashSet()
+        val prevVisual = wb.activeVisualsByImpetus[imp]
 
-        val prevSet = wb.activeAnchorsByImpetus[imp]
-        if (prevSet != null) {
-            for (oldAnchor in prevSet) {
+        if (prevVisual != null) {
+            for (oldAnchor in prevVisual.anchorSet) {
                 if (oldAnchor !in newSet) {
                     removeHolderAndMaybeExtinguish(level, wb, oldAnchor, imp)
                 }
@@ -426,28 +478,41 @@ object AmbitNetwork {
         }
 
         if (newSet.isEmpty()) {
-            wb.activeAnchorsByImpetus.remove(imp)
+            if (wb.activeVisualsByImpetus.remove(imp) != null) {
+                broadcastActiveLines(level, wb)
+            }
             return
         }
 
-        wb.activeAnchorsByImpetus[imp] = newSet
+        val nextVisual = ActiveVisual(
+            orderedAnchors = ordered,
+            anchorSet = newSet,
+            pigmentTag = pigmentTag?.copy(),
+            fallbackColor = fallbackColor,
+        )
+        wb.activeVisualsByImpetus[imp] = nextVisual
         for (anchorPos in newSet) {
             wb.holdersByAnchor.getOrPut(anchorPos) { HashSet() }.add(imp)
             val be = wb.ownerByPos[anchorPos] ?: (level.getBlockEntity(anchorPos) as? AmbitAnchorBlockEntity)
             be?.setOrbActivation(true, pigmentTag, fallbackColor)
         }
+
+        if (prevVisual != nextVisual) {
+            broadcastActiveLines(level, wb)
+        }
     }
 
     /**
-     * 促动石结束执行或切换回默认方盒时，熄灭其当前点亮的全部道引标（若有另一促动石仍在持有则保留）。
+     * 促动石结束执行或切换回默认方盒时，熄灭其当前点亮的全部道引标与标定线（若有另一促动石仍在持有则保留）。
      */
     @JvmStatic
     fun deactivateImpetusAnchors(level: ServerLevel, impetusPos: BlockPos) {
         val wb = worlds[level] ?: return
-        val held = wb.activeAnchorsByImpetus.remove(impetusPos) ?: return
-        for (anchorPos in held) {
+        val held = wb.activeVisualsByImpetus.remove(impetusPos) ?: return
+        for (anchorPos in held.anchorSet) {
             removeHolderAndMaybeExtinguish(level, wb, anchorPos, impetusPos)
         }
+        broadcastActiveLines(level, wb)
     }
 
     fun isAnchorHeld(level: ServerLevel, anchorPos: BlockPos): Boolean {
@@ -546,35 +611,6 @@ object AmbitNetwork {
             }
         }
         return AnchorChainResult.Valid(entries.map { it.pos })
-    }
-
-    /** 返回频道内所有已指定正顺位（`order > 0`）的道引标坐标（仅用于调序时的粒子连线预览）。 */
-    fun getChannelAssignedOutline(level: ServerLevel, key: WirelessChannelKey): List<BlockPos> {
-        val wb = worlds[level] ?: return emptyList()
-        val set = wb.posByChannel[key] ?: return emptyList()
-        return set.mapNotNull { p ->
-            val ord = wb.orderByPos[p] ?: 0L
-            if (ord > 0L) AnchorEntry(p, ord) else null
-        }.sorted().map { it.pos }
-    }
-
-    /**
-     * 在世界中沿着当前多边形连线喷射细微粒子（切换生效或调整序号时提供空间反馈）。
-     */
-    fun spawnPolygonOutlineParticles(level: ServerLevel, anchors: List<BlockPos>, maxParticles: Int = 96) {
-        if (anchors.size < 2) return
-        val stepCountPerEdge = max(2, maxParticles / anchors.size).coerceAtMost(12)
-        for (i in anchors.indices) {
-            val a = Vec3.atCenterOf(anchors[i])
-            val b = Vec3.atCenterOf(anchors[(i + 1) % anchors.size])
-            for (s in 0 until stepCountPerEdge) {
-                val t = s.toDouble() / stepCountPerEdge
-                val px = a.x + (b.x - a.x) * t
-                val py = a.y + (b.y - a.y) * t + 0.15
-                val pz = a.z + (b.z - a.z) * t
-                level.sendParticles(ParticleTypes.WITCH, px, py, pz, 1, 0.0, 0.0, 0.0, 0.0)
-            }
-        }
     }
 }
 

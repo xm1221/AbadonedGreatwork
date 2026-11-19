@@ -1,7 +1,6 @@
 package cn.xm1221.abadoned_greatwork.block
 
 import cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity
-import cn.xm1221.abadoned_greatwork.casting.circles.AmbitNetwork
 import cn.xm1221.abadoned_greatwork.casting.circles.WirelessChannelState
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import net.minecraft.ChatFormatting
@@ -34,7 +33,7 @@ import net.minecraft.world.phys.shapes.VoxelShape
  *
  * - 放下时默认顺位为 `0`（未指定），持有经 [AmbitSwitchBlock] 刷印过频道的物品放下时自动继承频道；
  * - **空手右击**：切换频道 `0..15`（保留自身顺位号）；
- * - **潜行 + 空手右击**：手动递增这根道引标的顺位（`0 -> 1 -> 2 -> ... -> 16 -> 1`），并实时提示重号与连线粒子。
+ * - **潜行 + 空手右击**：手动递增这根道引标的顺位（`0 -> 1 -> 2 -> ... -> 16 -> 1`）。
  */
 class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock {
 
@@ -62,13 +61,6 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
         val be = level.getBlockEntity(pos) as? AmbitAnchorBlockEntity ?: return
 
         be.applyPlacedBinding(BlockItem.getBlockEntityData(stack))
-        (placer as? Player)?.displayClientMessage(
-            Component.translatable(
-                "text.abadoned_greatwork.ambit.anchor_placed_manual",
-                be.channelState.channelDisplay(),
-            ),
-            true,
-        )
     }
 
     override fun use(
@@ -86,25 +78,6 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
             val srv = level as ServerLevel
             if (player.isShiftKeyDown) {
                 val newOrder = be.cycleManualOrder()
-                val key = be.channelState.key()
-                val conflict = AmbitNetwork.findConflictingPos(srv, pos, key, newOrder)
-                AmbitNetwork.spawnPolygonOutlineParticles(srv, AmbitNetwork.getChannelAssignedOutline(srv, key))
-
-                val msg = if (conflict != null) {
-                    Component.translatable(
-                        "text.abadoned_greatwork.ambit.anchor_order_conflict",
-                        be.channelState.channelDisplay(),
-                        newOrder,
-                        conflict.toShortString(),
-                    ).withStyle(ChatFormatting.YELLOW)
-                } else {
-                    Component.translatable(
-                        "text.abadoned_greatwork.ambit.anchor_order_set",
-                        be.channelState.channelDisplay(),
-                        newOrder,
-                    )
-                }
-                player.displayClientMessage(msg, true)
                 srv.playSound(
                     null,
                     pos,
@@ -115,19 +88,6 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
                 )
             } else {
                 val ch = be.cycleChannel(1)
-                val orderComp = if (be.order <= 0L) {
-                    Component.translatable("text.abadoned_greatwork.ambit.anchor_order_unset")
-                } else {
-                    Component.literal("#${be.order}")
-                }
-                player.displayClientMessage(
-                    Component.translatable(
-                        "text.abadoned_greatwork.ambit.anchor_channel_status",
-                        be.channelState.channelDisplay(),
-                        orderComp,
-                    ),
-                    true,
-                )
                 srv.playSound(
                     null,
                     pos,

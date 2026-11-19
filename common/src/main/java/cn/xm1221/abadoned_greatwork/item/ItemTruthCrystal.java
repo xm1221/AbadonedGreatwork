@@ -7,6 +7,9 @@ import at.petrak.hexcasting.api.utils.NBTHelper;
 import at.petrak.hexcasting.common.items.storage.ItemFocus;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -16,6 +19,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -30,6 +34,7 @@ public class ItemTruthCrystal extends ItemFocus {
     public static final String MODE = "mode";
     public static final String CAN_WRITE = "can_write";
     public static final String IS_CRAFTED = "is_crafted";
+    public static final String PONDER_HINTS = "ponder_hints";
 
     // ==================== 3 kinds (reward loot tables) ====================
 
@@ -180,6 +185,27 @@ public class ItemTruthCrystal extends ItemFocus {
 
     public static String getMode(ItemStack itemStack) {
         return NBTHelper.getString(itemStack, MODE);
+    }
+
+    public static void setPonderHints(ItemStack itemStack, List<String> hints) {
+        ListTag list = new ListTag();
+        for (String h : hints) {
+            if (h != null && !h.isBlank()) list.add(StringTag.valueOf(h));
+        }
+        if (!list.isEmpty()) {
+            NBTHelper.put(itemStack, PONDER_HINTS, list);
+        }
+    }
+
+    public static List<String> getPonderHints(ItemStack itemStack) {
+        Tag raw = NBTHelper.get(itemStack, PONDER_HINTS);
+        if (!(raw instanceof ListTag list)) return List.of();
+        List<String> out = new ArrayList<>(list.size());
+        for (int i = 0; i < list.size(); i++) {
+            String s = list.getString(i);
+            if (!s.isBlank()) out.add(s);
+        }
+        return out;
     }
 
     // ==================== Lifecycle ====================

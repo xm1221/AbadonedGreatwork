@@ -1,0 +1,7 @@
+{
+  "id": "control_flow",
+  "title": "hexponder.category.control_flow",
+  "description": "hexponder.category.control_flow.desc",
+  "icon": "minecraft:ender_eye",
+  "sort_order": 1
+}

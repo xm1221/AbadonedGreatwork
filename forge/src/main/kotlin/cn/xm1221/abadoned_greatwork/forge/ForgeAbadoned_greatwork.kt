@@ -11,8 +11,10 @@ import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes
 import net.minecraft.client.renderer.entity.ThrownItemRenderer
 import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.EntityRenderersEvent
 import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.fml.loading.FMLEnvironment
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
 
 @Mod(Abadoned_greatwork.MODID)
@@ -21,6 +23,9 @@ class ForgeAbadoned_greatwork {
         MOD_BUS.apply {
             EventBuses.registerModEventBus(Abadoned_greatwork.MODID, this)
             addListener(ForgeAbadoned_greatworkClient::init)
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                ForgeAbadoned_greatworkClient.registerModBusEvents(this)
+            }
             addListener(ForgeAbadoned_greatworkDatagen::init)
             addListener(ForgeAbadoned_greatworkServer::init)
         }

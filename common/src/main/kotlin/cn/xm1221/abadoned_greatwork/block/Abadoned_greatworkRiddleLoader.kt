@@ -26,6 +26,8 @@ object Abadoned_greatworkRiddleLoader {
         val variant: Int = -1,
         /** 完整 ItemStack NBT（SNBT 字符串）。若不为空，优先使用此字段，忽略其他结构化字段。 */
         val nbt: String = "",
+        /** 可选关联的思索知识点场景 ID 列表（只提示前置思路，不剧透答案）。 */
+        val ponder_hints: List<String> = emptyList(),
     ) {
         /** 是否使用完整 NBT 模式 */
         // 兜底按可空处理：目前 Gson 会走 Kotlin 生成的全默认无参构造，缺失字段会取默认值；
