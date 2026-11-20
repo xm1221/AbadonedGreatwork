@@ -26,7 +26,7 @@ public abstract class BrainsweepRecipeMixin {
 
     @Unique
     private static final ResourceLocation ABW_WAVE_TRANSMITTER_RECIPE =
-        new ResourceLocation("abadoned_greatwork", "brainsweep/wave_transmitter");
+        ResourceLocation.fromNamespaceAndPath("abadoned_greatwork", "brainsweep/wave_transmitter");
 
     @Inject(
         method = "matches(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/server/level/ServerLevel;)Z",
@@ -54,6 +54,9 @@ public abstract class BrainsweepRecipeMixin {
     @Unique
     private static boolean abw$isWearingOminousBanner(Raider raider) {
         ItemStack head = raider.getItemBySlot(EquipmentSlot.HEAD);
-        return !head.isEmpty() && ItemStack.isSameItemSameTags(head, Raid.getLeaderBannerInstance());
+        return !head.isEmpty() && ItemStack.isSameItemSameComponents(
+            head,
+            Raid.getLeaderBannerInstance(raider.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BANNER_PATTERN))
+        );
     }
 }

@@ -3,6 +3,7 @@ package cn.xm1221.abadoned_greatwork
 import net.minecraft.resources.ResourceLocation
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
+import cn.xm1221.abadoned_greatwork.api.AbadonedImageComponents
 import cn.xm1221.abadoned_greatwork.block.Abadoned_greatworkLootInjector
 import cn.xm1221.abadoned_greatwork.casting.circles.AmbitNetwork
 import cn.xm1221.abadoned_greatwork.casting.circles.AmbitReshapeHook
@@ -29,10 +30,10 @@ object Abadoned_greatwork {
     val LOGGER: Logger = LogManager.getLogger(MODID)
 
     @JvmStatic
-    fun id(path: String) = ResourceLocation(MODID, path)
+    fun id(path: String) = ResourceLocation.fromNamespaceAndPath(MODID, path)
 
     @JvmStatic
-    val EDIFIED_BIOME: ResourceLocation = ResourceLocation(MODID, "edified")
+    val EDIFIED_BIOME: ResourceLocation = ResourceLocation.fromNamespaceAndPath(MODID, "edified")
 
     fun init() {
         Abadoned_greatworkServerConfig.init()
@@ -44,6 +45,7 @@ object Abadoned_greatwork {
             Abadoned_greatworkBlockEntities,
             Abadoned_greatworkEntityTypes,
             Abadoned_greatworkCreativeTabs,
+            AbadonedImageComponents,
         )
         Abadoned_greatworkNetworking.init()
         Abadoned_greatworkLootInjector.register()

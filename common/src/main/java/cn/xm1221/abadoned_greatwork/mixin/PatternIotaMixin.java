@@ -46,7 +46,7 @@ public abstract class PatternIotaMixin {
     @WrapMethod(method = "execute")
     public @NotNull CastResult execute(CastingVM vm, ServerLevel world, SpellContinuation continuation, Operation<CastResult> original) {
         Supplier<@Nullable Component> castedName = () -> null;
-            var lookup = PatternRegistryManifest.matchPattern(((PatternIota) (Object) this).getPattern(), vm.getEnv(), false);
+            var lookup = PatternRegistryManifest.matchPattern(((PatternIota) (Object) this).getPattern(), vm.getEnv());
             vm.getEnv().precheckAction(lookup);
 
             Action action;
@@ -73,7 +73,7 @@ public abstract class PatternIotaMixin {
                             null,
                             List.of(),
                             ResolvedPatternType.ERRORED,
-                            HexEvalSounds.MISHAP);
+                            HexEvalSounds.MISHAP.get());
                 }
             }
         return original.call(vm, world, continuation);

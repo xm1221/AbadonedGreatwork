@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.registry
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.ActionRegistryEntry
 import at.petrak.hexcasting.api.casting.castables.Action
 import at.petrak.hexcasting.api.casting.math.HexDir
@@ -33,7 +34,7 @@ object Abadoned_greatworkActions : Abadoned_greatworkRegistrar<ActionRegistryEnt
         make(name, startDir, signature) { action }
 
     private fun make(name: String, startDir: HexDir, signature: String, getAction: () -> Action) = register(name) {
-        ActionRegistryEntry(HexPattern.fromAngles(signature, startDir), getAction())
+        ActionRegistryEntry(patternFromAngles(signature, startDir), getAction())
 
     }
 }

@@ -1,10 +1,13 @@
 package cn.xm1221.abadoned_greatwork.casting.circles
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
 import at.petrak.hexcasting.api.casting.iota.DoubleIota
 import at.petrak.hexcasting.api.casting.iota.Iota
-import at.petrak.hexcasting.api.casting.iota.IotaType
+import cn.xm1221.abadoned_greatwork.api.iotaFromNbt
+import cn.xm1221.abadoned_greatwork.api.iotaToNbt
+import net.minecraft.core.HolderLookup
 import cn.xm1221.abadoned_greatwork.block.entity.WaveReceiverBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.WaveRepeaterBlockEntity
 import com.mojang.datafixers.util.Pair
@@ -64,10 +67,10 @@ class WirelessChannelState(
         return channel
     }
 
-    fun readIotaTag(): CompoundTag =
-        customIotaTag?.copy() ?: IotaType.serialize(DoubleIota(channel.toDouble()))
+    fun readIota(registries: HolderLookup.Provider?): Iota =
+        customIotaTag?.let { iotaFromNbt(it, registries) } ?: DoubleIota(channel.toDouble())
 
-    fun writeIota(iota: Iota?, simulate: Boolean): Boolean {
+    fun writeIota(iota: Iota?, simulate: Boolean, registries: HolderLookup.Provider?): Boolean {
         if (simulate) return true
         if (iota == null) {
             customIotaTag = null
@@ -76,7 +79,7 @@ class WirelessChannelState(
             customIotaTag = null
             channel = iota.double.roundToInt()
         } else {
-            customIotaTag = IotaType.serialize(iota)
+            customIotaTag = iotaToNbt(iota, registries)
         }
         onDirty()
         return true
@@ -108,8 +111,8 @@ class WirelessChannelState(
         }
     }
 
-    fun channelDisplay(): Component =
-        customIotaTag?.let { IotaType.getDisplay(it) }
+    fun channelDisplay(registries: HolderLookup.Provider? = null): Component =
+        customIotaTag?.let { iotaFromNbt(it, registries)?.display() }
             ?: Component.literal(channel.toString()).withStyle(ChatFormatting.LIGHT_PURPLE)
 
     fun appendLensLines(lines: MutableList<Pair<ItemStack, Component>>) {

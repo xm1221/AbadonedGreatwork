@@ -14,7 +14,8 @@ class MishapNotFound(val what: String) : Mishap() {
     override fun accentColor(ctx: CastingEnvironment, errorCtx: Context): FrozenPigment =
         dyeColor(DyeColor.RED)
 
-    override fun execute(env: CastingEnvironment, errorCtx: Context, stack: MutableList<Iota>) {
+    override fun execute(env: CastingEnvironment, errorCtx: Context, stack: at.petrak.hexcasting.api.utils.TreeList<Iota>): at.petrak.hexcasting.api.utils.TreeList<Iota> {
+        return stack
     }
 
     override fun errorMessage(ctx: CastingEnvironment, errorCtx: Context): Component =

@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import vazkii.patchouli.api.IVariable;
 
@@ -37,8 +38,19 @@ public abstract class BrainsweepProcessorMixin {
     private IVariable abw$raidCaptainVar;
 
     @Unique
+    @Nullable
+    private ResourceLocation abw$recipeId;
+
+    @Unique
     private static final ResourceLocation ABW_WAVE_TRANSMITTER_RECIPE =
-        new ResourceLocation("abadoned_greatwork", "brainsweep/wave_transmitter");
+        ResourceLocation.fromNamespaceAndPath("abadoned_greatwork", "brainsweep/wave_transmitter");
+
+    @Inject(method = "setup", at = @At("TAIL"), remap = false)
+    private void abw$captureRecipeId(Level level, vazkii.patchouli.api.IVariableProvider vars, CallbackInfo ci) {
+        if (vars.has("recipe")) {
+            this.abw$recipeId = ResourceLocation.tryParse(vars.get("recipe", level.registryAccess()).asString());
+        }
+    }
 
     @Inject(method = "process", at = @At("HEAD"), cancellable = true, remap = false)
     private void abw$customizeRaidCaptainPreview(
@@ -46,7 +58,7 @@ public abstract class BrainsweepProcessorMixin {
         String key,
         CallbackInfoReturnable<IVariable> cir
     ) {
-        if (this.recipe == null || !ABW_WAVE_TRANSMITTER_RECIPE.equals(this.recipe.getId())) {
+        if (this.recipe == null || !ABW_WAVE_TRANSMITTER_RECIPE.equals(this.abw$recipeId)) {
             return;
         }
         if ("entity".equals(key)) {
@@ -62,25 +74,32 @@ public abstract class BrainsweepProcessorMixin {
                     return;
                 }
                 captain.setPatrolLeader(true);
-                captain.setItemSlot(EquipmentSlot.HEAD, Raid.getLeaderBannerInstance());
+                captain.setItemSlot(EquipmentSlot.HEAD, Raid.getLeaderBannerInstance(
+                    clientLevel.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.BANNER_PATTERN)
+                ));
                 var tag = new CompoundTag();
-                captain.save(tag);
+                captain.saveWithoutId(tag);
                 this.abw$raidCaptainVar = IVariable.wrap(
-                    BuiltInRegistries.ENTITY_TYPE.getKey(captain.getType()) + tag.toString()
+                    BuiltInRegistries.ENTITY_TYPE.getKey(captain.getType()) + tag.toString(),
+                    level.registryAccess()
                 );
             }
             cir.setReturnValue(this.abw$raidCaptainVar);
         } else if ("entityTooltip".equals(key)) {
             List<IVariable> lines = new ArrayList<>();
-            lines.add(IVariable.from(Component.translatable("tooltip.abadoned_greatwork.raid_captain")));
+            lines.add(IVariable.from(
+                Component.translatable("tooltip.abadoned_greatwork.raid_captain"),
+                level.registryAccess()
+            ));
             if (Minecraft.getInstance().options.advancedItemTooltips) {
                 lines.add(
                     IVariable.from(
-                        Component.literal("#abadoned_greatwork:raid_captains").withStyle(ChatFormatting.DARK_GRAY)
+                        Component.literal("#abadoned_greatwork:raid_captains").withStyle(ChatFormatting.DARK_GRAY),
+                        level.registryAccess()
                     )
                 );
             }
-            cir.setReturnValue(IVariable.wrapList(lines));
+            cir.setReturnValue(IVariable.wrapList(lines, level.registryAccess()));
         }
     }
 }

@@ -10,7 +10,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.BlockItem
@@ -60,19 +60,20 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
         if (level !is ServerLevel) return
         val be = level.getBlockEntity(pos) as? AmbitAnchorBlockEntity ?: return
 
-        be.applyPlacedBinding(BlockItem.getBlockEntityData(stack))
+        be.applyPlacedBinding(cn.xm1221.abadoned_greatwork.api.ItemComponents.blockEntityData(stack))
     }
 
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult,
-    ): InteractionResult {
-        if (!player.getItemInHand(hand).isEmpty) return InteractionResult.PASS
-        val be = level.getBlockEntity(pos) as? AmbitAnchorBlockEntity ?: return InteractionResult.PASS
+    ): ItemInteractionResult {
+        if (!player.getItemInHand(hand).isEmpty) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        val be = level.getBlockEntity(pos) as? AmbitAnchorBlockEntity ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
 
         if (!level.isClientSide) {
             val srv = level as ServerLevel
@@ -98,17 +99,17 @@ class AmbitAnchorBlock(properties: Properties) : Block(properties), EntityBlock 
                 )
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide)
+        return ItemInteractionResult.sidedSuccess(level.isClientSide)
     }
 
     override fun appendHoverText(
         stack: ItemStack,
-        level: BlockGetter?,
+        context: net.minecraft.world.item.Item.TooltipContext,
         tooltip: MutableList<Component>,
         flag: TooltipFlag,
     ) {
-        super.appendHoverText(stack, level, tooltip, flag)
-        val tag = BlockItem.getBlockEntityData(stack) ?: return
+        super.appendHoverText(stack, context, tooltip, flag)
+        val tag = cn.xm1221.abadoned_greatwork.api.ItemComponents.blockEntityData(stack) ?: return
         val probe = WirelessChannelState {}
         probe.load(tag)
         tooltip.add(

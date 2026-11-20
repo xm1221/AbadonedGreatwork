@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.client.ponder
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.math.HexCoord
 import at.petrak.hexcasting.api.casting.math.HexDir
 import at.petrak.hexcasting.api.casting.math.HexPattern
@@ -115,16 +116,16 @@ object PonderClientState {
 
         val perWorldTag = HexActions.REGISTRY.getTag(HexTags.Actions.PER_WORLD_PATTERN).orElse(null)
             ?: return null
-        val targetAngleCount = pattern.angles.size
+        val targetAngleCount = pattern.angleCount()
         val targetRotations = HexDir.entries.map { dir ->
-            HexPattern(dir, pattern.angles)
+            HexPattern(dir, pattern.signature)
                 .positions()
                 .distinct()
                 .sortedWith(compareBy<HexCoord>({ it.q }, { it.r }))
         }
         for (holder in perWorldTag) {
             val proto = holder.value().prototype()
-            if (proto.angles.size != targetAngleCount) continue
+            if (proto.angleCount() != targetAngleCount) continue
             val candidate = proto.positions().distinct().sortedWith(compareBy<HexCoord>({ it.q }, { it.r }))
             if (matchesNormalizedCoords(targetRotations, candidate)) {
                 val key = holder.unwrapKey().orElse(null) ?: continue

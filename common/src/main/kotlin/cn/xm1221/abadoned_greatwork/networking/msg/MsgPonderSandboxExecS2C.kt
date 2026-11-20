@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.networking.msg
 
+import cn.xm1221.abadoned_greatwork.api.*
 import cn.xm1221.abadoned_greatwork.ponder.data.readComponentList
 import cn.xm1221.abadoned_greatwork.ponder.data.writeComponentList
 import net.minecraft.nbt.CompoundTag
@@ -25,7 +26,7 @@ data class MsgPonderSandboxExecS2C(
             imageNbt = buf.readNbt() ?: CompoundTag(),
             resolutionType = buf.readUtf(),
             consoleLines = readComponentList(buf),
-            mishapText = if (buf.readBoolean()) buf.readComponent() else null,
+            mishapText = if (buf.readBoolean()) readComponent(buf) else null,
         )
 
         override fun MsgPonderSandboxExecS2C.encode(buf: FriendlyByteBuf) {
@@ -34,7 +35,7 @@ data class MsgPonderSandboxExecS2C(
             buf.writeUtf(resolutionType)
             writeComponentList(buf, consoleLines)
             buf.writeBoolean(mishapText != null)
-            if (mishapText != null) buf.writeComponent(mishapText)
+            if (mishapText != null) writeComponent(buf, mishapText)
         }
     }
 }

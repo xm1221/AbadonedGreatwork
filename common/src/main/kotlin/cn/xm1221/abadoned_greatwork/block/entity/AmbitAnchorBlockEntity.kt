@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.block.entity
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.addldata.ADIotaHolder
 import at.petrak.hexcasting.api.block.HexBlockEntity
 import at.petrak.hexcasting.api.casting.iota.Iota
@@ -100,7 +101,7 @@ class AmbitAnchorBlockEntity(
         val tag = orbPigmentTag ?: return null
         if (clientCachedPigment == null || clientCachedPigmentTag != tag) {
             clientCachedPigmentTag = tag.copy()
-            clientCachedPigment = FrozenPigment.fromNBT(tag)
+            clientCachedPigment = cn.xm1221.abadoned_greatwork.api.pigmentFromNbt(tag, level?.registryAccess())
         }
         return clientCachedPigment
     }
@@ -135,7 +136,7 @@ class AmbitAnchorBlockEntity(
         }
     }
 
-    override fun saveModData(tag: CompoundTag) {
+    override fun saveModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         channelState.save(tag)
         tag.putLong(TAG_ORDER, order)
         tag.putBoolean(TAG_ORB_ACTIVE, orbActive)
@@ -143,7 +144,7 @@ class AmbitAnchorBlockEntity(
         orbPigmentTag?.let { tag.put(TAG_ORB_PIGMENT, it.copy()) }
     }
 
-    override fun loadModData(tag: CompoundTag) {
+    override fun loadModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         channelState.load(tag)
         order = if (tag.contains(TAG_ORDER)) tag.getLong(TAG_ORDER).coerceAtLeast(0L) else 0L
         orbActive = tag.getBoolean(TAG_ORB_ACTIVE)
@@ -180,9 +181,9 @@ class AmbitAnchorBlockEntity(
 
     // ==================== ADIotaHolder ====================
 
-    override fun readIotaTag(): CompoundTag = channelState.readIotaTag()
+    override fun readIota(): at.petrak.hexcasting.api.casting.iota.Iota = channelState.readIota(level?.registryAccess())
 
-    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate)
+    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate, level?.registryAccess())
 
     override fun writeable(): Boolean = true
 

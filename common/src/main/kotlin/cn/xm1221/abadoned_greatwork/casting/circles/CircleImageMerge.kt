@@ -1,7 +1,11 @@
 package cn.xm1221.abadoned_greatwork.casting.circles
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.circles.CircleExecutionState
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
+import cn.xm1221.abadoned_greatwork.api.circleMeta
+import cn.xm1221.abadoned_greatwork.api.deepCopyComponents
+import cn.xm1221.abadoned_greatwork.api.withCircleMeta
 import net.minecraft.core.BlockPos
 import net.minecraft.nbt.Tag
 
@@ -36,19 +40,24 @@ object CircleImageMerge {
         require(branches.isNotEmpty()) { "CircleImageMerge.merge 至少要一份镜像" }
         if (branches.size == 1) return branches[0]
 
-        var merged = branches[0]
+        var stack = branches[0].stack
         val impetusSet = LinkedHashSet<Long>()
         readImpetusLongs(branches[0]).forEach(impetusSet::add)
         for (i in 1 until branches.size) {
-            merged = merged.copy(stack = merged.stack + branches[i].stack)
+            stack = stack.appendedAll(branches[i].stack)
             readImpetusLongs(branches[i]).forEach(impetusSet::add)
         }
 
-        val ud = branches.last().userData.copy()
+        var merged = branches.last().copy(
+            stack = stack,
+            components = deepCopyComponents(branches.last().components),
+        )
         if (impetusSet.isNotEmpty()) {
-            ud.putLongArray(TAG_MERGED_IMPETUSES, impetusSet.toLongArray())
+            val meta = merged.circleMeta()
+            meta.putLongArray(TAG_MERGED_IMPETUSES, impetusSet.toLongArray())
+            merged = merged.withCircleMeta(meta)
         }
-        return merged.copy(userData = ud)
+        return merged
     }
 
     /**
@@ -69,9 +78,9 @@ object CircleImageMerge {
             positions.add(state.impetusPos.asLong())
             readImpetusLongs(state.currentImage).forEach(positions::add)
         }
-        val tag = merged.userData.copy()
+        val tag = merged.circleMeta()
         tag.putLongArray(TAG_MERGED_IMPETUSES, positions.toLongArray())
-        return merged.copy(userData = tag)
+        return merged.withCircleMeta(tag)
     }
 
     /**
@@ -85,7 +94,7 @@ object CircleImageMerge {
     }
 
     private fun readImpetusLongs(image: CastingImage): LongArray {
-        val ud = image.userData
+        val ud = image.circleMeta()
         return if (ud.contains(TAG_MERGED_IMPETUSES, Tag.TAG_LONG_ARRAY.toInt())) {
             ud.getLongArray(TAG_MERGED_IMPETUSES)
         } else {

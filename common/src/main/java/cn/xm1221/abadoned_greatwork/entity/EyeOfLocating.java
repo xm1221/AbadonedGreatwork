@@ -7,6 +7,7 @@ import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
+import cn.xm1221.abadoned_greatwork.api.ItemComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -75,8 +76,10 @@ public class EyeOfLocating extends EyeOfEnder implements AbstractEye {
         // 写入携带物品，保证 Item NBT / 碎裂返回的物品都带目标
         var stack = this.getItem();
         if (!stack.isEmpty()) {
-            stack.getOrCreateTag().putString(KEY_TARGET_ID, this.targetId);
-            stack.getOrCreateTag().putBoolean(KEY_IS_STRUCTURE, this.isStructure);
+            ItemComponents.editCustom(stack, tag -> {
+                tag.putString(KEY_TARGET_ID, this.targetId);
+                tag.putBoolean(KEY_IS_STRUCTURE, this.isStructure);
+            });
             this.setItem(stack);
         }
     }

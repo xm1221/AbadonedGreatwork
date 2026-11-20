@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.block.entity
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.addldata.ADIotaHolder
 import at.petrak.hexcasting.api.block.HexBlockEntity
 import at.petrak.hexcasting.api.casting.iota.Iota
@@ -57,15 +58,15 @@ class MultiDirectrixPBlockEntity(
 
     // ==================== 存档 / 同步 ====================
 
-    override fun saveModData(tag: CompoundTag) {
-        pattern?.let { tag.put(TAG_PATTERN, it.serializeToNBT()) }
+    override fun saveModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
+        pattern?.let { tag.put(TAG_PATTERN, cn.xm1221.abadoned_greatwork.api.patternToNbt(it, registries)) }
         tag.putInt(TAG_TINT, tint)
     }
 
-    override fun loadModData(tag: CompoundTag) {
+    override fun loadModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         pattern = if (tag.contains(TAG_PATTERN, Tag.TAG_COMPOUND.toInt())) {
             val sub = tag.getCompound(TAG_PATTERN)
-            if (HexPattern.isPattern(sub)) HexPattern.fromNBT(sub) else null
+            cn.xm1221.abadoned_greatwork.api.patternFromNbt(sub, registries)
         } else {
             null
         }
@@ -74,8 +75,7 @@ class MultiDirectrixPBlockEntity(
 
     // ==================== ADIotaHolder ====================
 
-    override fun readIotaTag(): CompoundTag? =
-        pattern?.let { IotaType.serialize(PatternIota(it)) }
+    override fun readIota(): Iota? = pattern?.let { PatternIota(it) }
 
     /** 只收图案。别的 iota 一律「写不进去」（返回 `false`，玩家那边会看到写入失败）。 */
     override fun writeIota(iota: Iota?, simulate: Boolean): Boolean {

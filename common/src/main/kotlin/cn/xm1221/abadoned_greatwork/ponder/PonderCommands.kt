@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.ponder
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.iota.ListIota
 import at.petrak.hexcasting.api.casting.iota.PatternIota
 import at.petrak.hexcasting.api.item.IotaHolderItem
@@ -85,7 +86,7 @@ object PonderCommands {
                                 return@executes 0
                             }
                             val holder = stack.item as IotaHolderItem
-                            val iota = holder.readIota(stack, player.serverLevel())
+                            val iota = holder.readIota(stack)
                             if (iota == null) {
                                 ctx.source.sendFailure(Component.translatable("command.abadoned_greatwork.ponder.export_empty"))
                                 return@executes 0

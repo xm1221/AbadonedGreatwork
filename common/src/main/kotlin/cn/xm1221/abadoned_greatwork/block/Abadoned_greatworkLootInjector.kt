@@ -1,9 +1,10 @@
 package cn.xm1221.abadoned_greatwork.block
 
+import cn.xm1221.abadoned_greatwork.api.ItemComponents
 import dev.architectury.event.events.common.LootEvent
 import net.minecraft.world.level.storage.loot.LootPool
 import net.minecraft.world.level.storage.loot.entries.LootItem
-import net.minecraft.world.level.storage.loot.functions.SetNbtFunction
+import net.minecraft.world.level.storage.loot.functions.SetCustomDataFunction
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue
 
 /**
@@ -23,8 +24,9 @@ object Abadoned_greatworkLootInjector {
     )
 
     fun register() {
-        LootEvent.MODIFY_LOOT_TABLE.register { _, id, context, _ ->
-            if (id.namespace != "minecraft" || id.path !in CHESTS.map { "chests/$it" })
+        LootEvent.MODIFY_LOOT_TABLE.register { id, context, _ ->
+            val loc = id.location()
+            if (loc.namespace != "minecraft" || loc.path !in CHESTS.map { "chests/$it" })
                 return@register
 
             val stacks = TruthCrystalPuzzles.ALL
@@ -35,13 +37,14 @@ object Abadoned_greatworkLootInjector {
 
             for (stack in stacks) {
                 val entry = LootItem.lootTableItem(stack.item).setWeight(1)
-                if (stack.hasTag()) {
-                    entry.apply(SetNbtFunction.setTag(stack.tag!!))
+                val custom = ItemComponents.customOrNull(stack)
+                if (custom != null) {
+                    entry.apply(SetCustomDataFunction.setCustomData(custom))
                 }
                 pool.add(entry)
             }
 
-            context.addPool(pool.build())
+            context.addPool(pool)
         }
     }
 }

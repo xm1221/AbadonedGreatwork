@@ -1,28 +1,16 @@
 package cn.xm1221.abadoned_greatwork.casting.actions.spells
 
 import at.petrak.hexcasting.api.casting.RenderedSpell
-import at.petrak.hexcasting.api.casting.SpellList
 import at.petrak.hexcasting.api.casting.castables.SpellAction
 import at.petrak.hexcasting.api.casting.eval.CastingEnvironment
 import at.petrak.hexcasting.api.casting.eval.vm.CastingVM
 import at.petrak.hexcasting.api.casting.getInt
 import at.petrak.hexcasting.api.casting.getList
 import at.petrak.hexcasting.api.casting.iota.Iota
-import at.petrak.hexcasting.api.casting.iota.IotaType
 import at.petrak.hexcasting.api.casting.iota.ListIota
 import at.petrak.hexcasting.api.casting.mishaps.MishapBadCaster
 import at.petrak.hexcasting.api.casting.mishaps.MishapBadOffhandItem
-import at.petrak.hexcasting.api.utils.putInt
-import at.petrak.hexcasting.api.utils.putList
-import at.petrak.hexcasting.api.utils.putTag
-import at.petrak.hexcasting.api.utils.serializeToNBT
-import at.petrak.hexcasting.xplat.IXplatAbstractions
-import cn.xm1221.abadoned_greatwork.casting.TestCastingEnv
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
-import dev.architectury.event.events.common.ChatEvent
-import net.minecraft.client.gui.components.ChatComponent
-import net.minecraft.client.multiplayer.chat.ChatListener
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
 
 class OpTestEval(): SpellAction {

@@ -4,6 +4,7 @@ import cn.xm1221.abadoned_greatwork.entity.EyeOfLocating;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import cn.xm1221.abadoned_greatwork.api.ItemComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -38,11 +39,11 @@ public class ItemEyeOfLocating extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> components,
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> components,
                                 TooltipFlag flag) {
         //components.add(Component.translatable("text.abadoned_greatwork.eye.tooltip")
           //  .withStyle(ChatFormatting.GRAY));
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemComponents.customOrNull(stack);
         if (tag != null && tag.contains(KEY_TARGET_ID)) {
             String id = tag.getString(KEY_TARGET_ID);
             boolean isStructure = tag.getBoolean(KEY_IS_STRUCTURE);
@@ -68,12 +69,12 @@ public class ItemEyeOfLocating extends Item {
         // 目标：物品 NBT 指定，否则随机挑选群系或结构
         ResourceLocation id;
         boolean isStructure;
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemComponents.customOrNull(stack);
         if (tag != null && tag.contains(KEY_TARGET_ID)) {
             id = ResourceLocation.tryParse(tag.getString(KEY_TARGET_ID));
             isStructure = tag.getBoolean(KEY_IS_STRUCTURE);
             if (id == null) {
-                id = new ResourceLocation("minecraft", "plains");
+                id = ResourceLocation.fromNamespaceAndPath("minecraft", "plains");
                 isStructure = false;
             }
         } else {
@@ -117,12 +118,12 @@ public class ItemEyeOfLocating extends Item {
         if (rng.nextBoolean()) {
             var ids = access.registryOrThrow(Registries.STRUCTURE).keySet();
             var id = ids.stream().skip(rng.nextInt(Math.max(1, ids.size()))).findFirst()
-                .orElse(new ResourceLocation("minecraft", "village_plains"));
+                .orElse(ResourceLocation.fromNamespaceAndPath("minecraft", "village_plains"));
             return com.mojang.datafixers.util.Pair.of(id, true);
         } else {
             var ids = access.registryOrThrow(Registries.BIOME).keySet();
             var id = ids.stream().skip(rng.nextInt(Math.max(1, ids.size()))).findFirst()
-                .orElse(new ResourceLocation("minecraft", "plains"));
+                .orElse(ResourceLocation.fromNamespaceAndPath("minecraft", "plains"));
             return com.mojang.datafixers.util.Pair.of(id, false);
         }
     }

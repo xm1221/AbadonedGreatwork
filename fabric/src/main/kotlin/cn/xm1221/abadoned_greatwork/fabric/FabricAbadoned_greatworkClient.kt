@@ -54,11 +54,12 @@ object FabricAbadoned_greatworkClient : ClientModInitializer {
 
         WorldRenderEvents.AFTER_ENTITIES.register { ctx ->
             val consumers = ctx.consumers() ?: return@register
+            val pose = ctx.matrixStack() ?: return@register
             AmbitBoundaryRenderer.render(
-                poseStack = ctx.matrixStack(),
+                poseStack = pose,
                 bufferSource = consumers,
                 cameraPos = ctx.camera().position,
-                partialTick = ctx.tickDelta(),
+                partialTick = ctx.tickCounter().getGameTimeDeltaPartialTick(false),
             )
         }
     }

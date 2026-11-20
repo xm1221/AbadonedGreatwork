@@ -92,7 +92,7 @@ object PonderSceneLoader {
             val resources = rm.listResources(folder) { it.path.endsWith(".json") }
             for ((rl, res) in resources) {
                 val cleanPath = rl.path.removePrefix("$folder/")
-                val key = ResourceLocation(rl.namespace, cleanPath)
+                val key = ResourceLocation.fromNamespaceAndPath(rl.namespace, cleanPath)
                 try {
                     res.open().use { stream ->
                         out[key] = stream.readBytes().toString(Charsets.UTF_8)
@@ -172,7 +172,7 @@ object PonderSceneLoader {
             try {
                 val scene = res.open().use { stream ->
                     val raw = stream.readBytes().toString(Charsets.UTF_8)
-                    val fallbackId = ResourceLocation(
+                    val fallbackId = ResourceLocation.fromNamespaceAndPath(
                         rl.namespace,
                         rl.path.removePrefix("hex_ponder/scenes/").removeSuffix(".json"),
                     )
@@ -192,7 +192,7 @@ object PonderSceneLoader {
             try {
                 val scene = res.open().use { stream ->
                     val raw = stream.readBytes().toString(Charsets.UTF_8)
-                    val fallbackId = ResourceLocation(
+                    val fallbackId = ResourceLocation.fromNamespaceAndPath(
                         rl.namespace,
                         rl.path.removePrefix("spellplays/").removeSuffix(".json"),
                     )

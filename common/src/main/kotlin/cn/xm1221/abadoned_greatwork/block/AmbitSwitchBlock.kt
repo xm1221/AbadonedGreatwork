@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.block
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.block.circle.BlockCircleComponent
 import at.petrak.hexcasting.api.casting.circles.ICircleComponent
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
@@ -26,7 +27,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.context.BlockPlaceContext
@@ -75,20 +77,21 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
     override fun getStateForPlacement(context: BlockPlaceContext): BlockState =
         defaultBlockState().setValue(ENERGIZED, false)
 
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult,
-    ): InteractionResult {
+    ): ItemInteractionResult {
         val held = player.getItemInHand(hand)
-        val be = level.getBlockEntity(pos) as? AmbitSwitchBlockEntity ?: return InteractionResult.PASS
+        val be = level.getBlockEntity(pos) as? AmbitSwitchBlockEntity ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
 
         if (held.item === Abadoned_greatworkItems.AMBIT_ANCHOR.value) {
             if (!level.isClientSide) {
-                val tag = BlockItem.getBlockEntityData(held)?.copy() ?: CompoundTag()
+                val tag = cn.xm1221.abadoned_greatwork.api.ItemComponents.blockEntityData(held)?.copy() ?: CompoundTag()
                 be.channelState.copyTo(tag)
                 BlockItem.setBlockEntityData(held, Abadoned_greatworkBlockEntities.AMBIT_ANCHOR.value, tag)
                 player.displayClientMessage(
@@ -107,10 +110,10 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
                     1.25f,
                 )
             }
-            return InteractionResult.sidedSuccess(level.isClientSide)
+            return ItemInteractionResult.sidedSuccess(level.isClientSide)
         }
 
-        if (!held.isEmpty) return InteractionResult.PASS
+        if (!held.isEmpty) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
 
         if (!level.isClientSide) {
             val delta = if (player.isShiftKeyDown) -1 else 1
@@ -124,7 +127,7 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
                 0.7f + ch * 0.05f,
             )
         }
-        return InteractionResult.sidedSuccess(level.isClientSide)
+        return ItemInteractionResult.sidedSuccess(level.isClientSide)
     }
 
     // ==================== 法术环 ====================
@@ -148,7 +151,7 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
         world: ServerLevel,
     ): ICircleComponent.ControlFlow {
         val be = world.getBlockEntity(pos) as? AmbitSwitchBlockEntity
-        var nextUserData = imageIn.userData
+        var nextImage = imageIn
         val impetusPos = env.circleState().impetusPos
 
         if (be != null) {
@@ -181,11 +184,11 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
                 is AmbitNetwork.AnchorChainResult.Valid -> chain.anchors
             }
 
-            val budgetVolume = AmbitReshapeHook.circleBudgetVolume(env.circleState().bounds)
+            val budgetVolume = AmbitReshapeHook.circleBudgetVolume(env.circleState().bounds.aabb())
             when (val res = AmbitPolygonShape.computeAndValidate(anchors, budgetVolume)) {
                 AmbitPolygonShape.ValidationResult.Empty -> {
                     be.recordShapeSummary(0L, 0, 0L)
-                    nextUserData = AmbitReshapeHook.clearShapeFromUserData(nextUserData)
+                    nextImage = AmbitReshapeHook.clearShape(nextImage)
                     AmbitNetwork.deactivateImpetusAnchors(world, impetusPos)
                 }
 
@@ -208,15 +211,15 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
                 is AmbitPolygonShape.ValidationResult.Valid -> {
                     val shape = res.shape
                     be.recordShapeSummary(shape.areaBlocks, shape.height, shape.volumeBlocks)
-                    nextUserData = AmbitReshapeHook.writeShapeToUserData(nextUserData, shape)
+                    nextImage = AmbitReshapeHook.writeShape(nextImage, shape)
 
                     // 光球颜色：施法者定制染色优先，否则回落到栈顶 Iota 类型配色（空栈再回落默认紫）
                     val pigment = env.pigment
                     val customPigmentTag = if (!pigment.item.isEmpty &&
-                        !pigment.item.`is`(HexItems.DEFAULT_PIGMENT) &&
+                        !pigment.item.`is`(HexItems.DEFAULT_PIGMENT.get()) &&
                         pigment != FrozenPigment.DEFAULT.get()
                     ) {
-                        pigment.serializeToNBT()
+                        cn.xm1221.abadoned_greatwork.api.pigmentToNbt(pigment, world.registryAccess())
                     } else {
                         null
                     }
@@ -234,11 +237,6 @@ class AmbitSwitchBlock(properties: Properties) : BlockCircleComponent(properties
             }
         }
 
-        val nextImage = if (nextUserData === imageIn.userData) {
-            imageIn
-        } else {
-            imageIn.copy(userData = nextUserData)
-        }
         val exits = possibleExitDirections(pos, bs, world)
             .filter { it != enterDir.opposite }
             .map { exitPositionFromDirection(pos, it) }

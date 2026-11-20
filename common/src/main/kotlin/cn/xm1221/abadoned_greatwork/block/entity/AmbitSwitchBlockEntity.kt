@@ -48,14 +48,14 @@ class AmbitSwitchBlockEntity(
         sync()
     }
 
-    override fun saveModData(tag: CompoundTag) {
+    override fun saveModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         channelState.save(tag)
         tag.putLong(TAG_LAST_AREA, lastAreaBlocks)
         tag.putInt(TAG_LAST_HEIGHT, lastHeight)
         tag.putLong(TAG_LAST_VOL, lastVolumeBlocks)
     }
 
-    override fun loadModData(tag: CompoundTag) {
+    override fun loadModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         channelState.load(tag)
         lastAreaBlocks = tag.getLong(TAG_LAST_AREA)
         lastHeight = tag.getInt(TAG_LAST_HEIGHT)
@@ -88,9 +88,9 @@ class AmbitSwitchBlockEntity(
 
     // ==================== ADIotaHolder ====================
 
-    override fun readIotaTag(): CompoundTag = channelState.readIotaTag()
+    override fun readIota(): at.petrak.hexcasting.api.casting.iota.Iota = channelState.readIota(level?.registryAccess())
 
-    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate)
+    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate, level?.registryAccess())
 
     override fun writeable(): Boolean = true
 

@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.block
 
+import cn.xm1221.abadoned_greatwork.api.ItemComponents
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkItems
 import net.minecraft.nbt.CompoundTag
@@ -37,8 +38,8 @@ object TruthCrystalPuzzles {
             }
             val list = ArrayList<ItemStack>(raw.size)
             for (candidate in raw) {
-                if (!candidate.hasTag()) continue
-                if (list.none { ItemStack.isSameItemSameTags(it, candidate) }) {
+                if (!ItemComponents.hasCustom(candidate)) continue
+                if (list.none { ItemStack.isSameItemSameComponents(it, candidate) }) {
                     list.add(candidate)
                 }
             }
@@ -54,11 +55,13 @@ object TruthCrystalPuzzles {
         val stack = ItemStack(ITEMS[variant % 3].value)
 
         if (riddle.isRawNbt) {
-            // 完整 NBT 模式：直接合并 SNBT 到物品栈
-            riddle.nbtTag()?.let { stack.orCreateTag.merge(it) }
+            riddle.nbtTag()?.let { raw ->
+                val merged = ItemComponents.copyCustom(stack)
+                merged.merge(raw)
+                ItemComponents.setCustom(stack, merged)
+            }
         } else {
-            // 结构化字段模式
-            val tag = stack.orCreateTag
+            val tag = ItemComponents.copyCustom(stack)
 
             val inputTag = CompoundTag()
             val inputTags = riddle.getAllInputTags()
@@ -75,6 +78,7 @@ object TruthCrystalPuzzles {
             tag.putString(ItemTruthCrystal.MODE, "normal")
             tag.putBoolean(ItemTruthCrystal.IS_CRAFTED, false)
             tag.putBoolean(ItemTruthCrystal.CAN_WRITE, false)
+            ItemComponents.setCustom(stack, tag)
         }
 
         if (!riddle.ponder_hints.isNullOrEmpty()) {

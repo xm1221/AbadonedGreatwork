@@ -70,10 +70,10 @@ class MediaPoolBlockEntityRenderer(
         val normMat = pose.normal()
 
         // 顶面：对应贴图 (u=8..15, v=0..7)
-        val topU0 = sprite.getU(8.0)
-        val topU1 = sprite.getU(15.0)
-        val topV0 = sprite.getV(0.0)
-        val topV1 = sprite.getV(7.0)
+        val topU0 = sprite.getU(8.0f)
+        val topU1 = sprite.getU(15.0f)
+        val topV0 = sprite.getV(0.0f)
+        val topV1 = sprite.getV(7.0f)
         quad(
             vc, poseMat, normMat, light, packedOverlay,
             x0, y1, z0, topU0, topV0,
@@ -84,10 +84,10 @@ class MediaPoolBlockEntityRenderer(
         )
 
         // 四个侧面：对应贴图 (u=8..15, v=0..1)
-        val sideU0 = sprite.getU(8.0)
-        val sideU1 = sprite.getU(15.0)
-        val sideV0 = sprite.getV(0.0)
-        val sideV1 = sprite.getV(1.0)
+        val sideU0 = sprite.getU(8.0f)
+        val sideU1 = sprite.getU(15.0f)
+        val sideV0 = sprite.getV(0.0f)
+        val sideV1 = sprite.getV(1.0f)
 
         // North (-Z)
         quad(
@@ -160,17 +160,19 @@ class MediaPoolBlockEntityRenderer(
         ny: Float,
         nz: Float,
     ) {
-        vc.vertex(pose, x, y, z)
-            .color(255, 255, 255, 255)
-            .uv(u, v)
-            .overlayCoords(overlay)
-            .uv2(light)
-            .normal(norm, nx, ny, nz)
-            .endVertex()
+        val normal = org.joml.Vector3f(nx, ny, nz)
+        norm.transform(normal)
+        vc.addVertex(pose, x, y, z)
+            .setColor(255, 255, 255, 255)
+            .setUv(u, v)
+            .setOverlay(overlay)
+            .setLight(light)
+            .setNormal(normal.x, normal.y, normal.z)
+            
     }
 
     companion object {
-        private val TEX_IDLE = ResourceLocation(Abadoned_greatwork.MODID, "block/media_pool")
-        private val TEX_ENERGIZED = ResourceLocation(Abadoned_greatwork.MODID, "block/media_pool_energized")
+        private val TEX_IDLE = ResourceLocation.fromNamespaceAndPath(Abadoned_greatwork.MODID, "block/media_pool")
+        private val TEX_ENERGIZED = ResourceLocation.fromNamespaceAndPath(Abadoned_greatwork.MODID, "block/media_pool_energized")
     }
 }

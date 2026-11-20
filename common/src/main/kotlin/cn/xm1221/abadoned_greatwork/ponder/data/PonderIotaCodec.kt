@@ -1,8 +1,10 @@
 package cn.xm1221.abadoned_greatwork.ponder.data
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.iota.DoubleIota
 import at.petrak.hexcasting.api.casting.iota.Iota
-import at.petrak.hexcasting.api.casting.iota.IotaType
+import cn.xm1221.abadoned_greatwork.api.iotaFromNbt
+import cn.xm1221.abadoned_greatwork.api.iotaToNbt
 import at.petrak.hexcasting.api.casting.iota.ListIota
 import at.petrak.hexcasting.api.casting.iota.NullIota
 import at.petrak.hexcasting.api.casting.iota.PatternIota
@@ -74,10 +76,10 @@ object PonderIotaCodec {
         if (trimmed.isEmpty()) return null
         return try {
             when {
-                trimmed == "null" -> IotaType.serialize(NullIota())
+                trimmed == "null" -> iotaToNbt(NullIota())
                 trimmed.startsWith("double:") -> {
                     val d = trimmed.substring(7).trim().toDouble()
-                    IotaType.serialize(DoubleIota(d))
+                    iotaToNbt(DoubleIota(d))
                 }
                 trimmed.startsWith("vec:{") && trimmed.endsWith("}") -> {
                     val inner = trimmed.substring(5, trimmed.length - 1)
@@ -85,20 +87,20 @@ object PonderIotaCodec {
                     val x = parts[0].trim().toDouble()
                     val y = parts[1].trim().toDouble()
                     val z = parts[2].trim().toDouble()
-                    IotaType.serialize(Vec3Iota(Vec3(x, y, z)))
+                    iotaToNbt(Vec3Iota(Vec3(x, y, z)))
                 }
                 trimmed.startsWith("pattern:") -> {
                     val actionRl = ResourceLocation.tryParse(trimmed.substring(8).trim()) ?: return null
                     val entry = HexActions.REGISTRY.get(actionRl) ?: return null
-                    IotaType.serialize(PatternIota(entry.prototype()))
+                    iotaToNbt(PatternIota(entry.prototype()))
                 }
                 (trimmed.startsWith("pattern{") && trimmed.endsWith("}")) ||
                     (trimmed.startsWith("pattern[") && trimmed.endsWith("]")) -> {
                     val inner = trimmed.substring(8, trimmed.length - 1)
                     val parts = inner.split(",")
                     val dir = HexDir.valueOf(parts[0].trim().uppercase())
-                    val pat = HexPattern.fromAngles(parts[1].trim(), dir)
-                    IotaType.serialize(PatternIota(pat))
+                    val pat = patternFromAngles(parts[1].trim(), dir)
+                    iotaToNbt(PatternIota(pat))
                 }
                 trimmed.startsWith("iota:[") && trimmed.endsWith("]") -> {
                     val inner = trimmed.substring(6, trimmed.length - 1)
@@ -107,9 +109,9 @@ object PonderIotaCodec {
                         if (part.isEmpty()) continue
                         val tag = resolveString(part, presetIotas) ?: return null
                         // 便携构建仅包含字面量/图案/向量/列表，无需 ServerLevel
-                        elems.add(IotaType.deserialize(tag, null))
+                        elems.add(iotaFromNbt(tag) ?: return null)
                     }
-                    IotaType.serialize(ListIota(elems))
+                    iotaToNbt(ListIota(elems))
                 }
                 trimmed.startsWith("iota:") -> {
                     var body = trimmed.substring(5)
@@ -202,7 +204,7 @@ object PonderIotaCodec {
     }
 
     fun encodeToA85(iota: Iota): String {
-        val tag = IotaType.serialize(iota)
+        val tag = iotaToNbt(iota)
         val rawBytes = ByteArrayOutputStream().use { baos ->
             NbtIo.write(tag, DataOutputStream(baos))
             baos.toByteArray()

@@ -28,7 +28,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
@@ -84,25 +85,26 @@ class MediaPoolBlock(properties: Properties) : BlockCircleComponent(properties),
     override fun getAnalogOutputSignal(state: BlockState, level: Level, pos: BlockPos): Int =
         (level.getBlockEntity(pos) as? MediaPoolBlockEntity)?.analogOutputSignal() ?: 0
 
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult,
-    ): InteractionResult {
+    ): ItemInteractionResult {
         val held = player.getItemInHand(hand)
-        if (held.isEmpty) return InteractionResult.PASS
-        val be = level.getBlockEntity(pos) as? MediaPoolBlockEntity ?: return InteractionResult.PASS
-        if (!be.hasMediaForInsertion(held)) return InteractionResult.PASS
+        if (held.isEmpty) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        val be = level.getBlockEntity(pos) as? MediaPoolBlockEntity ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        if (!be.hasMediaForInsertion(held)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
 
         if (!level.isClientSide) {
             if (be.insertMediaFromItem(held)) {
                 level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_RESONATE, SoundSource.BLOCKS, 0.85f, 1.05f)
             }
         }
-        return InteractionResult.sidedSuccess(level.isClientSide)
+        return ItemInteractionResult.sidedSuccess(level.isClientSide)
     }
 
     // ==================== 法术环 ====================
@@ -161,7 +163,7 @@ class MediaPoolBlock(properties: Properties) : BlockCircleComponent(properties),
             }
         }
 
-        val nextImage = imageIn.copy(stack = stack.dropLast(1))
+        val nextImage = imageIn.copy(stack = stack.dropRight(1))
         val exits = possibleExitDirections(pos, bs, world)
             .filter { it != enterDir.opposite }
             .map { exitPositionFromDirection(pos, it) }
@@ -203,7 +205,7 @@ class MediaPoolBlock(properties: Properties) : BlockCircleComponent(properties),
                 image,
                 listOf(effect),
                 mishap.resolutionType(env),
-                HexEvalSounds.MISHAP,
+                HexEvalSounds.MISHAP.get(),
             )
         )
     }

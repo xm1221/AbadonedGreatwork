@@ -1,9 +1,6 @@
 package cn.xm1221.abadoned_greatwork.registry;
 
-import at.petrak.hexcasting.api.addldata.ADIotaHolder;
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork;
-import gay.object.ioticblocks.api.IoticBlocksAPI;
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * 把「玩家能用 iota 读写图案往方块里写东西」这件事交给 IoticBlocks。
@@ -28,20 +25,15 @@ public final class Abadoned_greatworkIotaHolders {
      * 方块不在（或者还没同步出方块实体）时返回 {@code null}，上游会当成「这里不能写」。
      */
     public static void init() {
-        registerHolder("multi_directrix_p");
-        registerHolder("wave_transmitter");
-        registerHolder("wave_receiver");
-        registerHolder("ambit_switch");
-        registerHolder("ambit_anchor");
-    }
-
-    private static void registerHolder(String path) {
-        IoticBlocksAPI.INSTANCE.registerIotaHolderProvider(
-            Abadoned_greatwork.id(path),
-            (level, pos) -> {
-                BlockEntity be = level.getBlockEntity(pos);
-                return be instanceof ADIotaHolder holder ? holder : null;
-            }
-        );
+        // IoticBlocks 1.21.1 is not on Modrinth or CurseForge (those pages are still 1.20.1).
+        // The NeoForge fork is optional: skip registration when its API class is absent so
+        // Fabric, which has no 1.21.1 build, still loads.
+        try {
+            Class.forName("gay.object.ioticblocks.api.IoticBlocksAPI");
+        } catch (ClassNotFoundException e) {
+            Abadoned_greatwork.LOGGER.info("IoticBlocks is not installed; iota holder providers were not registered");
+            return;
+        }
+        IoticBlocksRegistrar.registerAll();
     }
 }

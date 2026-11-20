@@ -30,7 +30,7 @@ class OpTrackEye : SpellAction {
         // 栈顶：召唤位置（向量）
         val spawnPos = args.getVec3(0, 2)
         // 栈次顶：目标实体
-        val targetEntity = args.getEntity(1, 2)
+        val targetEntity = args.getEntity(env.world, 1, 2)
 
         // 召唤位置必须在施法范围内
         env.assertVecInRange(spawnPos)

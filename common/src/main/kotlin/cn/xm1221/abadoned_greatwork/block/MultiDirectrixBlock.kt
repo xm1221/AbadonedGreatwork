@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.block
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.block.circle.BlockCircleComponent
 import at.petrak.hexcasting.api.casting.circles.ICircleComponent
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
@@ -17,7 +18,8 @@ import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.util.StringRepresentable
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
@@ -115,20 +117,21 @@ class MultiDirectrixBlock(properties: Properties) : BlockCircleComponent(propert
      * 潜行右键切换**被点中的那一面**：`未连接 → 输入 → 输出 → 未连接`。
      *
      * `hit.direction` 就是这一面的外法线，所以不用去算玩家视线。非潜行时返回
-     * [InteractionResult.PASS]，把右键让给正常放方块。
+     * [ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION]，把右键让给正常放方块。
      *
      * 三段轮换的音高按「越活跃越高」给（0.8 / 1.4 / 1.0），闭着眼睛也能听出点到第几档。
      */
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult,
-    ): InteractionResult {
-        if (!player.isShiftKeyDown) return InteractionResult.PASS
-        val prop = PORTS[hit.direction] ?: return InteractionResult.PASS
+    ): ItemInteractionResult {
+        if (!player.isShiftKeyDown) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        val prop = PORTS[hit.direction] ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         // 显式标成非空类型：getValue 是 Java 平台类型，不标的话 when 会被要求处理 null 分支
         val current: PortMode = state.getValue(prop)
         val next = when (current) {
@@ -148,7 +151,7 @@ class MultiDirectrixBlock(properties: Properties) : BlockCircleComponent(propert
                 },
             )
         }
-        return InteractionResult.sidedSuccess(level.isClientSide)
+        return ItemInteractionResult.sidedSuccess(level.isClientSide)
     }
 
     // ==================== 结构方块旋转 / 镜像 ====================

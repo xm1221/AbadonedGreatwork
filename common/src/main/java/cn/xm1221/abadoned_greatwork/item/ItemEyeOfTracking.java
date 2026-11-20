@@ -3,6 +3,7 @@ package cn.xm1221.abadoned_greatwork.item;
 import cn.xm1221.abadoned_greatwork.entity.EyeOfTracking;
 import cn.xm1221.abadoned_greatwork.entity.eye.EyeTarget;
 import net.minecraft.ChatFormatting;
+import cn.xm1221.abadoned_greatwork.api.ItemComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -35,9 +36,9 @@ public class ItemEyeOfTracking extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> components,
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> components,
                                 TooltipFlag flag) {
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemComponents.customOrNull(stack);
         if (tag != null && tag.contains(EyeOfTracking.KEY_TARGET_NAME)) {
             components.add(Component.translatable("text.abadoned_greatwork.eye.tracking_target",
                 Component.literal(tag.getString(EyeOfTracking.KEY_TARGET_NAME))
@@ -52,7 +53,7 @@ public class ItemEyeOfTracking extends Item {
             return InteractionResultHolder.sidedSuccess(stack, true);
         }
         ServerLevel serverLevel = (ServerLevel) level;
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemComponents.customOrNull(stack);
         if (tag == null || !tag.hasUUID(EyeOfTracking.KEY_TARGET_UUID)) {
             return InteractionResultHolder.pass(stack); // 无目标，不消耗
         }

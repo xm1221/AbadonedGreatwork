@@ -29,8 +29,6 @@ class PonderCastEnv(
 
     val capturedMessages: MutableList<Component> = ArrayList()
 
-    override fun getCaster(): ServerPlayer = player
-
     override fun getCastingEntity(): LivingEntity = player
 
     override fun getMishapEnvironment(): MishapEnvironment = PonderMishapEnvironment(world, player)
@@ -65,10 +63,6 @@ class PonderCastEnv(
         // 教学模拟不在世界内喷射粒子
     }
 
-    override fun postCast(image: CastingImage?) {
-        // 不向世界发送螺旋图案特效，也不覆盖玩家法杖数据
-    }
-
     override fun printMessage(message: Component?) {
         if (message != null) {
             capturedMessages.add(message)
@@ -85,5 +79,6 @@ class PonderCastEnv(
         override fun damage(healthProportion: Float) {}
         override fun removeXp(amount: Int) {}
         override fun blind(ticks: Int) {}
+        override fun nauseate(ticks: Int) {}
     }
 }

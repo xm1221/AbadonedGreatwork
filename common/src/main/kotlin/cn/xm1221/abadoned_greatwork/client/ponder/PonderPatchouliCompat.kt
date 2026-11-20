@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.client.ponder
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.HexAPI
 import at.petrak.hexcasting.common.lib.hex.HexActions
 import com.google.gson.JsonElement

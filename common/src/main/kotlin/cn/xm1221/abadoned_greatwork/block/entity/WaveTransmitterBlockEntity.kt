@@ -57,13 +57,13 @@ class WaveTransmitterBlockEntity(
         sync()
     }
 
-    override fun saveModData(tag: CompoundTag) {
+    override fun saveModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         channelState.save(tag)
         tag.putInt(TAG_LAST_COUNT, lastTriggeredCount)
         tag.putInt(TAG_LAST_RANGE, lastRangeBlocks)
     }
 
-    override fun loadModData(tag: CompoundTag) {
+    override fun loadModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         channelState.load(tag)
         lastTriggeredCount = tag.getInt(TAG_LAST_COUNT)
         lastRangeBlocks = tag.getInt(TAG_LAST_RANGE)
@@ -90,9 +90,9 @@ class WaveTransmitterBlockEntity(
 
     // ==================== ADIotaHolder ====================
 
-    override fun readIotaTag(): CompoundTag = channelState.readIotaTag()
+    override fun readIota(): at.petrak.hexcasting.api.casting.iota.Iota = channelState.readIota(level?.registryAccess())
 
-    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate)
+    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate, level?.registryAccess())
 
     override fun writeable(): Boolean = true
 

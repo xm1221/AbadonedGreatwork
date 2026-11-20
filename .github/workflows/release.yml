@@ -50,19 +50,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Two JDKs: 21 is what runs Gradle (buildSrc uses Loom 1.11 / unpick 3.0, which
-      # needs a Java 21 runtime), 17 is the toolchain the mod compiles against.
-      # setup-java exports JAVA_HOME_17_X64, and gradle.properties registers it through
-      # org.gradle.java.installations.fromEnv - Gradle does not read that variable by itself.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          # ORDER MATTERS: setup-java makes the LAST version the default JAVA_HOME/PATH.
-          # Gradle must launch on 21, so 21 goes last; 17 is then only reachable via
-          # JAVA_HOME_17_X64, which gradle.properties registers as a toolchain source.
-          java-version: |
-            17
-            21
+          java-version: 21
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -71,38 +62,15 @@ jobs:
           RELEASE: true
         run: ./gradlew build
 
-      # do this first so we fail if we've already published this version
-      # because CurseForge and Modrinth apparently don't care!
-      - name: Publish to GitHub
-        if: inputs.publish_github
-        env:
-          RELEASE: true
-          DRY_RUN: ${{ inputs.dry_run && 'true' || '' }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew publishGithub
-
-      - name: Publish to CurseForge
-        if: inputs.publish_curseforge
-        env:
-          RELEASE: true
-          DRY_RUN: ${{ inputs.dry_run && 'true' || '' }}
-          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
-        run: ./gradlew publishCurseforge
-
-      - name: Publish to Modrinth
-        if: inputs.publish_modrinth
-        env:
-          RELEASE: true
-          DRY_RUN: ${{ inputs.dry_run && 'true' || '' }}
-          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-        run: ./gradlew publishModrinth
-
-      - name: Upload dry run artifact
-        if: inputs.dry_run
+      # The 1.21 branch builds with Architectury Loom directly and does not apply
+      # me.modmuss50.mod-publish-plugin, so CurseForge/Modrinth/GitHub release
+      # publishing is not a Gradle task here. Upload the remapped jars instead.
+      - name: Upload release jars
+        if: inputs.publish_curseforge || inputs.publish_modrinth || inputs.publish_github || inputs.dry_run
         uses: actions/upload-artifact@v4
         with:
-          name: dry-run
-          path: '*/build/publishMods'
+          name: mod-jars
+          path: build/ciArtifacts/
           if-no-files-found: error
 
   publish-pypi:

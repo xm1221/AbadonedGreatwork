@@ -178,15 +178,15 @@ class AmbitAnchorBlockEntityRenderer(
         val poseMat = pose.pose()
         val normMat = pose.normal()
 
-        val su0 = sprite.getU(sideUv.u0.toDouble())
-        val su1 = sprite.getU(sideUv.u1.toDouble())
-        val sv0 = sprite.getV(sideUv.v0.toDouble())
-        val sv1 = sprite.getV(sideUv.v1.toDouble())
+        val su0 = sprite.getU(sideUv.u0.toFloat())
+        val su1 = sprite.getU(sideUv.u1.toFloat())
+        val sv0 = sprite.getV(sideUv.v0.toFloat())
+        val sv1 = sprite.getV(sideUv.v1.toFloat())
 
-        val cu0 = sprite.getU(capUv.u0.toDouble())
-        val cu1 = sprite.getU(capUv.u1.toDouble())
-        val cv0 = sprite.getV(capUv.v0.toDouble())
-        val cv1 = sprite.getV(capUv.v1.toDouble())
+        val cu0 = sprite.getU(capUv.u0.toFloat())
+        val cu1 = sprite.getU(capUv.u1.toFloat())
+        val cv0 = sprite.getV(capUv.v0.toFloat())
+        val cv1 = sprite.getV(capUv.v1.toFloat())
 
         // Up (+Y)
         quad(
@@ -282,18 +282,20 @@ class AmbitAnchorBlockEntityRenderer(
         u: Float, v: Float,
         nx: Float, ny: Float, nz: Float,
     ) {
-        vc.vertex(pose, x, y, z)
-            .color(r, g, b, 255)
-            .uv(u, v)
-            .overlayCoords(overlay)
-            .uv2(light)
-            .normal(norm, nx, ny, nz)
-            .endVertex()
+        val normal = org.joml.Vector3f(nx, ny, nz)
+        norm.transform(normal)
+        vc.addVertex(pose, x, y, z)
+            .setColor(r, g, b, 255)
+            .setUv(u, v)
+            .setOverlay(overlay)
+            .setLight(light)
+            .setNormal(normal.x, normal.y, normal.z)
+            
     }
 
     companion object {
         private const val RENDER_SCALE = 1.5f
-        private val TEX_ANCHOR = ResourceLocation(Abadoned_greatwork.MODID, "block/ambit_anchor")
-        private val TEX_SLATE = ResourceLocation(Abadoned_greatwork.MODID, "block/multi_directrix_0")
+        private val TEX_ANCHOR = ResourceLocation.fromNamespaceAndPath(Abadoned_greatwork.MODID, "block/ambit_anchor")
+        private val TEX_SLATE = ResourceLocation.fromNamespaceAndPath(Abadoned_greatwork.MODID, "block/multi_directrix_0")
     }
 }

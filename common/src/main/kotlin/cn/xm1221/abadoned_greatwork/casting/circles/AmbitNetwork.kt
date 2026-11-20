@@ -1,10 +1,15 @@
 package cn.xm1221.abadoned_greatwork.casting.circles
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.HexAPI
 import at.petrak.hexcasting.api.casting.eval.CastingEnvironment
 import at.petrak.hexcasting.api.casting.eval.CastingEnvironmentComponent
 import at.petrak.hexcasting.api.casting.eval.env.CircleCastEnv
+import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
 import at.petrak.hexcasting.common.lib.HexAttributes
+import cn.xm1221.abadoned_greatwork.api.AbadonedImageComponents
+import cn.xm1221.abadoned_greatwork.api.circleMeta
+import cn.xm1221.abadoned_greatwork.api.withCircleMeta
 import cn.xm1221.abadoned_greatwork.block.entity.AmbitAnchorBlockEntity
 import cn.xm1221.abadoned_greatwork.networking.msg.MsgSyncAmbitLinesS2C
 import dev.architectury.event.events.common.PlayerEvent
@@ -638,9 +643,9 @@ object AmbitReshapeHook {
     }
 
     fun init() {
-        CastingEnvironment.addCreateEventListener { env, userData ->
+        CastingEnvironment.addCreateEventListener { env, image ->
             if (env !is CircleCastEnv) return@addCreateEventListener
-            val shape = readShapeFromUserData(userData) ?: return@addCreateEventListener
+            val shape = readShape(image) ?: return@addCreateEventListener
             env.addExtension(AmbitScopeComponent(env, shape))
         }
     }
@@ -653,21 +658,24 @@ object AmbitReshapeHook {
         return if (xy > Long.MAX_VALUE / dz) Long.MAX_VALUE else xy * dz
     }
 
-    fun writeShapeToUserData(userData: CompoundTag, shape: AmbitPolygonShape): CompoundTag {
-        val copy = userData.copy()
-        copy.put(TAG_ACTIVE_AMBIT, shape.toNbt())
-        return copy
+    fun writeShape(image: CastingImage, shape: AmbitPolygonShape): CastingImage {
+        val meta = image.circleMeta()
+        meta.put(TAG_ACTIVE_AMBIT, shape.toNbt())
+        return image.withCircleMeta(meta)
     }
 
-    fun clearShapeFromUserData(userData: CompoundTag): CompoundTag {
-        val copy = userData.copy()
-        copy.remove(TAG_ACTIVE_AMBIT)
-        return copy
+    fun clearShape(image: CastingImage): CastingImage {
+        val meta = image.circleMeta()
+        if (!meta.contains(TAG_ACTIVE_AMBIT)) return image
+        meta.remove(TAG_ACTIVE_AMBIT)
+        return image.withCircleMeta(meta)
     }
 
-    fun readShapeFromUserData(userData: CompoundTag?): AmbitPolygonShape? {
-        if (userData == null || !userData.contains(TAG_ACTIVE_AMBIT, Tag.TAG_COMPOUND.toInt())) return null
-        return AmbitPolygonShape.fromNbt(userData.getCompound(TAG_ACTIVE_AMBIT))
+    fun readShape(image: CastingImage): AmbitPolygonShape? {
+        val meta = image.getComponent(AbadonedImageComponents.CIRCLE_META.value)
+            ?: return null
+        if (!meta.contains(TAG_ACTIVE_AMBIT, Tag.TAG_COMPOUND.toInt())) return null
+        return AmbitPolygonShape.fromNbt(meta.getCompound(TAG_ACTIVE_AMBIT))
     }
 
     private fun isWithinCasterOrSentinel(env: CircleCastEnv, vec: Vec3): Boolean {

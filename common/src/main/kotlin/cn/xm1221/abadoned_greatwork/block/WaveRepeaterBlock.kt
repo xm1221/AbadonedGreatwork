@@ -15,7 +15,8 @@ import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.util.RandomSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
@@ -100,16 +101,17 @@ class WaveRepeaterBlock(properties: Properties) : BlockCircleComponent(propertie
         state.rotate(mirror.getRotation(state.getValue(FACING)))
 
     /** 空手右击 / 潜行右击循环切换谐振频道 `0..15`。 */
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult,
-    ): InteractionResult {
-        if (!player.getItemInHand(hand).isEmpty) return InteractionResult.PASS
-        val be = level.getBlockEntity(pos) as? WaveRepeaterBlockEntity ?: return InteractionResult.PASS
+    ): ItemInteractionResult {
+        if (!player.getItemInHand(hand).isEmpty) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        val be = level.getBlockEntity(pos) as? WaveRepeaterBlockEntity ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
 
         if (!level.isClientSide) {
             val delta = if (player.isShiftKeyDown) -1 else 1
@@ -123,7 +125,7 @@ class WaveRepeaterBlock(properties: Properties) : BlockCircleComponent(propertie
                 0.7f + ch * 0.05f,
             )
         }
-        return InteractionResult.sidedSuccess(level.isClientSide)
+        return ItemInteractionResult.sidedSuccess(level.isClientSide)
     }
 
     override fun tick(state: BlockState, level: ServerLevel, pos: BlockPos, random: RandomSource) {

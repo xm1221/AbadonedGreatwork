@@ -2,6 +2,7 @@ package cn.xm1221.abadoned_greatwork.client.renderer
 
 import at.petrak.hexcasting.api.pigment.FrozenPigment
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.api.pigmentFromNbt
 import cn.xm1221.abadoned_greatwork.networking.msg.MsgSyncAmbitLinesS2C
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
@@ -33,7 +34,7 @@ object AmbitBoundaryRenderer {
     private const val PIGMENT_STEP_BLOCKS = 1.5
     private const val MAX_STEPS_PER_EDGE = 24
 
-    private val TEX_ANCHOR = ResourceLocation(Abadoned_greatwork.MODID, "block/ambit_anchor")
+    private val TEX_ANCHOR = ResourceLocation.fromNamespaceAndPath(Abadoned_greatwork.MODID, "block/ambit_anchor")
 
     private class CachedLoop(
         val points: List<Vec3>,
@@ -54,7 +55,7 @@ object AmbitBoundaryRenderer {
             val pts = loop.anchors.map { pos ->
                 Vec3(pos.x + 0.5, pos.y + ORB_CENTER_Y_OFFSET, pos.z + 0.5)
             }
-            val pigment = loop.pigmentTag?.let { FrozenPigment.fromNBT(it) }
+            val pigment = loop.pigmentTag?.let { pigmentFromNbt(it, Minecraft.getInstance().connection?.registryAccess()) }
             CachedLoop(pts, pigment, loop.fallbackColor)
         }
     }
@@ -79,10 +80,10 @@ object AmbitBoundaryRenderer {
         val sprite = Minecraft.getInstance()
             .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
             .apply(TEX_ANCHOR)
-        val u0 = sprite.getU(0.1)
-        val v0 = sprite.getV(0.1)
-        val u1 = sprite.getU(0.4)
-        val v1 = sprite.getV(0.4)
+        val u0 = sprite.getU(0.1f)
+        val v0 = sprite.getV(0.1f)
+        val u1 = sprite.getU(0.4f)
+        val v1 = sprite.getV(0.4f)
 
         val coreVc = bufferSource.getBuffer(RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS))
         val haloVc = bufferSource.getBuffer(RenderType.lightning())
@@ -292,10 +293,10 @@ object AmbitBoundaryRenderer {
             emitTexturedVertex(vc, poseMat, normMat, bx1, by1, bz1, r1, g1, b1, a1, u1, v1)
             emitTexturedVertex(vc, poseMat, normMat, ax1, ay1, az1, r1, g1, b1, a1, u0, v1)
         } else {
-            vc.vertex(poseMat, ax0, ay0, az0).color(r0, g0, b0, a0).endVertex()
-            vc.vertex(poseMat, bx0, by0, bz0).color(r0, g0, b0, a0).endVertex()
-            vc.vertex(poseMat, bx1, by1, bz1).color(r1, g1, b1, a1).endVertex()
-            vc.vertex(poseMat, ax1, ay1, az1).color(r1, g1, b1, a1).endVertex()
+            vc.addVertex(poseMat, ax0, ay0, az0).setColor(r0, g0, b0, a0)
+            vc.addVertex(poseMat, bx0, by0, bz0).setColor(r0, g0, b0, a0)
+            vc.addVertex(poseMat, bx1, by1, bz1).setColor(r1, g1, b1, a1)
+            vc.addVertex(poseMat, ax1, ay1, az1).setColor(r1, g1, b1, a1)
         }
     }
 
@@ -307,12 +308,14 @@ object AmbitBoundaryRenderer {
         r: Int, g: Int, b: Int, a: Int,
         u: Float, v: Float,
     ) {
-        vc.vertex(poseMat, x, y, z)
-            .color(r, g, b, a)
-            .uv(u, v)
-            .overlayCoords(OverlayTexture.NO_OVERLAY)
-            .uv2(LightTexture.FULL_BRIGHT)
-            .normal(normMat, 0f, 1f, 0f)
-            .endVertex()
+        val normal = org.joml.Vector3f(0f, 1f, 0f)
+        normMat.transform(normal)
+        vc.addVertex(poseMat, x, y, z)
+            .setColor(r, g, b, a)
+            .setUv(u, v)
+            .setOverlay(OverlayTexture.NO_OVERLAY)
+            .setLight(LightTexture.FULL_BRIGHT)
+            .setNormal(normal.x, normal.y, normal.z)
+            
     }
 }

@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.ponder.data
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.common.lib.hex.HexActions
 import com.google.gson.JsonElement
 import io.netty.buffer.Unpooled
@@ -384,7 +385,7 @@ data class StepSnapshot(
         buf.writeUtf(resolutionType)
         writeComponentList(buf, consoleLines)
         buf.writeBoolean(mishapText != null)
-        if (mishapText != null) buf.writeComponent(mishapText)
+        if (mishapText != null) cn.xm1221.abadoned_greatwork.api.writeComponent(buf, mishapText)
         buf.writeBoolean(callout != null)
         callout?.writeToBuf(buf)
     }
@@ -417,7 +418,7 @@ data class StepSnapshot(
             imageNbt = buf.readNbt() ?: CompoundTag(),
             resolutionType = buf.readUtf(),
             consoleLines = readComponentList(buf),
-            mishapText = if (buf.readBoolean()) buf.readComponent() else null,
+            mishapText = if (buf.readBoolean()) cn.xm1221.abadoned_greatwork.api.readComponent(buf) else null,
             callout = if (buf.readBoolean()) ResolvedCallout.readFromBuf(buf) else null,
         )
     }
@@ -524,12 +525,12 @@ internal fun readNullableTag(buf: FriendlyByteBuf): CompoundTag? {
 
 internal fun writeComponentList(buf: FriendlyByteBuf, list: List<Component>) {
     buf.writeInt(list.size)
-    for (comp in list) buf.writeComponent(comp)
+    for (comp in list) cn.xm1221.abadoned_greatwork.api.writeComponent(buf, comp)
 }
 
 internal fun readComponentList(buf: FriendlyByteBuf): List<Component> {
     val n = buf.readInt()
     val out = ArrayList<Component>(n)
-    repeat(n) { out.add(buf.readComponent()) }
+    repeat(n) { out.add(cn.xm1221.abadoned_greatwork.api.readComponent(buf)) }
     return out
 }

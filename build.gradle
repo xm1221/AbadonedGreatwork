@@ -1,0 +1,144 @@
+plugins {
+    id 'dev.architectury.loom' version '1.13-SNAPSHOT' apply false
+    id 'architectury-plugin' version '3.4-SNAPSHOT'
+    id 'com.gradleup.shadow' version '8.3.6' apply false
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+architectury {
+    minecraft = project.minecraft_version
+}
+
+allprojects {
+    group = rootProject.maven_group
+    version = rootProject.mod_version
+}
+
+subprojects {
+    apply plugin: 'dev.architectury.loom'
+    apply plugin: 'architectury-plugin'
+    apply plugin: 'maven-publish'
+    apply plugin: 'kotlin'
+
+    base {
+        archivesName = "$rootProject.archives_name-$project.name-$minecraft_version"
+    }
+
+    repositories {
+        maven { url = 'https://maven.neoforged.net/releases' }
+        maven { url = 'https://maven.fabricmc.net/' }
+        maven { url = 'https://maven.architectury.dev/' }
+        maven { url = 'https://maven.blamejared.com/' }
+        maven { url = 'https://maven.hexxy.media' }
+        maven { url = 'https://api.modrinth.com/maven' }
+        maven { url = 'https://maven.shedaniel.me/' }
+        maven { url = 'https://maven.terraformersmc.com/releases' }
+        maven { url = 'https://maven.ladysnake.org/releases' }
+        maven { url = 'https://thedarkcolour.github.io/KotlinForForge/' }
+        mavenCentral()
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = 'xm1221Maven'
+                    url = 'https://xm1221.github.io/maven'
+                }
+            }
+            filter {
+                includeGroup 'cn.xm1221.MieLib'
+            }
+        }
+    }
+
+    loom {
+        silentMojangMappingsLicense()
+        accessWidenerPath = project(':common').file('src/main/resources/abadoned_greatwork.accesswidener')
+        mixin {
+            defaultRefmapName = "${project.base.archivesName.get()}.refmap.json"
+        }
+    }
+
+    dependencies {
+        minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
+        mappings loom.officialMojangMappings()
+        compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.0'))
+
+        // Local jars from common/libs.
+        //
+        // BlameJared CI jars are not uniformly mapped (same split MieHexRevolution documents):
+        //   - hexcasting-neoforge / paucal-neoforge / patchouli-neoforge / inline-neoforge /
+        //     cloth-config-neoforge / IoticBlocks-neoforge are named (Mojang) mappings, so they
+        //     go in as plain implementation (no Loom remap).
+        //   - the fabric variants are intermediary and must go through modImplementation.
+        def libsDir = file("${rootProject.projectDir}/common/libs")
+
+        // IoticBlocks has no 1.21.1 build on Modrinth or CurseForge (those only ship 1.20.1).
+        // The compile-only jar is the NeoForge 1.21.1 fork release; registration is skipped
+        // at runtime when the mod is absent, so Fabric still loads.
+        compileOnly fileTree(dir: libsDir, include: ['IoticBlocks-neoforge-*.jar'])
+
+        if (project.name == 'neoforge') {
+            implementation fileTree(dir: libsDir, include: [
+                    'hexcasting-neoforge-*.jar',
+                    'paucal-*-neoforge.jar',
+                    'cloth-config-*-neoforge.jar',
+                    'Patchouli-*-NEOFORGE.jar',
+                    'inline-neoforge-*.jar',
+                    'IoticBlocks-neoforge-*.jar',
+            ])
+        } else if (project.name == 'fabric') {
+            modImplementation fileTree(dir: libsDir, include: [
+                    'hexcasting-fabric-*.jar',
+                    'paucal-*-fabric.jar',
+                    'cloth-config-*-fabric.jar',
+                    'Patchouli-*-FABRIC.jar',
+                    'inline-fabric-*.jar',
+            ])
+        } else {
+            modImplementation fileTree(dir: libsDir, include: [
+                    'hexcasting-fabric-*.jar',
+                    'paucal-*-fabric.jar',
+                    'cloth-config-*-fabric.jar',
+                    'Patchouli-*-FABRIC.jar',
+            ])
+        }
+
+        def mielibPlatform = project.name == 'neoforge' ? 'neoforge' : (project.name == 'fabric' ? 'fabric' : 'common')
+        def mielibDep = "cn.xm1221.MieLib:mielib-${mielibPlatform}:${rootProject.mielib_version}"
+        if (project.name == 'neoforge') {
+            implementation(mielibDep) { transitive = false }
+            include(mielibDep) { transitive = false }
+        } else if (project.name == 'fabric') {
+            modImplementation(mielibDep) { transitive = false }
+            include(mielibDep) { transitive = false }
+        } else if (project.name == 'common') {
+            modImplementation(mielibDep) { transitive = false }
+        }
+    }
+
+    java {
+        withSourcesJar()
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        it.options.encoding = 'UTF-8'
+        it.options.release = 21
+    }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+            freeCompilerArgs.add('-Xjvm-default=all')
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifactId = base.archivesName.get()
+                from components.java
+            }
+        }
+    }
+}

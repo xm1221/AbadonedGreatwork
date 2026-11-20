@@ -13,7 +13,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
@@ -103,16 +104,17 @@ class WaveTransmitterBlock(properties: Properties) : BlockCircleComponent(proper
     }
 
     /** 空手右键/潜行右键循环切换频道 `0..15`。 */
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult,
-    ): InteractionResult {
-        if (!player.getItemInHand(hand).isEmpty) return InteractionResult.PASS
-        val be = level.getBlockEntity(pos) as? WaveTransmitterBlockEntity ?: return InteractionResult.PASS
+    ): ItemInteractionResult {
+        if (!player.getItemInHand(hand).isEmpty) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        val be = level.getBlockEntity(pos) as? WaveTransmitterBlockEntity ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
 
         if (!level.isClientSide) {
             val delta = if (player.isShiftKeyDown) -1 else 1
@@ -126,7 +128,7 @@ class WaveTransmitterBlock(properties: Properties) : BlockCircleComponent(proper
                 0.7f + ch * 0.05f,
             )
         }
-        return InteractionResult.sidedSuccess(level.isClientSide)
+        return ItemInteractionResult.sidedSuccess(level.isClientSide)
     }
 
     // ==================== 法术环 ====================

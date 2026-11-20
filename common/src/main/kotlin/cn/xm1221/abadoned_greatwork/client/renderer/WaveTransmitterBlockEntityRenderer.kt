@@ -322,13 +322,15 @@ class WaveTransmitterBlockEntityRenderer(
     ) {
         val u = Mth.lerp(u16 / 16f, sprite.u0, sprite.u1)
         val v = Mth.lerp(v16 / 16f, sprite.v0, sprite.v1)
-        vc.vertex(mat, x, y, z)
-            .color(255, 255, 255, 255)
-            .uv(u, v)
-            .overlayCoords(overlay)
-            .uv2(light)
-            .normal(nMat, nx, ny, nz)
-            .endVertex()
+        val normal = org.joml.Vector3f(nx, ny, nz)
+        nMat.transform(normal)
+        vc.addVertex(mat, x, y, z)
+            .setColor(255, 255, 255, 255)
+            .setUv(u, v)
+            .setOverlay(overlay)
+            .setLight(light)
+            .setNormal(normal.x, normal.y, normal.z)
+            
     }
 
     companion object {
@@ -337,7 +339,7 @@ class WaveTransmitterBlockEntityRenderer(
         private const val RAISE_SPEED = 0.22f
         private const val LOWER_SPEED = 0.11f
 
-        private val TEX_IDLE = ResourceLocation(Abadoned_greatwork.MODID, "block/wave_transmitter")
-        private val TEX_ENERGIZED = ResourceLocation(Abadoned_greatwork.MODID, "block/wave_transmitter_energized")
+        private val TEX_IDLE = ResourceLocation.fromNamespaceAndPath(Abadoned_greatwork.MODID, "block/wave_transmitter")
+        private val TEX_ENERGIZED = ResourceLocation.fromNamespaceAndPath(Abadoned_greatwork.MODID, "block/wave_transmitter_energized")
     }
 }

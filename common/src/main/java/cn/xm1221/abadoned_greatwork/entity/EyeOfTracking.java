@@ -4,6 +4,7 @@ import cn.xm1221.abadoned_greatwork.entity.eye.AbstractEye;
 import cn.xm1221.abadoned_greatwork.entity.eye.EyeTarget;
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes;
 import net.minecraft.core.BlockPos;
+import cn.xm1221.abadoned_greatwork.api.ItemComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -48,8 +49,10 @@ public class EyeOfTracking extends EyeOfEnder implements AbstractEye {
             // 写入携带物品（掉回物品时保留目标，可再次抛出）
             var stack = this.getItem();
             if (!stack.isEmpty()) {
-                stack.getOrCreateTag().putUUID(KEY_TARGET_UUID, this.targetEntity.getUUID());
-                stack.getOrCreateTag().putString(KEY_TARGET_NAME, this.targetEntity.getDisplayName().getString());
+                ItemComponents.editCustom(stack, tag -> {
+                    tag.putUUID(KEY_TARGET_UUID, this.targetEntity.getUUID());
+                    tag.putString(KEY_TARGET_NAME, this.targetEntity.getDisplayName().getString());
+                });
                 this.setItem(stack);
             }
         }

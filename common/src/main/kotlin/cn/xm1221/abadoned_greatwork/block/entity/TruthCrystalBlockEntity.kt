@@ -118,8 +118,8 @@ class TruthCrystalBlockEntity(
     override fun getUpdatePacket(): net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket? =
         net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this)
 
-    override fun getUpdateTag(): CompoundTag =
-        saveWithoutMetadata()
+    override fun getUpdateTag(registries: net.minecraft.core.HolderLookup.Provider): CompoundTag =
+        saveWithoutMetadata(registries)
 
     override fun getMaxStackSize(): Int = 1
 
@@ -135,14 +135,14 @@ class TruthCrystalBlockEntity(
         items.clear()
     }
 
-    override fun load(tag: CompoundTag) {
-        super.load(tag)
+    override fun loadAdditional(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
+        super.loadAdditional(tag, registries)
         items.clear()
-        ContainerHelper.loadAllItems(tag, items)
+        ContainerHelper.loadAllItems(tag, items, registries)
     }
 
-    override fun saveAdditional(tag: CompoundTag) {
-        super.saveAdditional(tag)
-        ContainerHelper.saveAllItems(tag, items)
+    override fun saveAdditional(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
+        super.saveAdditional(tag, registries)
+        ContainerHelper.saveAllItems(tag, items, registries)
     }
 }

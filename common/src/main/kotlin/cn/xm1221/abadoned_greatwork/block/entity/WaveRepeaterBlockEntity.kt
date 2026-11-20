@@ -5,6 +5,7 @@ import at.petrak.hexcasting.api.block.HexBlockEntity
 import at.petrak.hexcasting.api.block.circle.BlockCircleComponent
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
 import at.petrak.hexcasting.api.casting.iota.Iota
+import cn.xm1221.abadoned_greatwork.api.withCopiedComponents
 import cn.xm1221.abadoned_greatwork.block.WaveRepeaterBlock
 import cn.xm1221.abadoned_greatwork.casting.circles.TransmitResult
 import cn.xm1221.abadoned_greatwork.casting.circles.WirelessChannelState
@@ -112,9 +113,7 @@ class WaveRepeaterBlockEntity(
         val srv = level as? ServerLevel ?: return false
         if (!canRelayWave(gameTime)) return false
 
-        val snapshot = incomingImage
-            .copy(userData = incomingImage.userData.copy())
-            .withOverriddenUsedOps(0)
+        val snapshot = incomingImage.withCopiedComponents().withOverriddenUsedOps(0)
         pendingRelay = PendingRelay(
             image = snapshot,
             casterUuid = caster?.uuid,
@@ -219,14 +218,14 @@ class WaveRepeaterBlockEntity(
         sync()
     }
 
-    override fun saveModData(tag: CompoundTag) {
+    override fun saveModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         channelState.save(tag)
         tag.putInt(TAG_LAST_COUNT, lastTriggeredCount)
         tag.putInt(TAG_LAST_RELAYED, lastRelayedCount)
         tag.putInt(TAG_LAST_RANGE, lastRangeBlocks)
     }
 
-    override fun loadModData(tag: CompoundTag) {
+    override fun loadModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         channelState.load(tag)
         lastTriggeredCount = tag.getInt(TAG_LAST_COUNT)
         lastRelayedCount = tag.getInt(TAG_LAST_RELAYED)
@@ -265,9 +264,9 @@ class WaveRepeaterBlockEntity(
 
     // ==================== ADIotaHolder ====================
 
-    override fun readIotaTag(): CompoundTag = channelState.readIotaTag()
+    override fun readIota(): at.petrak.hexcasting.api.casting.iota.Iota = channelState.readIota(level?.registryAccess())
 
-    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate)
+    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate, level?.registryAccess())
 
     override fun writeable(): Boolean = true
 

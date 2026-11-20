@@ -4,6 +4,7 @@ import cn.xm1221.abadoned_greatwork.entity.eye.AbstractEye;
 import cn.xm1221.abadoned_greatwork.entity.eye.EyeTarget;
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkEntityTypes;
 import net.minecraft.core.BlockPos;
+import cn.xm1221.abadoned_greatwork.api.ItemComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EntityType;
@@ -45,9 +46,11 @@ public class EyeOfWaypoint extends EyeOfEnder implements AbstractEye {
             // 写入携带物品（掉回物品时保留目标，可再次抛出）
             var stack = this.getItem();
             if (!stack.isEmpty()) {
-                stack.getOrCreateTag().putInt(KEY_TARGET_X, this.waypoint.getX());
-                stack.getOrCreateTag().putInt(KEY_TARGET_Y, this.waypoint.getY());
-                stack.getOrCreateTag().putInt(KEY_TARGET_Z, this.waypoint.getZ());
+                ItemComponents.editCustom(stack, tag -> {
+                    tag.putInt(KEY_TARGET_X, this.waypoint.getX());
+                    tag.putInt(KEY_TARGET_Y, this.waypoint.getY());
+                    tag.putInt(KEY_TARGET_Z, this.waypoint.getZ());
+                });
                 this.setItem(stack);
             }
         }

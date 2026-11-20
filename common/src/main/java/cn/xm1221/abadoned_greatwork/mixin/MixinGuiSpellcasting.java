@@ -5,9 +5,9 @@ import at.petrak.hexcasting.api.casting.eval.ResolvedPatternType;
 import at.petrak.hexcasting.api.casting.math.HexCoord;
 import at.petrak.hexcasting.api.casting.math.HexPattern;
 import at.petrak.hexcasting.client.gui.GuiSpellcasting;
-import at.petrak.hexcasting.common.msgs.IMessage;
 import at.petrak.hexcasting.common.msgs.MsgNewSpellPatternC2S;
 import at.petrak.hexcasting.xplat.IClientXplatAbstractions;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderSpellcastingAccess;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
@@ -52,12 +52,12 @@ public abstract class MixinGuiSpellcasting implements PonderSpellcastingAccess {
         method = "drawEnd",
         at = @At(
             value = "INVOKE",
-            target = "Lat/petrak/hexcasting/xplat/IClientXplatAbstractions;sendPacketToServer(Lat/petrak/hexcasting/common/msgs/IMessage;)V",
+            target = "Lat/petrak/hexcasting/xplat/IClientXplatAbstractions;sendPacketToServer(Lnet/minecraft/network/protocol/common/custom/CustomPacketPayload;)V",
             remap = false
         ),
         remap = false
     )
-    private boolean redirectPattern$abw(IClientXplatAbstractions inst, IMessage msg) {
+    private boolean redirectPattern$abw(IClientXplatAbstractions inst, CustomPacketPayload msg) {
         if (sandboxMode$abw && msg instanceof MsgNewSpellPatternC2S s) {
             if (onDrawPattern$abw != null) {
                 onDrawPattern$abw.accept(s.pattern());

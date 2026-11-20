@@ -49,7 +49,7 @@ class MediaPoolBlockEntity(
     fun hasMediaForInsertion(stack: ItemStack): Boolean {
         if (stack.isEmpty) return false
         if (storedMedia < 0L) return false
-        if (stack.`is`(HexItems.CREATIVE_UNLOCKER)) return true
+        if (stack.`is`(HexItems.CREATIVE_UNLOCKER.get())) return true
         return extractMediaFromInsertedItem(stack, true) > 0L
     }
 
@@ -65,7 +65,7 @@ class MediaPoolBlockEntity(
      */
     fun insertMediaFromItem(stack: ItemStack): Boolean {
         if (stack.isEmpty || storedMedia < 0L) return false
-        if (stack.`is`(HexItems.CREATIVE_UNLOCKER)) {
+        if (stack.`is`(HexItems.CREATIVE_UNLOCKER.get())) {
             storedMedia = -1L
             markDirtyAndSync()
             return true
@@ -215,14 +215,14 @@ class MediaPoolBlockEntity(
                 Component.literal(max).withStyle(ChatFormatting.GRAY),
             )
         }
-        lines.add(Pair(ItemStack(HexItems.AMETHYST_DUST), line))
+        lines.add(Pair(ItemStack(HexItems.AMETHYST_DUST.get()), line))
     }
 
-    override fun saveModData(tag: CompoundTag) {
+    override fun saveModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         tag.putLong(TAG_MEDIA, storedMedia)
     }
 
-    override fun loadModData(tag: CompoundTag) {
+    override fun loadModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
         storedMedia = if (tag.contains(TAG_MEDIA)) {
             val raw = tag.getLong(TAG_MEDIA)
             if (raw < 0L) -1L else raw.coerceAtMost(MAX_MEDIA)

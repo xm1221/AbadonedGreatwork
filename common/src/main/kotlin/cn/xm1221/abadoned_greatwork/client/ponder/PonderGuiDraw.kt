@@ -58,7 +58,7 @@ object PonderGuiDraw {
         return ITEM_CACHE.getOrPut(trimmed) {
             val rl = ResourceLocation.tryParse(trimmed)
             val item = if (rl != null) BuiltInRegistries.ITEM.get(rl) else Items.AIR
-            if (item == Items.AIR) ItemStack(HexItems.STAFF_OAK) else ItemStack(item)
+            if (item == Items.AIR) ItemStack(HexItems.STAFF_OAK.get()) else ItemStack(item)
         }
     }
 

@@ -3,7 +3,7 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-java = "17" # must be an integer
+java = "21" # must be an integer
 # buildSrc / 构建工具链自己跑在 21 上：Architectury Loom 1.11 的依赖（unpick 3.0）要求 21
 # 不能叫 java-build / javaBuild —— 会和上面的 `java` 形成前缀冲突，`libs.versions.java.get()` 就废了
 jdk = "21"
@@ -14,12 +14,12 @@ kotlin-forge = "4.12.0"
 
 # Minecraft
 
-minecraft = "1.20.1"
+minecraft = "1.21.1"
 parchment = "2023.09.03"
 
 architectury = "9.2.14"
 architectury-plugin = { require="[3.4, 3.5[" }
-architectury-loom = "1.11.454"
+architectury-loom = "1.13-SNAPSHOT"
 
 fabric-loader = "0.19.2"
 fabric-api = "0.92.8+1.20.1"

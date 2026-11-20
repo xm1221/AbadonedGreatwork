@@ -442,8 +442,8 @@ class HexPonderIndexScreen(
         return super.mouseClicked(mouseX, mouseY, button)
     }
 
-    override fun mouseScrolled(mouseX: Double, mouseY: Double, delta: Double): Boolean {
-        scrollRows = (scrollRows + if (delta > 0) -1 else 1).coerceAtLeast(0)
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, scrollX: Double, scrollY: Double): Boolean {
+        scrollRows = (scrollRows + if (scrollY > 0) -1 else 1).coerceAtLeast(0)
         return true
     }
 

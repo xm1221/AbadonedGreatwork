@@ -4,6 +4,7 @@ import cn.xm1221.abadoned_greatwork.entity.EyeOfWaypoint;
 import cn.xm1221.abadoned_greatwork.entity.eye.EyeTarget;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import cn.xm1221.abadoned_greatwork.api.ItemComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -34,9 +35,9 @@ public class ItemEyeOfWaypoint extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> components,
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> components,
                                 TooltipFlag flag) {
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemComponents.customOrNull(stack);
         if (tag != null && tag.contains(EyeOfWaypoint.KEY_TARGET_X)) {
             BlockPos pos = new BlockPos(
                 tag.getInt(EyeOfWaypoint.KEY_TARGET_X),
@@ -54,7 +55,7 @@ public class ItemEyeOfWaypoint extends Item {
         if (level.isClientSide) {
             return InteractionResultHolder.sidedSuccess(stack, true);
         }
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemComponents.customOrNull(stack);
         if (tag == null || !tag.contains(EyeOfWaypoint.KEY_TARGET_X)) {
             return InteractionResultHolder.pass(stack); // 无目标，不消耗
         }

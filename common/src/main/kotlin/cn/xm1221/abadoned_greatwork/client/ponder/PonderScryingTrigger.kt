@@ -58,7 +58,7 @@ object PonderScryingTrigger {
 
     private fun registerSlateOverlay() {
         try {
-            ScryingLensOverlayRegistry.addDisplayer(HexBlocks.SLATE) { lines, _, pos, _, world, _ ->
+            ScryingLensOverlayRegistry.addDisplayer(HexBlocks.SLATE.get()) { lines, _, pos, _, world, _ ->
                 val tile = world.getBlockEntity(pos)
                 if (tile is BlockEntitySlate) {
                     val pattern = tile.pattern ?: return@addDisplayer
@@ -66,14 +66,14 @@ object PonderScryingTrigger {
                     if (actionId != null) {
                         lines.add(
                             Pair.of(
-                                ItemStack(HexBlocks.SLATE.asItem()),
+                                ItemStack(HexBlocks.SLATE.get()),
                                 Component.translatable("hexcasting.action.$actionId"),
                             )
                         )
                     } else {
                         lines.add(
                             Pair.of(
-                                ItemStack(HexBlocks.SLATE.asItem()),
+                                ItemStack(HexBlocks.SLATE.get()),
                                 Component.translatable("block.hexcasting.slate.written"),
                             )
                         )
@@ -158,7 +158,7 @@ object PonderScryingTrigger {
         } else {
             Component.translatable("entity.hexcasting.wall_scroll")
         }
-        lines.add(Pair.of(ItemStack(HexItems.SCROLL_LARGE), titleComp))
+        lines.add(Pair.of(ItemStack(HexItems.SCROLL_LARGE.get()), titleComp))
         lines.add(
             Pair.of(
                 ItemStack.EMPTY,

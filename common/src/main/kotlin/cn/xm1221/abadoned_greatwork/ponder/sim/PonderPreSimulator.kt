@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.ponder.sim
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.eval.ResolvedPatternType
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
 import at.petrak.hexcasting.api.casting.eval.vm.CastingVM
@@ -73,16 +74,16 @@ object PonderPreSimulator {
                 "push" -> {
                     val pushTag = PonderIotaCodec.resolveElement(step.pushRaw, presets)
                     if (pushTag != null) {
-                        val iota = IotaType.deserialize(pushTag, world)
+                        val iota = cn.xm1221.abadoned_greatwork.api.iotaFromNbt(pushTag, world.registryAccess())
                         if (iota != null) {
-                            vm.image = vm.image.copy(stack = vm.image.stack + iota)
+                            vm.image = vm.image.copy(stack = vm.image.stack.appended(iota))
                         }
                     }
                 }
                 "push_in" -> {
                     val pushTag = PonderIotaCodec.resolveElement(step.pushRaw, presets)
                     if (pushTag != null) {
-                        val iota = IotaType.deserialize(pushTag, world)
+                        val iota = cn.xm1221.abadoned_greatwork.api.iotaFromNbt(pushTag, world.registryAccess())
                         if (iota != null) {
                             val res = vm.queueExecuteAndWrapIota(iota, world)
                             resolutionType = res.resolutionType.name
@@ -107,7 +108,7 @@ object PonderPreSimulator {
                         for (realIdx in realIndices) {
                             mutable.removeAt(realIdx)
                         }
-                        vm.image = vm.image.copy(stack = mutable)
+                        vm.image = vm.image.copy(stack = at.petrak.hexcasting.api.utils.TreeList.from(mutable))
                     }
                 }
                 "clear", "note" -> {
@@ -121,9 +122,9 @@ object PonderPreSimulator {
                 }
             }
 
-            val descs = vm.generateDescs()
-            val stackTags = descs.first
-            val ravenmindTag = descs.second
+            val stackTags = vm.image.stack.map { cn.xm1221.abadoned_greatwork.api.iotaToNbt(it, world.registryAccess()) }.toList()
+            val ravenmindTag = vm.image.getComponent(at.petrak.hexcasting.common.lib.hex.HexImageComponents.RAVENMIND.get())
+                ?.let { cn.xm1221.abadoned_greatwork.api.iotaToNbt(it, world.registryAccess()) }
             val newStackSize = stackTags.size
             val poppedCount = (prevStackSize - newStackSize).coerceAtLeast(0)
             val pushedCount = (newStackSize - prevStackSize).coerceAtLeast(0)
@@ -134,7 +135,9 @@ object PonderPreSimulator {
                 else -> -1
             }
 
-            val parenthesizedTags = vm.image.parenthesized.map { IotaType.serialize(it.iota) }
+            val parenthesizedTags = vm.image.parenthesized.map {
+                cn.xm1221.abadoned_greatwork.api.iotaToNbt(it.iota, world.registryAccess())
+            }.toList()
 
             val isErrored = resolutionType == ResolvedPatternType.ERRORED.name
             val captured = env.capturedMessages.toList()
@@ -183,7 +186,7 @@ object PonderPreSimulator {
                     escapeNext = vm.image.escapeNext,
                     ravenmindTag = ravenmindTag,
                     opsConsumed = vm.image.opsConsumed,
-                    imageNbt = vm.image.serializeToNbt(),
+                    imageNbt = cn.xm1221.abadoned_greatwork.api.castingImageToNbt(vm.image, world.registryAccess()),
                     resolutionType = resolutionType,
                     consoleLines = consoleLines,
                     mishapText = mishapText,
@@ -208,7 +211,7 @@ object PonderPreSimulator {
     fun executeSandbox(player: ServerPlayer, pattern: HexPattern, imageNbt: CompoundTag): SandboxExecResult {
         val world = player.serverLevel()
         val image = try {
-            CastingImage.loadFromNbt(imageNbt, world)
+            cn.xm1221.abadoned_greatwork.api.castingImageFromNbt(imageNbt, world.registryAccess())
         } catch (_: Exception) {
             CastingImage()
         }
@@ -221,7 +224,7 @@ object PonderPreSimulator {
         val mishapText = if (isErrored) captured.lastOrNull() else null
         val consoleLines = if (isErrored && captured.isNotEmpty()) captured.dropLast(1) else captured
         return SandboxExecResult(
-            imageNbt = vm.image.serializeToNbt(),
+            imageNbt = cn.xm1221.abadoned_greatwork.api.castingImageToNbt(vm.image, world.registryAccess()),
             resolutionType = resolutionName,
             consoleLines = consoleLines,
             mishapText = mishapText,
@@ -237,7 +240,7 @@ object PonderPreSimulator {
     private fun resolveDisplayPattern(step: PonderStepDef): HexPattern? {
         if (step.pattern.isNotEmpty()) {
             return runCatching {
-                HexPattern.fromAngles(step.pattern, HexDir.valueOf(step.startDir.uppercase()))
+                patternFromAngles(step.pattern, HexDir.valueOf(step.startDir.uppercase()))
             }.getOrNull()
         }
         if (step.action.isNotEmpty()) {
@@ -255,7 +258,7 @@ object PonderPreSimulator {
         }
         if (step.pattern.isNotEmpty()) {
             return runCatching {
-                HexPattern.fromAngles(step.pattern, HexDir.valueOf(step.startDir.uppercase()))
+                patternFromAngles(step.pattern, HexDir.valueOf(step.startDir.uppercase()))
             }.getOrNull()
         }
         return null

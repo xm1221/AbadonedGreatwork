@@ -36,8 +36,8 @@ object TruthCrystalInteraction {
 
     private fun grant(player: Player, name: String) {
         val sp = player as? ServerPlayer ?: return
-        val id = ResourceLocation("abadoned_greatwork", name)
-        val adv = sp.server.advancements.getAdvancement(id) ?: return
+        val id = ResourceLocation.fromNamespaceAndPath("abadoned_greatwork", name)
+        val adv = sp.server.advancements.get(id) ?: return
         sp.advancements.award(adv, "impossible")
     }
 
@@ -56,7 +56,7 @@ object TruthCrystalInteraction {
         grant(player, "attempt_puzzle")
 
         // 读取手持物品中的 iota
-        val heldIota = heldItem.readIota(heldStack, level) ?: return InteractionResult.PASS
+        val heldIota = heldItem.readIota(heldStack) ?: return InteractionResult.PASS
         val heldList = if (heldIota is ListIota) heldIota.list.toList() else listOf(heldIota)
 
         // 检查长度限制（递归统计所有子项，杜绝嵌套列表作弊）
@@ -125,14 +125,16 @@ object TruthCrystalInteraction {
         val lootTableId = crystalItem.lootTable
 
         // 发放战利品
-        val lootTable = level.server.lootData.getLootTable(lootTableId)
+        val lootTable = level.server.reloadableRegistries().getLootTable(
+            net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, lootTableId),
+        )
         val lootParams = LootParams.Builder(level)
             .withParameter(LootContextParams.THIS_ENTITY, player)
             .withParameter(LootContextParams.ORIGIN, player.position())
             .create(LootContextParamSets.GIFT)
         val loot = lootTable.getRandomItems(lootParams)
 
-        for (stack in loot) {
+        for (stack in loot.toList()) {
             player.drop(stack, false)
         }
 
@@ -177,7 +179,7 @@ object TruthCrystalInteraction {
             }
 
         val env = TestCastingEnv(level, player, player.position())
-        val image = CastingImage().copy(stack = inputIotas.toMutableList())
+        val image = CastingImage().copy(stack = at.petrak.hexcasting.api.utils.TreeList.from(inputIotas))
         val vm = CastingVM(image, env)
 
         vm.queueExecuteAndWrapIotas(heldIotas, level)
@@ -206,7 +208,7 @@ object TruthCrystalInteraction {
         testCount: Int,
     ): Boolean {
         val crystalItem = crystalStack.item as? IotaHolderItem ?: return false
-        val storedIota = crystalItem.readIota(crystalStack, level) ?: return false
+        val storedIota = crystalItem.readIota(crystalStack) ?: return false
         val storedList = if (storedIota is ListIota) storedIota.list.toList() else listOf(storedIota)
 
         val rounds = if (testCount > 0) testCount else 1
@@ -214,12 +216,12 @@ object TruthCrystalInteraction {
             val inputIotas = ItemTruthCrystal.getInputAt(crystalStack, level, round)?.toList() ?: emptyList()
 
             val env1 = TestCastingEnv(level, player, player.position())
-            val image1 = CastingImage().copy(stack = inputIotas.toMutableList())
+            val image1 = CastingImage().copy(stack = at.petrak.hexcasting.api.utils.TreeList.from(inputIotas))
             val vm1 = CastingVM(image1, env1)
             vm1.queueExecuteAndWrapIotas(heldList, level)
 
             val env2 = TestCastingEnv(level, player, player.position())
-            val image2 = CastingImage().copy(stack = inputIotas.toMutableList())
+            val image2 = CastingImage().copy(stack = at.petrak.hexcasting.api.utils.TreeList.from(inputIotas))
             val vm2 = CastingVM(image2, env2)
             vm2.queueExecuteAndWrapIotas(storedList, level)
 

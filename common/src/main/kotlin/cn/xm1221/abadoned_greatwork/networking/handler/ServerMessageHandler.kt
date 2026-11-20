@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.networking.handler
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.math.HexDir
 import at.petrak.hexcasting.api.casting.math.HexPattern
 import cn.xm1221.abadoned_greatwork.networking.msg.Abadoned_greatworkMessageC2S
@@ -24,7 +25,7 @@ fun Abadoned_greatworkMessageC2S.applyOnServer(ctx: PacketContext) = ctx.queue {
         is MsgPonderSandboxExecC2S -> {
             val player = ctx.player as? ServerPlayer ?: return@queue
             val pattern = try {
-                HexPattern.fromAngles(sig, HexDir.valueOf(startDir.uppercase()))
+                patternFromAngles(sig, HexDir.valueOf(startDir.uppercase()))
             } catch (_: Exception) {
                 return@queue
             }

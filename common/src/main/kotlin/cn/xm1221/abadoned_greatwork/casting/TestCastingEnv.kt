@@ -102,5 +102,8 @@ class TestCastingEnv(world: ServerLevel, val caster: LivingEntity?, val vec: Vec
         override fun blind(ticks: Int) {
 
         }
+
+        override fun nauseate(ticks: Int) {
+        }
     }
 }

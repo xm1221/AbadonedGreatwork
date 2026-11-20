@@ -1,10 +1,10 @@
 package cn.xm1221.abadoned_greatwork.item;
 
 import at.petrak.hexcasting.api.casting.iota.Iota;
-import at.petrak.hexcasting.api.casting.iota.IotaType;
 import at.petrak.hexcasting.api.casting.iota.ListIota;
-import at.petrak.hexcasting.api.utils.NBTHelper;
 import at.petrak.hexcasting.common.items.storage.ItemFocus;
+import cn.xm1221.abadoned_greatwork.api.HexPortNbt;
+import cn.xm1221.abadoned_greatwork.api.ItemComponents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -14,6 +14,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -54,28 +55,28 @@ public class ItemTruthCrystal extends ItemFocus {
     }
 
     public ResourceLocation getLootTable() {
-        return new ResourceLocation("abadoned_greatwork",
+        return ResourceLocation.fromNamespaceAndPath("abadoned_greatwork",
                 "gameplay/truth_crystal_reward_" + lootTableIndex);
     }
 
     // ==================== Crafted ====================
 
     public static boolean isCrafted(ItemStack stack) {
-        return NBTHelper.getBoolean(stack, IS_CRAFTED);
+        return ItemComponents.copyCustom(stack).getBoolean(IS_CRAFTED);
     }
 
     public static void markCrafted(ItemStack stack) {
-        NBTHelper.putBoolean(stack, IS_CRAFTED, true);
+        ItemComponents.editCustom(stack, tag -> tag.putBoolean(IS_CRAFTED, true));
     }
 
     // ==================== Length Limit & Counter ====================
 
     public static int getLengthLimit(ItemStack itemStack) {
-        return NBTHelper.getInt(itemStack, LENGTH_LIMIT);
+        return ItemComponents.copyCustom(itemStack).getInt(LENGTH_LIMIT);
     }
 
     public static void setLengthLimit(ItemStack itemStack, int lengthLimit) {
-        NBTHelper.putInt(itemStack, LENGTH_LIMIT, lengthLimit);
+        ItemComponents.editCustom(itemStack, tag -> tag.putInt(LENGTH_LIMIT, lengthLimit));
     }
 
     /**
@@ -96,7 +97,7 @@ public class ItemTruthCrystal extends ItemFocus {
     // ==================== Input ====================
 
     public static int getTestCount(ItemStack itemStack) {
-        var inputs = NBTHelper.get(itemStack, INPUT);
+        var inputs = ItemComponents.copyCustom(itemStack).get(INPUT);
         if (!(inputs instanceof CompoundTag tag)) return 0;
         int count = 0;
         while (tag.contains(String.valueOf(count))) {
@@ -106,11 +107,11 @@ public class ItemTruthCrystal extends ItemFocus {
     }
 
     public static Iterable<Iota> getInputAt(ItemStack itemStack, ServerLevel level, int index) {
-        var inputs = NBTHelper.get(itemStack, INPUT);
+        var inputs = ItemComponents.copyCustom(itemStack).get(INPUT);
         if (!(inputs instanceof CompoundTag tag)) return null;
-        var listTag = NBTHelper.get(tag, String.valueOf(index));
+        var listTag = tag.get(String.valueOf(index));
         if (!(listTag instanceof CompoundTag cTag)) return null;
-        var iota = IotaType.deserialize(cTag, level);
+        var iota = HexPortNbt.iotaFromNbt(cTag, level.registryAccess());
         if (iota instanceof ListIota li) {
             return li.getList();
         }
@@ -123,42 +124,42 @@ public class ItemTruthCrystal extends ItemFocus {
 
     public static void setInput(ItemStack itemStack, ListIota list0, ListIota list1) {
         var inputs = new CompoundTag();
-        NBTHelper.put(inputs, "0", IotaType.serialize(list0));
-        NBTHelper.put(inputs, "1", IotaType.serialize(list1));
-        NBTHelper.put(itemStack, INPUT, inputs);
+        inputs.put("0", HexPortNbt.iotaToNbt(list0));
+        inputs.put("1", HexPortNbt.iotaToNbt(list1));
+        ItemComponents.editCustom(itemStack, tag -> tag.put(INPUT, inputs));
     }
 
     public static void setInputs(ItemStack itemStack, List<ListIota> lists) {
         var inputs = new CompoundTag();
         for (int i = 0; i < lists.size(); i++) {
-            NBTHelper.put(inputs, String.valueOf(i), IotaType.serialize(lists.get(i)));
+            inputs.put(String.valueOf(i), HexPortNbt.iotaToNbt(lists.get(i)));
         }
-        NBTHelper.put(itemStack, INPUT, inputs);
+        ItemComponents.editCustom(itemStack, tag -> tag.put(INPUT, inputs));
     }
 
     // ==================== Output ====================
 
     public static void setOutput(ItemStack itemStack, ListIota list0, ListIota list1) {
         var output = new CompoundTag();
-        NBTHelper.put(output, "0", IotaType.serialize(list0));
-        NBTHelper.put(output, "1", IotaType.serialize(list1));
-        NBTHelper.put(itemStack, OUTPUT, output);
+        output.put("0", HexPortNbt.iotaToNbt(list0));
+        output.put("1", HexPortNbt.iotaToNbt(list1));
+        ItemComponents.editCustom(itemStack, tag -> tag.put(OUTPUT, output));
     }
 
     public static void setOutputs(ItemStack itemStack, List<ListIota> lists) {
         var output = new CompoundTag();
         for (int i = 0; i < lists.size(); i++) {
-            NBTHelper.put(output, String.valueOf(i), IotaType.serialize(lists.get(i)));
+            output.put(String.valueOf(i), HexPortNbt.iotaToNbt(lists.get(i)));
         }
-        NBTHelper.put(itemStack, OUTPUT, output);
+        ItemComponents.editCustom(itemStack, tag -> tag.put(OUTPUT, output));
     }
 
     public static Iterable<Iota> getOutputAt(ItemStack itemStack, ServerLevel level, int index) {
-        var outputs = NBTHelper.get(itemStack, OUTPUT);
+        var outputs = ItemComponents.copyCustom(itemStack).get(OUTPUT);
         if (!(outputs instanceof CompoundTag tag)) return null;
-        var listTag = NBTHelper.get(tag, String.valueOf(index));
+        var listTag = tag.get(String.valueOf(index));
         if (!(listTag instanceof CompoundTag cTag)) return null;
-        var iota = IotaType.deserialize(cTag, level);
+        var iota = HexPortNbt.iotaFromNbt(cTag, level.registryAccess());
         if (iota instanceof ListIota li) {
             return li.getList();
         }
@@ -172,19 +173,19 @@ public class ItemTruthCrystal extends ItemFocus {
     // ==================== Tooltip / Mode ====================
 
     public static void setTooltip(ItemStack itemStack, String tooltip) {
-        NBTHelper.putString(itemStack, TOOLTIP, tooltip);
+        ItemComponents.editCustom(itemStack, tag -> tag.putString(TOOLTIP, tooltip));
     }
 
     public static String getTooltip(ItemStack itemStack) {
-        return NBTHelper.getString(itemStack, TOOLTIP);
+        return ItemComponents.copyCustom(itemStack).getString(TOOLTIP);
     }
 
     public static void setMode(ItemStack itemStack, String mode) {
-        NBTHelper.putString(itemStack, MODE, mode);
+        ItemComponents.editCustom(itemStack, tag -> tag.putString(MODE, mode));
     }
 
     public static String getMode(ItemStack itemStack) {
-        return NBTHelper.getString(itemStack, MODE);
+        return ItemComponents.copyCustom(itemStack).getString(MODE);
     }
 
     public static void setPonderHints(ItemStack itemStack, List<String> hints) {
@@ -193,12 +194,12 @@ public class ItemTruthCrystal extends ItemFocus {
             if (h != null && !h.isBlank()) list.add(StringTag.valueOf(h));
         }
         if (!list.isEmpty()) {
-            NBTHelper.put(itemStack, PONDER_HINTS, list);
+            ItemComponents.editCustom(itemStack, tag -> tag.put(PONDER_HINTS, list));
         }
     }
 
     public static List<String> getPonderHints(ItemStack itemStack) {
-        Tag raw = NBTHelper.get(itemStack, PONDER_HINTS);
+        Tag raw = ItemComponents.copyCustom(itemStack).get(PONDER_HINTS);
         if (!(raw instanceof ListTag list)) return List.of();
         List<String> out = new ArrayList<>(list.size());
         for (int i = 0; i < list.size(); i++) {
@@ -218,19 +219,19 @@ public class ItemTruthCrystal extends ItemFocus {
 
     @Override
     public boolean canWrite(ItemStack stack, Iota datum) {
-        return NBTHelper.getBoolean(stack, CAN_WRITE);
+        return ItemComponents.copyCustom(stack).getBoolean(CAN_WRITE);
     }
 
     @Override
     public void onCraftedBy(ItemStack stack, Level level, Player player) {
-        NBTHelper.putBoolean(stack, CAN_WRITE, true);
+        ItemComponents.editCustom(stack, tag -> tag.putBoolean(CAN_WRITE, true));
         markCrafted(stack);
     }
 
     // ==================== Tooltip display ====================
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> components,
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> components,
                                 TooltipFlag flag) {
         ChatFormatting variantColor = lootTableIndex == 0 ? ChatFormatting.AQUA :
                 (lootTableIndex == 1 ? ChatFormatting.GOLD : ChatFormatting.LIGHT_PURPLE);
@@ -243,7 +244,7 @@ public class ItemTruthCrystal extends ItemFocus {
                     .withStyle(ChatFormatting.GRAY));
         }
 
-        var text = NBTHelper.getString(stack, TOOLTIP);
+        var text = ItemComponents.copyCustom(stack).getString(TOOLTIP);
         if (text != null && !text.isEmpty()) {
             components.add(Component.translatable(text).withStyle(ChatFormatting.YELLOW));
         } else {

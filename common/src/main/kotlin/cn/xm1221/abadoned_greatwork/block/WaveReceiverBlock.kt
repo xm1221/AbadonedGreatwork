@@ -40,6 +40,9 @@ import kotlin.math.abs
  */
 class WaveReceiverBlock(properties: Properties) : BlockAbstractImpetus(properties) {
 
+    override fun getBlockEntityType() =
+        Abadoned_greatworkBlockEntities.WAVE_RECEIVER.value as net.minecraft.world.level.block.entity.BlockEntityType<out at.petrak.hexcasting.api.casting.circles.BlockEntityAbstractImpetus>
+
     init {
         registerDefaultState(
             stateDefinition.any()
@@ -137,7 +140,7 @@ class WaveReceiverBlock(properties: Properties) : BlockAbstractImpetus(propertie
 
         // 1. 手持媒质物品右击：向促动石媒质槽充能
         if (!held.isEmpty) {
-            val isMediaItem = held.`is`(HexItems.CREATIVE_UNLOCKER) ||
+            val isMediaItem = held.`is`(HexItems.CREATIVE_UNLOCKER.get()) ||
                 be.extractMediaFromInsertedItem(held, true) > 0L
             if (!isMediaItem) return InteractionResult.PASS
 

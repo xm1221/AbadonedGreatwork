@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.block
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.HexAPI
 import at.petrak.hexcasting.api.block.circle.BlockCircleComponent
 import at.petrak.hexcasting.api.casting.circles.CircleExecutionState
@@ -29,7 +30,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
@@ -136,16 +138,17 @@ class MultiDirectrixPBlock(properties: Properties) : BlockCircleComponent(proper
     // ==================== 手动切换端口 ====================
 
     /** 潜行右键切换被点中那一面：`未连接 → 输入 → 输出 → 未连接`。 */
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult,
-    ): InteractionResult {
-        if (!player.isShiftKeyDown) return InteractionResult.PASS
-        val prop = PORTS[hit.direction] ?: return InteractionResult.PASS
+    ): ItemInteractionResult {
+        if (!player.isShiftKeyDown) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        val prop = PORTS[hit.direction] ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         val current: PortMode = state.getValue(prop)
         val next = when (current) {
             PortMode.NONE -> PortMode.IN
@@ -164,7 +167,7 @@ class MultiDirectrixPBlock(properties: Properties) : BlockCircleComponent(proper
                 },
             )
         }
-        return InteractionResult.sidedSuccess(level.isClientSide)
+        return ItemInteractionResult.sidedSuccess(level.isClientSide)
     }
 
     // ==================== 结构方块旋转 / 镜像 ====================
@@ -271,7 +274,7 @@ class MultiDirectrixPBlock(properties: Properties) : BlockCircleComponent(proper
                 dir to isolated
             } else {
                 val withDir = isolated.copy(
-                    stack = isolated.stack + Vec3Iota(Vec3.atLowerCornerOf(dir.normal)),
+                    stack = isolated.stack.appended(Vec3Iota(Vec3.atLowerCornerOf(dir.normal))),
                 )
                 runProgram(withDir, env, world, program)?.let { dir to it }
             }
@@ -351,24 +354,22 @@ class MultiDirectrixPBlock(properties: Properties) : BlockCircleComponent(proper
         arrivals: List<CircleExecutionState>,
         world: ServerLevel,
     ): CastingImage {
-        val lists: List<Iota> = arrivals.map { st ->
+        val lists = at.petrak.hexcasting.api.utils.TreeList.from<Iota>(arrivals.map { st ->
             val img = st.currentImage
             ListIota(
                 listOf(
                     ListIota(img.stack),
-                    ravenMindOf(img, world) ?: NullIota(),
+                    ravenMindOf(img) ?: NullIota(),
                     Vec3Iota(Vec3.atLowerCornerOf(st.enteredFrom.normal)),
                 )
             )
-        }
+        })
         return arrivals.last().currentImage.copy(stack = lists)
     }
 
-    /** 渡鸦之思存在 `userData[hexcasting:ravenmind]` 里（序列化过的 iota），上游 `OpPeekLocal` 也是这么读的。 */
-    private fun ravenMindOf(image: CastingImage, world: ServerLevel): Iota? {
-        val tag = image.userData.get(HexAPI.RAVENMIND_USERDATA) ?: return null
-        return if (tag is CompoundTag) IotaType.deserialize(tag, world) else null
-    }
+    /** Ravenmind is an image component (`HexImageComponents.RAVENMIND`), read the same way as OpPeekLocal. */
+    private fun ravenMindOf(image: CastingImage): Iota? =
+        image.getComponent(at.petrak.hexcasting.common.lib.hex.HexImageComponents.RAVENMIND.get())
 
     companion object {
         /** 固定的六面（北东南西上下），共用 [MultiDirectrixBlock] 那套属性实例。 */

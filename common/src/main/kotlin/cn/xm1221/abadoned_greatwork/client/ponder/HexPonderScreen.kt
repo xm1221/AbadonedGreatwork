@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.client.ponder
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.HexAPI
 import at.petrak.hexcasting.api.casting.eval.ResolvedPatternType
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
@@ -288,7 +289,7 @@ class HexPonderScreen(
         if (snap.hasDisplayPattern && newProgress < 1f) {
             val pat = parsePattern(snap.displaySig, snap.displayStartDir)
             if (pat != null) {
-                val segCount = max(1, pat.angles.size + 1)
+                val segCount = max(1, pat.angleCount() + 1)
                 val segIdx = floor(newProgress * segCount).toInt()
                 if (lastSegmentSounded == -1) {
                     playUiSound(HexSounds.START_PATTERN)
@@ -332,9 +333,14 @@ class HexPonderScreen(
         playUiSound(sound)
     }
 
-    private fun playUiSound(event: SoundEvent) {
+    private fun playUiSound(event: net.minecraft.core.Holder<SoundEvent>) {
         Minecraft.getInstance().soundManager.play(SimpleSoundInstance.forUI(event, 1.0f))
     }
+
+    private fun clientRegs() = Minecraft.getInstance().connection?.registryAccess()
+
+    private fun parsedImage(tag: CompoundTag): CastingImage =
+        castingImageFromNbt(tag, clientRegs())
 
     private fun currentSnapshot(): StepSnapshot? =
         bundle.snapshots.getOrNull(currentStepIndex)
@@ -412,22 +418,14 @@ class HexPonderScreen(
     }
 
     private fun extractParenthesizedTags(imageNbt: CompoundTag): List<CompoundTag> {
-        if (!imageNbt.contains(CastingImage.TAG_PARENTHESIZED, Tag.TAG_COMPOUND.toInt())) {
-            return emptyList()
-        }
-        val parenObj = imageNbt.getCompound(CastingImage.TAG_PARENTHESIZED)
-        val iotas = parenObj.getList(CastingImage.ParenthesizedIota.TAG_IOTAS, Tag.TAG_COMPOUND.toInt())
-        val out = ArrayList<CompoundTag>(iotas.size)
-        for (i in 0 until iotas.size) {
-            out.add(iotas.getCompound(i))
-        }
-        return out
+        val image = parsedImage(imageNbt)
+        return image.parenthesized.map { iotaToNbt(it.iota, clientRegs()) }.toList()
     }
 
     private fun exitSandbox() {
         sandboxMode = false
         sandboxSpellcasting = null
-        Minecraft.getInstance().soundManager.stop(HexSounds.CASTING_AMBIANCE.location, null)
+        Minecraft.getInstance().soundManager.stop(HexSounds.CASTING_AMBIANCE.value().location, null)
         rebuildButtons()
     }
 
@@ -435,7 +433,7 @@ class HexPonderScreen(
         val mc = Minecraft.getInstance()
         val sc = GuiSpellcasting(InteractionHand.MAIN_HAND, ArrayList(), emptyList(), null, 0)
         sc.init(mc, width, height)
-        mc.soundManager.stop(HexSounds.CASTING_AMBIANCE.location, null)
+        mc.soundManager.stop(HexSounds.CASTING_AMBIANCE.value().location, null)
 
         val access = sc as PonderSpellcastingAccess
         access.`setSandboxMode$abw`(true)
@@ -459,21 +457,13 @@ class HexPonderScreen(
     fun onSandboxResult(msg: MsgPonderSandboxExecS2C) {
         if (!sandboxMode) return
         sandboxImageNbt = msg.imageNbt
-        val stackList = msg.imageNbt.getList("stack", Tag.TAG_COMPOUND.toInt())
-        val tags = ArrayList<CompoundTag>(stackList.size)
-        for (i in 0 until stackList.size) {
-            tags.add(stackList.getCompound(i))
-        }
-        sandboxStackTags = tags
-        val userdata = msg.imageNbt.getCompound("userdata")
-        sandboxRavenmindTag = if (userdata.contains(HexAPI.RAVENMIND_USERDATA, Tag.TAG_COMPOUND.toInt())) {
-            userdata.getCompound(HexAPI.RAVENMIND_USERDATA)
-        } else {
-            null
-        }
-        sandboxOpenParens = msg.imageNbt.getInt("open_parens")
-        sandboxParenthesizedTags = extractParenthesizedTags(msg.imageNbt)
-        sandboxEscapeNext = msg.imageNbt.getBoolean("escape_next")
+        val parsed = parsedImage(msg.imageNbt)
+        sandboxStackTags = parsed.stack.map { iotaToNbt(it, clientRegs()) }.toList()
+        sandboxRavenmindTag = parsed.getComponent(at.petrak.hexcasting.common.lib.hex.HexImageComponents.RAVENMIND.get())
+            ?.let { iotaToNbt(it, clientRegs()) }
+        sandboxOpenParens = parsed.parenCount
+        sandboxParenthesizedTags = parsed.parenthesized.map { iotaToNbt(it.iota, clientRegs()) }.toList()
+        sandboxEscapeNext = parsed.escapeNext
         sandboxConsoleLines = msg.consoleLines
         sandboxMishap = msg.mishapText
 
@@ -544,7 +534,7 @@ class HexPonderScreen(
         }
         if (!(knowledgeOpen && knowledgeW == 0)) {
             hoveredStackTag?.let { tag ->
-                graphics.renderTooltip(font, IotaType.getDisplay(tag), mouseX, mouseY)
+                graphics.renderTooltip(font, (iotaFromNbt(tag, clientRegs())?.display() ?: net.minecraft.network.chat.Component.literal("<?>")), mouseX, mouseY)
             }
         }
         renderTimelineTooltip(graphics, mouseX, mouseY)
@@ -637,7 +627,7 @@ class HexPonderScreen(
                 }
 
                 val isNewlyPushed = !sandboxMode && pushedCount > 0 && realIdx >= stackTags.size - pushedCount
-                val iotaCol = 0xFF000000.toInt() or (IotaType.getColor(tag) and 0xFFFFFF)
+                val iotaCol = 0xFF000000.toInt() or ((iotaFromNbt(tag, clientRegs())?.type?.color() ?: 0) and 0xFFFFFF)
 
                 PonderGuiDraw.drawRecessedBox(
                     g, rowX, rowY, rowW, rowH - 1,
@@ -656,7 +646,7 @@ class HexPonderScreen(
                 val availW = (rowW - prefixW - badgeW - 6).coerceAtLeast(24)
 
                 // Tag-Only 渲染：绝不在客户端反序列化实体/世界 iota
-                val seq: FormattedCharSequence = IotaType.getDisplayWithMaxWidth(tag, availW, font)
+                val seq: FormattedCharSequence = (iotaFromNbt(tag, clientRegs())?.displayWithMaxWidth(availW, font) ?: net.minecraft.network.chat.Component.empty().visualOrderText)
                 g.drawString(font, seq, rowX + 5 + prefixW, rowY + 3, PonderGuiDraw.TEXT_MAIN, false)
                 if (badgeTxt.isNotEmpty()) {
                     g.drawString(font, badgeTxt, rowX + rowW - badgeW, rowY + 3, 0xFF6BCB77.toInt(), true)
@@ -685,7 +675,7 @@ class HexPonderScreen(
         val rw = font.width(ravenPrefix)
         val ravenAvail = (leftW - 18 - rw).coerceAtLeast(24)
         if (ravenTag != null && !ravenTag.isEmpty) {
-            val rSeq = IotaType.getDisplayWithMaxWidth(ravenTag, ravenAvail, font)
+            val rSeq = (iotaFromNbt(ravenTag, clientRegs())?.displayWithMaxWidth(ravenAvail, font) ?: net.minecraft.network.chat.Component.empty().visualOrderText)
             g.drawString(font, rSeq, leftX + 9 + rw, imgY + 17, PonderGuiDraw.TEXT_BODY, false)
         } else {
             g.drawString(font, "Null", leftX + 9 + rw, imgY + 17, 0xFF6B6280.toInt(), false)
@@ -807,9 +797,9 @@ class HexPonderScreen(
                     ry += rowH
                 }
                 for (tag in visibleTags) {
-                    val iotaCol = 0xFF000000.toInt() or (IotaType.getColor(tag) and 0xFFFFFF)
+                    val iotaCol = 0xFF000000.toInt() or ((iotaFromNbt(tag, clientRegs())?.type?.color() ?: 0) and 0xFFFFFF)
                     g.fill(boxX + 4, ry + 1, boxX + 6, ry + rowH - 2, iotaCol)
-                    val seq = IotaType.getDisplayWithMaxWidth(tag, boxW - 14, font)
+                    val seq = (iotaFromNbt(tag, clientRegs())?.displayWithMaxWidth(boxW - 14, font) ?: net.minecraft.network.chat.Component.empty().visualOrderText)
                     g.drawString(font, seq, boxX + 9, ry + 1, PonderGuiDraw.TEXT_MAIN, false)
                     if (mouseX >= boxX + 3 && mouseX < boxX + boxW - 3 && mouseY >= ry && mouseY < ry + rowH) {
                         hoveredStackTag = tag
@@ -1045,8 +1035,8 @@ class HexPonderScreen(
         val boxW = (stageW * 0.56f).roundToInt().coerceIn(135, 220)
         val lines = font.split(Component.literal(txt), boxW - 14)
         val iotaDisplays = callout.inlineIotaTags.map { tag ->
-            val col = 0xFF000000.toInt() or (IotaType.getColor(tag) and 0xFFFFFF)
-            IotaType.getDisplayWithMaxWidth(tag, boxW - 22, font) to col
+            val col = 0xFF000000.toInt() or ((iotaFromNbt(tag, clientRegs())?.type?.color() ?: 0) and 0xFFFFFF)
+            (iotaFromNbt(tag, clientRegs())?.displayWithMaxWidth(boxW - 22, font) ?: net.minecraft.network.chat.Component.empty().visualOrderText) to col
         }
         val boxH = 10 + lines.size * (font.lineHeight + 2) +
             if (iotaDisplays.isEmpty()) 0 else 6 + iotaDisplays.size * (font.lineHeight + 3)
@@ -1128,8 +1118,8 @@ class HexPonderScreen(
                 cy += font.lineHeight + 1
             }
             for (tag in card.inlineIotaTags) {
-                val col = 0xFF000000.toInt() or (IotaType.getColor(tag) and 0xFFFFFF)
-                val seq = IotaType.getDisplayWithMaxWidth(tag, w - 24, font)
+                val col = 0xFF000000.toInt() or ((iotaFromNbt(tag, clientRegs())?.type?.color() ?: 0) and 0xFFFFFF)
+                val seq = (iotaFromNbt(tag, clientRegs())?.displayWithMaxWidth(w - 24, font) ?: net.minecraft.network.chat.Component.empty().visualOrderText)
                 PonderGuiDraw.drawRecessedBox(g, x + 8, cy, w - 16, font.lineHeight + 3, 0xFF0C0914.toInt(), col)
                 g.drawString(font, seq, x + 11, cy + 2, col, false)
                 cy += font.lineHeight + 5
@@ -1252,8 +1242,8 @@ class HexPonderScreen(
         super.mouseMoved(mouseX, mouseY)
     }
 
-    override fun mouseScrolled(mouseX: Double, mouseY: Double, delta: Double): Boolean {
-        val dir = if (delta > 0) -1 else 1
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, scrollX: Double, scrollY: Double): Boolean {
+        val dir = if (scrollY > 0) -1 else 1
         if (mouseX >= leftX && mouseX <= leftX + leftW) {
             stackScroll = (stackScroll + dir).coerceAtLeast(0)
             return true
@@ -1262,7 +1252,7 @@ class HexPonderScreen(
             knowledgeScroll = (knowledgeScroll + dir * 14).coerceAtLeast(0)
             return true
         }
-        return super.mouseScrolled(mouseX, mouseY, delta)
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)
     }
 
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
@@ -1295,7 +1285,7 @@ class HexPonderScreen(
 
     override fun onClose() {
         // 禁止调用 super.onClose() 覆盖父界面返回逻辑
-        Minecraft.getInstance().soundManager.stop(HexSounds.CASTING_AMBIANCE.location, null)
+        Minecraft.getInstance().soundManager.stop(HexSounds.CASTING_AMBIANCE.value().location, null)
         sandboxSpellcasting = null
         Minecraft.getInstance().setScreen(parentScreen)
     }
@@ -1303,7 +1293,7 @@ class HexPonderScreen(
     private fun parsePattern(sig: String, startDirName: String): HexPattern? {
         if (sig.isEmpty()) return null
         return runCatching {
-            HexPattern.fromAngles(sig, HexDir.valueOf(startDirName.uppercase()))
+            patternFromAngles(sig, HexDir.valueOf(startDirName.uppercase()))
         }.getOrNull()
     }
 

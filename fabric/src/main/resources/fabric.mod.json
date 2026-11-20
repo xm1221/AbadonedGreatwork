@@ -41,16 +41,18 @@
     "abadoned_greatwork-fabric.mixins.json"
   ],
   "depends": {
-    "minecraft": "${versions.minecraft}",
-    "fabricloader": ">=${versions.fabric_loader}",
-    "fabric-api": ">=${versions.fabric_api}",
-    "fabric-language-kotlin": ">=${versions.kotlin_fabric}",
-    "architectury": ">=${versions.architectury}",
-    "hexcasting": ">=${versions.hexcasting}",
-    "cloth-config": ">=${versions.clothConfig}",
-    "mielib": ">=${versions.mielib}"
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabricloader": ">=0.16.3",
+    "fabric-api": ">=0.103.0+1.21.1",
+    "fabric-language-kotlin": ">=1.13.7+kotlin.2.2.21",
+    "architectury": ">=13.0.8",
+    "hexcasting": ">=0.12.0-devel-pre-68",
+    "cloth-config": ">=15.0.140",
+    "mielib": ">=0.0.3.4+1.21.1"
   },
   "suggests": {
-    "modmenu": ">=${versions.modMenu}"
+    "modmenu": ">=11.0.4",
+    "ioticblocks": "*"
   }
 }

@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.casting.circles
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.casting.circles.CircleExecutionState
 import at.petrak.hexcasting.api.casting.eval.vm.CastingImage
 import at.petrak.hexcasting.api.pigment.FrozenPigment
@@ -102,4 +103,4 @@ class ForkedExecutionState(
  * （`currentImage = cont.update.withOverriddenUsedOps(0)`）：一块板岩执行完，算子计数归零。
  */
 internal fun CastingImage.forkImage(): CastingImage =
-    copy(userData = userData.copy()).withOverriddenUsedOps(0)
+    copy(components = deepCopyComponents(components)).withOverriddenUsedOps(0)

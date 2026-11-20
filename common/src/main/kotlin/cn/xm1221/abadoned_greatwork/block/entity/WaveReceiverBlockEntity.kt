@@ -85,9 +85,7 @@ class WaveReceiverBlockEntity(
         lastReceiveTick = srv.gameTime
         super.startExecution(caster)
         val state = this.executionState ?: return false
-        state.currentImage = incomingImage
-            .copy(userData = AmbitReshapeHook.clearShapeFromUserData(incomingImage.userData))
-            .withOverriddenUsedOps(0)
+        state.currentImage = AmbitReshapeHook.clearShape(incomingImage).withOverriddenUsedOps(0)
         setChanged()
         return true
     }
@@ -104,13 +102,13 @@ class WaveReceiverBlockEntity(
         channelState.appendLensLines(lines)
     }
 
-    override fun saveModData(tag: CompoundTag) {
-        super.saveModData(tag)
+    override fun saveModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
+        super.saveModData(tag, registries)
         channelState.save(tag)
     }
 
-    override fun loadModData(tag: CompoundTag) {
-        super.loadModData(tag)
+    override fun loadModData(tag: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider) {
+        super.loadModData(tag, registries)
         channelState.load(tag)
         (level as? ServerLevel)?.let { srv ->
             if (!isRemoved) {
@@ -121,9 +119,9 @@ class WaveReceiverBlockEntity(
 
     // ==================== ADIotaHolder ====================
 
-    override fun readIotaTag(): CompoundTag = channelState.readIotaTag()
+    override fun readIota(): at.petrak.hexcasting.api.casting.iota.Iota = channelState.readIota(level?.registryAccess())
 
-    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate)
+    override fun writeIota(iota: Iota?, simulate: Boolean): Boolean = channelState.writeIota(iota, simulate, level?.registryAccess())
 
     override fun writeable(): Boolean = true
 

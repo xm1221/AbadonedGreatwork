@@ -1,14 +1,19 @@
 package cn.xm1221.abadoned_greatwork.block
 
+import cn.xm1221.abadoned_greatwork.api.*
 import at.petrak.hexcasting.api.item.IotaHolderItem
 import cn.xm1221.abadoned_greatwork.block.entity.TruthCrystalBlockEntity
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
+import cn.xm1221.abadoned_greatwork.api.asItemInteraction
+import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlockEntities
+import com.mojang.serialization.MapCodec
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.ItemInteractionResult
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.BlockGetter
@@ -45,7 +50,13 @@ class TruthCrystalBlock(
     private val blockEntityTypeSupplier: () -> BlockEntityType<out BlockEntity>,
 ) : BaseEntityBlock(properties) {
 
+    override fun codec(): MapCodec<out BaseEntityBlock> = CODEC
+
     companion object {
+        val CODEC: MapCodec<TruthCrystalBlock> = simpleCodec { props ->
+            TruthCrystalBlock(props) { Abadoned_greatworkBlockEntities.TRUTH_CRYSTAL.value }
+        }
+
         val SHAPE: VoxelShape = Shapes.or(
             Block.box(1.0, 0.0, 1.0, 15.0, 3.0, 15.0),
             Block.box(3.0, 3.0, 3.0, 13.0, 12.0, 13.0),
@@ -70,49 +81,47 @@ class TruthCrystalBlock(
 
     // ==================== 右键交互 ====================
 
-    @Suppress("DEPRECATION")
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult,
-    ): InteractionResult {
-        if (level.isClientSide) return InteractionResult.SUCCESS
+    ): ItemInteractionResult {
+        if (level.isClientSide) return ItemInteractionResult.SUCCESS
 
-        val be = level.getBlockEntity(pos) as? TruthCrystalBlockEntity ?: return InteractionResult.PASS
+        val be = level.getBlockEntity(pos) as? TruthCrystalBlockEntity
+            ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         val heldStack = player.getItemInHand(hand)
 
-        // 1. 空手 → 弹出内部水晶
         if (heldStack.isEmpty) {
             if (!be.isEmpty) {
                 val removed = be.removeItemNoUpdate(0)
                 player.setItemInHand(hand, removed)
                 level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.BLOCKS, 1.0f, 1.2f)
-                return InteractionResult.SUCCESS
+                return ItemInteractionResult.SUCCESS
             }
-            return InteractionResult.PASS
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         }
 
-        // 2. 手持真理水晶 → 放入（槽为空时）
         if (heldStack.item is ItemTruthCrystal) {
             if (be.isEmpty) {
                 be.setItem(0, heldStack.split(1))
                 level.playSound(null, pos, SoundEvents.AMETHYST_BLOCK_PLACE, SoundSource.BLOCKS, 1.0f, 1.1f)
-                return InteractionResult.SUCCESS
+                return ItemInteractionResult.SUCCESS
             }
-            return InteractionResult.PASS
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         }
 
-        // 3. 手持 IotaHolderItem 且槽内有真理水晶 → 验证
         if (heldStack.item is IotaHolderItem && be.item.item is ItemTruthCrystal && level is ServerLevel) {
-            return TruthCrystalInteraction.handle(be, player, level, heldStack)
+            return TruthCrystalInteraction.handle(be, player, level, heldStack).asItemInteraction()
         }
 
-        // 4. 自定义回调
         val callback = TruthCrystalBlockEntity.interactions[heldStack.item]
-        return callback?.onInteract(be, player, hand, heldStack) ?: InteractionResult.PASS
+        return (callback?.onInteract(be, player, hand, heldStack) ?: net.minecraft.world.InteractionResult.PASS)
+            .asItemInteraction()
     }
 
     // ==================== 红石比较器信号 ====================
