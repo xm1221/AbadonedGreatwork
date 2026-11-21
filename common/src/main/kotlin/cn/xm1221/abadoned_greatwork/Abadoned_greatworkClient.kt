@@ -8,12 +8,18 @@ import cn.xm1221.abadoned_greatwork.block.entity.MediaPoolBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.MultiDirectrixPBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.WaveRepeaterBlockEntity
 import cn.xm1221.abadoned_greatwork.block.entity.WaveTransmitterBlockEntity
+import cn.xm1221.abadoned_greatwork.client.gui.skin.GuiSkinLoader
+import cn.xm1221.abadoned_greatwork.client.notes.NoteClientCommands
+import cn.xm1221.abadoned_greatwork.client.notes.NotePatchouliCompat
+import cn.xm1221.abadoned_greatwork.client.notes.screen.NoteLibraryScreen
+import cn.xm1221.abadoned_greatwork.client.notes.screen.NoteScrapPreviewScreen
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderClientState
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderDrawPatternWorker
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderPatchouliCompat
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderScryingTrigger
 import cn.xm1221.abadoned_greatwork.client.renderer.AmbitBoundaryRenderer
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkClientConfig
+import cn.xm1221.abadoned_greatwork.notes.ClientNoteLibrary
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkBlocks
 import dev.architectury.event.events.client.ClientPlayerEvent
 import dev.architectury.registry.client.rendering.ColorHandlerRegistry
@@ -21,6 +27,7 @@ import dev.architectury.registry.client.rendering.RenderTypeRegistry
 import me.shedaniel.autoconfig.AutoConfig
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.renderer.RenderType
 
@@ -35,10 +42,22 @@ object Abadoned_greatworkClient {
         DrawPatternHook.register(Abadoned_greatwork.id("ponder_pattern_color"), PonderDrawPatternWorker)
         PonderScryingTrigger.init()
 
+        // 贴图驱动 GUI 皮肤、玩家笔记与 Patchouli 注入
+        GuiSkinLoader.init()
+        NotePatchouliCompat.init()
+        NoteClientCommands.init()
+        ClientNoteLibrary.openLibraryScreenHook = {
+            Minecraft.getInstance().setScreen(NoteLibraryScreen())
+        }
+        ClientNoteLibrary.openScrapPreviewHook = { entry, offhand ->
+            Minecraft.getInstance().setScreen(NoteScrapPreviewScreen(entry, offhand))
+        }
+
         ClientPlayerEvent.CLIENT_PLAYER_QUIT.register {
             AmbitBoundaryRenderer.clear()
             PonderClientState.clear()
             PonderPatchouliCompat.invalidateCache()
+            ClientNoteLibrary.clearOnDisconnect()
         }
     }
 

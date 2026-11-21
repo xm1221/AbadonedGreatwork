@@ -4,6 +4,7 @@ import at.petrak.hexcasting.api.casting.iota.IotaType
 import at.petrak.hexcasting.common.lib.HexRegistries
 import at.petrak.hexcasting.common.lib.hex.HexIotaTypes
 import cn.xm1221.abadoned_greatwork.casting.iota.BiomeIota
+import cn.xm1221.abadoned_greatwork.notes.NoteIota
 
 /**
  * Iota 类型注册器。
@@ -15,4 +16,7 @@ object Abadoned_greatworkIotaTypes : Abadoned_greatworkRegistrar<IotaType<*>>(
 ) {
     /** 封装群系/结构 ResourceLocation 的 Iota 类型 */
     val BIOME = register("biome") { BiomeIota.TYPE }
+
+    /** 封装玩家手册条目的 Iota 类型 */
+    val NOTE = register("note") { NoteIota.TYPE }
 }

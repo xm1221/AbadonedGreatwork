@@ -42,6 +42,7 @@ class HexPonderIndexScreen(
     private var listW = 0
     private var listH = 0
     private var clearFilterRect: IntArray? = null
+    private var hoveredLockedEntry: PonderIndexEntry? = null
 
     private data class ClickableTab(
         val x: Int,
@@ -296,6 +297,7 @@ class HexPonderIndexScreen(
 
         val rows = buildDisplayRows()
         clickableTargets.clear()
+        hoveredLockedEntry = null
 
         g.enableScissor(listX + 2, listY + 2, listX + listW - 2, listY + listH - 2)
         if (rows.isEmpty()) {
@@ -338,6 +340,19 @@ class HexPonderIndexScreen(
         g.disableScissor()
 
         super.render(g, mouseX, mouseY, partialTick)
+
+        hoveredLockedEntry?.let { entry ->
+            val hint = if (entry.lockHint.isNotEmpty()) localize(entry.lockHint) else localize("hexponder.index.locked_default")
+            g.renderComponentTooltip(
+                font,
+                listOf(
+                    Component.literal(localize(entry.title)).withStyle { it.withColor(PonderGuiDraw.TEXT_GOLD) },
+                    Component.literal(hint).withStyle { it.withColor(PonderGuiDraw.TEXT_ERR) },
+                ),
+                mouseX,
+                mouseY,
+            )
+        }
     }
 
     private fun renderSceneCard(
@@ -352,18 +367,29 @@ class HexPonderIndexScreen(
     ) {
         val hovered = mouseX >= cx && mouseX < cx + cardW && mouseY >= cy && mouseY < cy + cardH &&
             mouseY >= listY && mouseY < listY + listH
-        PonderGuiDraw.drawPixelButton(g, font, cx, cy, cardW, cardH, "", hovered)
+        val locked = entry.locked
+        PonderGuiDraw.drawPixelButton(g, font, cx, cy, cardW, cardH, "", hovered && !locked, enabled = !locked)
         val icon = PonderGuiDraw.resolveItemStack(entry.iconItem)
         if (!icon.isEmpty) {
             g.renderItem(icon, cx + 5, cy + 7)
         }
+        if (locked) {
+            PonderGuiDraw.drawLockBadge(g, cx + cardW - 11, cy + 4)
+            if (hovered) {
+                hoveredLockedEntry = entry
+            }
+        }
         val textX = cx + 25
-        val availW = (cardW - 30).coerceAtLeast(20)
+        val availW = (cardW - (if (locked) 38 else 30)).coerceAtLeast(20)
         val title = font.plainSubstrByWidth(localize(entry.title), availW)
-        g.drawString(font, title, textX, cy + 6, PonderGuiDraw.TEXT_MAIN, true)
+        g.drawString(font, title, textX, cy + 6, if (locked) PonderGuiDraw.TEXT_MUTED else PonderGuiDraw.TEXT_MAIN, true)
 
-        val stepInfo = "${entry.stepCount} ${localize("hexponder.index.steps")}"
-        g.drawString(font, stepInfo, textX, cy + 17, PonderGuiDraw.TEXT_MUTED, false)
+        val stepInfo = if (locked) {
+            localize("hexponder.index.locked_badge")
+        } else {
+            "${entry.stepCount} ${localize("hexponder.index.steps")}"
+        }
+        g.drawString(font, stepInfo, textX, cy + 17, if (locked) 0xFFD99B26.toInt() else PonderGuiDraw.TEXT_MUTED, false)
 
         clickableTargets.add(ClickableTarget.Scene(cx, cy, cardW, cardH, entry))
     }
@@ -426,10 +452,19 @@ class HexPonderIndexScreen(
         }
         for (target in clickableTargets) {
             if (target.contains(mouseX, mouseY)) {
-                playClick()
                 when (target) {
-                    is ClickableTarget.Scene -> PonderClientState.openScene(target.entry.id, this)
-                    is ClickableTarget.Manual -> PonderPatchouliCompat.openManualPage(target.hit.entryId, target.hit.pageIndex)
+                    is ClickableTarget.Scene -> {
+                        if (target.entry.locked) {
+                            Minecraft.getInstance().soundManager.play(SimpleSoundInstance.forUI(HexSounds.CAST_FAILURE, 1.0f))
+                        } else {
+                            playClick()
+                            PonderClientState.openScene(target.entry.id, this)
+                        }
+                    }
+                    is ClickableTarget.Manual -> {
+                        playClick()
+                        PonderPatchouliCompat.openManualPage(target.hit.entryId, target.hit.pageIndex)
+                    }
                 }
                 return true
             }

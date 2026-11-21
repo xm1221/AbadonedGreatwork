@@ -35,4 +35,10 @@ dependencies {
     }
 
     fileTree(baseDir = "libs").also { it.include("fabric") }
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

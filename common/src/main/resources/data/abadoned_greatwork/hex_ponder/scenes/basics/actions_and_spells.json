@@ -12,8 +12,13 @@
   "clear_before": true,
   "start_dir": "NORTH_EAST",
   "triggers": {
-    "items": ["hexcasting:charged_amethyst"],
-    "actions": ["hexcasting:duplicate", "hexcasting:swap"]
+    "items": [
+      "hexcasting:charged_amethyst"
+    ],
+    "actions": [
+      "hexcasting:duplicate",
+      "hexcasting:swap"
+    ]
   },
   "knowledge_cards": [
     {
@@ -31,7 +36,10 @@
       "chapter": "hexponder.scene.actions_and_spells.ch0",
       "pattern": "aqaa",
       "start_dir": "SOUTH_EAST",
-      "origin": [-1, 1],
+      "origin": [
+        -1,
+        1
+      ],
       "push": "double:10",
       "title": "hexponder.scene.actions_and_spells.s0.title",
       "callout": {
@@ -44,7 +52,10 @@
     {
       "type": "execute",
       "action": "hexcasting:duplicate",
-      "origin": [-1, 1],
+      "origin": [
+        -1,
+        1
+      ],
       "callout": {
         "anchor": "stack",
         "anchor_index": 0,
@@ -56,7 +67,10 @@
       "type": "push",
       "pattern": "aqaa",
       "start_dir": "SOUTH_EAST",
-      "origin": [-1, 1],
+      "origin": [
+        -1,
+        1
+      ],
       "push": "double:3",
       "title": "hexponder.scene.actions_and_spells.s2.title"
     },
@@ -64,7 +78,10 @@
       "type": "execute",
       "chapter": "hexponder.scene.actions_and_spells.ch1",
       "action": "hexcasting:swap",
-      "origin": [-1, 2],
+      "origin": [
+        -1,
+        2
+      ],
       "callout": {
         "anchor": "stack",
         "anchor_index": 0,
@@ -75,7 +92,10 @@
     {
       "type": "execute",
       "action": "hexcasting:sub",
-      "origin": [-1, 1],
+      "origin": [
+        -1,
+        1
+      ],
       "callout": {
         "anchor": "stack",
         "anchor_index": 0,

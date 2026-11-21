@@ -690,6 +690,32 @@ def save_scene(body: dict[str, Any]) -> dict[str, Any]:
     else:
         scene.pop("subtitle", None)
 
+    # Unlock rule & optional natural-language lock hint
+    raw_unlock = scene.get("unlock")
+    lh_zh = str(raw_texts.get("lock_hint_zh") or "").strip()
+    lh_en = str(raw_texts.get("lock_hint_en") or "").strip()
+    if isinstance(raw_unlock, dict) and raw_unlock.get("locked"):
+        u_out: dict[str, Any] = {
+            "locked": True,
+            "mode": "any" if str(raw_unlock.get("mode") or "all").lower() == "any" else "all",
+        }
+        if lh_zh or lh_en:
+            base_lh = lh_zh or lh_en
+            u_out["hint"] = put_pair(f"{prefix}lock_hint", base_lh, lh_en or base_lh)
+        conds_in = raw_unlock.get("conditions") or []
+        clean_conds: list[dict[str, str]] = []
+        for c in conds_in:
+            if not isinstance(c, dict):
+                continue
+            ctype = str(c.get("type") or "manual").strip().lower()
+            cid = str(c.get("id") or "").strip()
+            if ctype == "manual" or cid:
+                clean_conds.append({"type": ctype, "id": cid})
+        u_out["conditions"] = clean_conds
+        scene["unlock"] = u_out
+    else:
+        scene.pop("unlock", None)
+
     # Canonical key order at top level while preserving optional keys
     cards_in = scene.get("knowledge_cards") or []
     card_texts = raw_texts.get("cards") or []
@@ -810,6 +836,49 @@ def delete_scene(body: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "deleted": rel_file, **lang_res}
 
 
+def reorder_items(body: dict[str, Any]) -> dict[str, Any]:
+    kind = str(body.get("kind") or "").strip()
+    order = body.get("order")
+    if not isinstance(order, list) or not order:
+        raise ValueError("缺少 order 列表")
+
+    updated = 0
+    if kind == "categories":
+        for idx, cid in enumerate(order):
+            cid_str = str(cid).strip()
+            if not SLUG_RE.match(cid_str):
+                continue
+            cf = CATS_DIR / f"{cid_str}.json"
+            if cf.is_file():
+                obj = read_json(cf)
+                obj["sort_order"] = idx
+                atomic_write_json(cf, obj)
+                updated += 1
+        return {"ok": True, "kind": "categories", "updated": updated}
+
+    if kind == "scenes":
+        cat = str(body.get("category") or "").strip()
+        if not SLUG_RE.match(cat):
+            raise ValueError("无效的分类 ID")
+        slug_to_file: dict[str, Path] = {}
+        for sf in sorted(SCENES_DIR.rglob("*.json")):
+            obj = read_json(sf)
+            if str(obj.get("category") or "") == cat:
+                sid = str(obj.get("id") or sf.stem)
+                slug = sid.split(":", 1)[-1]
+                slug_to_file[slug] = sf
+        for idx, slug in enumerate(order):
+            sf = slug_to_file.get(str(slug).strip())
+            if sf and sf.is_file():
+                obj = read_json(sf)
+                obj["sort_order"] = idx
+                atomic_write_json(sf, obj)
+                updated += 1
+        return {"ok": True, "kind": "scenes", "category": cat, "updated": updated}
+
+    raise ValueError(f"未知的排序类型: {kind}")
+
+
 def run_validation() -> dict[str, Any]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -860,6 +929,13 @@ def run_validation() -> dict[str, Any]:
                     referenced_hp_keys.add(val)
                     if val not in zh_cn or val not in en_us:
                         errors.append(f"场景 {rel} 缺少翻译键: {val}")
+            unlock_obj = sc.get("unlock")
+            if isinstance(unlock_obj, dict):
+                hint_val = str(unlock_obj.get("hint") or "")
+                if hint_val.startswith("hexponder."):
+                    referenced_hp_keys.add(hint_val)
+                    if hint_val not in zh_cn or hint_val not in en_us:
+                        errors.append(f"场景 {rel} 锁定提示缺少翻译键: {hint_val}")
             for card in sc.get("knowledge_cards") or []:
                 for f in ("title", "body"):
                     val = str(card.get(f) or "")
@@ -1008,6 +1084,8 @@ class StudioHandler(BaseHTTPRequestHandler):
                 self._send_json(HTTPStatus.OK, save_scene(body))
             elif parsed.path == "/api/scene/delete":
                 self._send_json(HTTPStatus.OK, delete_scene(body))
+            elif parsed.path == "/api/reorder":
+                self._send_json(HTTPStatus.OK, reorder_items(body))
             elif parsed.path == "/api/validate":
                 self._send_json(HTTPStatus.OK, run_validation())
             else:

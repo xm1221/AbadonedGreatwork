@@ -19,6 +19,12 @@ public class Abadoned_greatworkMixinConfigPlugin implements IMixinConfigPlugin {
             }
             return shouldApply;
         }
+        if (mixinClassName.equals("cn.xm1221.abadoned_greatwork.mixin.BookContentsBuilderAccessor")
+                || mixinClassName.equals("cn.xm1221.abadoned_greatwork.mixin.BookContentsBuilderMixin")
+                || mixinClassName.equals("cn.xm1221.abadoned_greatwork.mixin.BookEntryMixin")) {
+            return Abadoned_greatworkMixinConfigPlugin.class.getClassLoader()
+                    .getResource("vazkii/patchouli/client/book/BookContentsBuilder.class") != null;
+        }
         return true;
     }
 

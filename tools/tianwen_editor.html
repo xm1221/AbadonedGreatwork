@@ -586,6 +586,29 @@
 
         <div class="form-group recessed">
           <div class="section-head">
+            <span>锁定与数据驱动解锁</span>
+            <label><input type="checkbox" id="sUnlockLocked" onchange="updateUnlockLocked(this.checked)" /> 默认锁定</label>
+          </div>
+          <div id="unlockConfigBox" style="display:none;flex-direction:column;gap:5px;">
+            <div class="form-row">
+              <label>满足方式</label>
+              <select id="sUnlockMode" onchange="updateUnlockMode(this.value)">
+                <option value="all">all（全部条件满足时解锁）</option>
+                <option value="any">any（任一条件满足即解锁）</option>
+              </select>
+            </div>
+            <div class="form-row"><label>未解锁提示(中)</label><input id="sLockHintZh" placeholder="例：获得橡木法杖后解锁" oninput="updateSceneLockHint('zh', this.value)" /></div>
+            <div class="form-row"><label>未解锁提示(EN)</label><input id="sLockHintEn" placeholder="留空自动同步中文" oninput="updateSceneLockHint('en', this.value)" /></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">
+              <span class="muted" style="font-size:11px;">解锁条件（留空则仅靠 /abw tianwen unlock 解锁）</span>
+              <button class="mini" onclick="addUnlockCondition()">+ 条件</button>
+            </div>
+            <div id="unlockConditionsList" style="display:flex;flex-direction:column;gap:4px;"></div>
+          </div>
+        </div>
+
+        <div class="form-group recessed">
+          <div class="section-head">
             <span>札记卡片 (自然语言编辑)</span>
             <button onclick="addKnowledgeCard()">+ 添加卡片</button>
           </div>
@@ -782,6 +805,8 @@ function makeDefaultTexts() {
   return {
     title: { zh: "新演示章节", en: "New Ponder Scene" },
     subtitle: { zh: "基础施法演示", en: "Basic Casting Demo" },
+    lock_hint_zh: "",
+    lock_hint_en: "",
     cards: [{ title_zh: "要点记录", title_en: "", body_zh: "可在右侧用自然语言编写札记。", body_en: "" }],
     steps: [
       { ...makeDefaultStepText(), chapter_zh: "第一节", callout_zh: "获取施法者并压入栈顶" },
@@ -960,10 +985,13 @@ function loadStudioScene(entry, skipConfirm = false) {
 
   const tPair = resolveLangPair(sc.title, zh, en);
   const subPair = resolveLangPair(sc.subtitle, zh, en);
+  const lhPair = resolveLangPair(sc.unlock?.hint, zh, en);
 
   sceneTexts = {
     title: tPair,
     subtitle: subPair,
+    lock_hint_zh: lhPair.zh,
+    lock_hint_en: lhPair.en,
     cards: (sc.knowledge_cards || []).map(c => {
       const kt = resolveLangPair(c.title, zh, en);
       const kb = resolveLangPair(c.body, zh, en);
@@ -1054,6 +1082,23 @@ function buildCompiledPayload() {
     out.subtitle = addPair(`${pref}subtitle`, sb, sceneTexts.subtitle.en || sb);
   } else {
     delete out.subtitle;
+  }
+
+  if (out.unlock && out.unlock.locked) {
+    const uOut = {
+      locked: true,
+      mode: out.unlock.mode === "any" ? "any" : "all"
+    };
+    if ((sceneTexts.lock_hint_zh || "").trim() || (sceneTexts.lock_hint_en || "").trim()) {
+      const lhb = (sceneTexts.lock_hint_zh || "").trim() || sceneTexts.lock_hint_en;
+      uOut.hint = addPair(`${pref}lock_hint`, lhb, sceneTexts.lock_hint_en || lhb);
+    }
+    uOut.conditions = (out.unlock.conditions || [])
+      .filter(c => c && (c.type === "manual" || (c.id || "").trim()))
+      .map(c => ({ type: c.type || "manual", id: (c.id || "").trim() }));
+    out.unlock = uOut;
+  } else {
+    delete out.unlock;
   }
 
   out.knowledge_cards = (out.knowledge_cards || []).map((c, idx) => {
@@ -1886,13 +1931,13 @@ function renderChapterTree() {
   }
   const q = (document.getElementById("treeSearch").value || "").trim().toLowerCase();
   container.innerHTML = "";
-  for (const cat of studioData.categories) {
+  studioData.categories.forEach((cat, catIdx) => {
     const catScenes = studioData.scenes.filter(s => s.category === cat.id);
     const matchingScenes = q ? catScenes.filter(s =>
       (s.title_zh || "").toLowerCase().includes(q) || s.slug.toLowerCase().includes(q)
     ) : catScenes;
     const catMatch = !q || (cat.title_zh || "").toLowerCase().includes(q) || cat.id.toLowerCase().includes(q);
-    if (!catMatch && !matchingScenes.length) continue;
+    if (!catMatch && !matchingScenes.length) return;
 
     const grp = document.createElement("div");
     grp.className = "cat-group";
@@ -1901,22 +1946,73 @@ function renderChapterTree() {
     hdr.innerHTML = `
       <img class="px-icon" src="/api/icon?id=${encodeURIComponent(cat.icon)}" alt="" />
       <span class="ctitle" title="${esc(cat.id)}">${esc(cat.title_zh)} <span class="muted" style="font-weight:normal;">(${catScenes.length})</span></span>
-      <button class="mini" title="编辑分类">✎</button>`;
-    hdr.querySelector("button").onclick = () => openCategoryModal(cat);
+      ${!q ? `<button class="mini btn-cat-up" title="上移分类" ${catIdx === 0 ? "disabled" : ""}>▲</button><button class="mini btn-cat-dn" title="下移分类" ${catIdx === studioData.categories.length - 1 ? "disabled" : ""}>▼</button>` : ""}
+      <button class="mini btn-cat-edit" title="编辑分类">✎</button>`;
+    hdr.querySelector(".btn-cat-edit").onclick = () => openCategoryModal(cat);
+    if (!q) {
+      hdr.querySelector(".btn-cat-up").onclick = () => reorderCategories(catIdx, -1);
+      hdr.querySelector(".btn-cat-dn").onclick = () => reorderCategories(catIdx, 1);
+    }
     grp.appendChild(hdr);
 
     const listToShow = catMatch ? catScenes : matchingScenes;
-    for (const sc of listToShow) {
+    listToShow.forEach((sc, scIdx) => {
       const row = document.createElement("div");
       row.className = "scene-row" + (oldSceneFile === sc.file ? " active" : "");
+      const lockMark = sc.data?.unlock?.locked ? `<span title="默认锁定" style="color:var(--gold);font-size:10px;">🔒</span>` : "";
       row.innerHTML = `
         <img class="px-icon" src="/api/icon?id=${encodeURIComponent(sc.icon)}" alt="" />
-        <span class="stitle" title="${esc(sc.id)}">${esc(sc.title_zh || sc.slug)}</span>
-        <span class="muted" style="font-size:10px;">${sc.data.steps?.length || 0}步</span>`;
+        <span class="stitle" title="${esc(sc.id)}">${lockMark}${esc(sc.title_zh || sc.slug)}</span>
+        <span class="muted" style="font-size:10px;">${sc.data.steps?.length || 0}步</span>
+        ${!q ? `<button class="mini btn-sc-up" title="上移章节" ${scIdx === 0 ? "disabled" : ""}>▲</button><button class="mini btn-sc-dn" title="下移章节" ${scIdx === listToShow.length - 1 ? "disabled" : ""}>▼</button>` : ""}`;
+      if (!q) {
+        row.querySelector(".btn-sc-up").onclick = e => { e.stopPropagation(); reorderScenes(cat.id, scIdx, -1); };
+        row.querySelector(".btn-sc-dn").onclick = e => { e.stopPropagation(); reorderScenes(cat.id, scIdx, 1); };
+      }
       row.onclick = () => loadStudioScene(sc);
       grp.appendChild(row);
-    }
+    });
     container.appendChild(grp);
+  });
+}
+
+async function reorderCategories(idx, delta) {
+  const cats = [...studioData.categories];
+  const ni = idx + delta;
+  if (ni < 0 || ni >= cats.length) return;
+  [cats[idx], cats[ni]] = [cats[ni], cats[idx]];
+  try {
+    await apiFetch("/api/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "categories", order: cats.map(c => c.id) })
+    });
+    await initStudio(true);
+    toast("分类顺序已保存");
+  } catch (err) {
+    alert("调序失败: " + err.message);
+  }
+}
+
+async function reorderScenes(catId, idx, delta) {
+  const list = studioData.scenes.filter(s => s.category === catId);
+  const ni = idx + delta;
+  if (ni < 0 || ni >= list.length) return;
+  [list[idx], list[ni]] = [list[ni], list[idx]];
+  try {
+    await apiFetch("/api/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "scenes", category: catId, order: list.map(s => s.slug) })
+    });
+    if (scene.category === catId) {
+      const myNewIdx = list.findIndex(s => s.slug === activeSceneSlug);
+      if (myNewIdx !== -1) scene.sort_order = myNewIdx;
+    }
+    await initStudio(true);
+    toast("章节顺序已保存");
+  } catch (err) {
+    alert("调序失败: " + err.message);
   }
 }
 
@@ -2124,6 +2220,14 @@ function syncSceneFields() {
   document.getElementById("sTrigActions").value = (scene.triggers?.actions || []).join(", ");
   document.getElementById("sTrigItems").value = (scene.triggers?.items || []).join(", ");
 
+  const uLocked = !!(scene.unlock && scene.unlock.locked);
+  document.getElementById("sUnlockLocked").checked = uLocked;
+  document.getElementById("unlockConfigBox").style.display = uLocked ? "flex" : "none";
+  document.getElementById("sUnlockMode").value = (scene.unlock && scene.unlock.mode === "any") ? "any" : "all";
+  document.getElementById("sLockHintZh").value = sceneTexts.lock_hint_zh || "";
+  document.getElementById("sLockHintEn").value = sceneTexts.lock_hint_en || "";
+  renderUnlockConditions();
+
   const cBox = document.getElementById("cardsList");
   cBox.innerHTML = "";
   (scene.knowledge_cards || []).forEach((c, idx) => {
@@ -2282,6 +2386,71 @@ function updateCardIotas(i, v) {
   const arr = v.split(",").map(s => s.trim()).filter(Boolean);
   if (arr.length) scene.knowledge_cards[i].inline_iotas = arr; else delete scene.knowledge_cards[i].inline_iotas;
   setDirty(true); refreshExports();
+}
+
+function renderUnlockConditions() {
+  const box = document.getElementById("unlockConditionsList");
+  if (!box) return;
+  box.innerHTML = "";
+  const conds = (scene.unlock && Array.isArray(scene.unlock.conditions)) ? scene.unlock.conditions : [];
+  conds.forEach((c, idx) => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:4px;align-items:center;";
+    const tp = c.type || "advancement";
+    const pickBtn = tp === "item"
+      ? `<button class="mini" onclick="openIconPicker(id => updateUnlockCond(${idx}, 'id', id, true))">选</button>`
+      : "";
+    const sceneSel = tp === "scene" && studioData?.scenes?.length
+      ? `<select style="max-width:110px;" onchange="if(this.value){updateUnlockCond(${idx},'id',this.value,true);this.value='';}"><option value="">▾选章节</option>${studioData.scenes.map(s => `<option value="${esc(s.id)}">${esc(s.title_zh || s.slug)}</option>`).join("")}</select>`
+      : "";
+    row.innerHTML = `
+      <select style="width:94px;" onchange="updateUnlockCond(${idx}, 'type', this.value, true)">
+        <option value="advancement" ${tp === "advancement" ? "selected" : ""}>进度</option>
+        <option value="item" ${tp === "item" ? "selected" : ""}>获得物品</option>
+        <option value="item_tag" ${tp === "item_tag" ? "selected" : ""}>物品标签</option>
+        <option value="scene" ${tp === "scene" ? "selected" : ""}>前置章节</option>
+        <option value="manual" ${tp === "manual" ? "selected" : ""}>仅指令</option>
+      </select>
+      <input style="flex:1;min-width:0;" value="${esc(c.id || "")}" ${tp === "manual" ? "disabled placeholder='仅通过指令解锁'" : "placeholder='namespace:id'"} oninput="updateUnlockCond(${idx}, 'id', this.value, false)" />
+      ${pickBtn}${sceneSel}
+      <button class="danger mini" onclick="removeUnlockCondition(${idx})">✕</button>`;
+    box.appendChild(row);
+  });
+}
+function updateUnlockLocked(checked) {
+  scene.unlock = scene.unlock || { locked: false, mode: "all", conditions: [] };
+  scene.unlock.locked = !!checked;
+  if (!checked) delete scene.unlock;
+  setDirty(true); syncSceneFields(); refreshExports();
+}
+function updateUnlockMode(v) {
+  scene.unlock = scene.unlock || { locked: true, mode: "all", conditions: [] };
+  scene.unlock.mode = v === "any" ? "any" : "all";
+  setDirty(true); refreshExports();
+}
+function updateSceneLockHint(lang, v) {
+  sceneTexts[lang === "en" ? "lock_hint_en" : "lock_hint_zh"] = v;
+  setDirty(true); refreshExports();
+}
+function addUnlockCondition() {
+  scene.unlock = scene.unlock || { locked: true, mode: "all", conditions: [] };
+  scene.unlock.locked = true;
+  scene.unlock.conditions = scene.unlock.conditions || [];
+  scene.unlock.conditions.push({ type: "item", id: "hexcasting:staff/oak" });
+  setDirty(true); syncSceneFields(); refreshExports();
+}
+function removeUnlockCondition(idx) {
+  if (!scene.unlock?.conditions) return;
+  scene.unlock.conditions.splice(idx, 1);
+  setDirty(true); renderUnlockConditions(); refreshExports();
+}
+function updateUnlockCond(idx, field, val, reRender) {
+  if (!scene.unlock?.conditions?.[idx]) return;
+  scene.unlock.conditions[idx][field] = val;
+  if (field === "type" && val === "manual") scene.unlock.conditions[idx].id = "";
+  setDirty(true);
+  if (reRender) renderUnlockConditions();
+  refreshExports();
 }
 
 function syncAfterEdit() { renderSteps(); renderStageHudOverlays(); refreshExports(); renderCanvas(); }

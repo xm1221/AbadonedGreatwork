@@ -61,8 +61,9 @@ object PonderSceneLoader {
         categories = loadedCats
         scenes = loadedScenes
 
+        val catOrder = loadedCats.associate { it.id to it.sortOrder }
         val entries = loadedScenes.values
-            .sortedWith(compareBy<PonderSceneDef>({ it.sortOrder }, { it.id.toString() }))
+            .sortedWith(compareBy<PonderSceneDef>({ catOrder[it.category] ?: Int.MAX_VALUE }, { it.sortOrder }, { it.id.toString() }))
             .map { it.toIndexEntry() }
         val payload = PonderIndexPayload(loadedCats, entries)
         indexPayload = payload
@@ -76,12 +77,22 @@ object PonderSceneLoader {
         )
 
         latestServer?.playerList?.players?.forEach { player ->
-            MsgPonderIndexSyncS2C.sendChunked(player, payload)
+            syncIndexTo(player)
         }
     }
 
     fun syncIndexTo(player: ServerPlayer) {
-        MsgPonderIndexSyncS2C.sendChunked(player, indexPayload)
+        val base = indexPayload
+        val playerEntries = base.entries.map { entry ->
+            val def = scenes[entry.id]
+            if (def == null) {
+                entry
+            } else {
+                val unlocked = PonderUnlockManager.isUnlocked(player, def)
+                entry.copy(locked = !unlocked)
+            }
+        }
+        MsgPonderIndexSyncS2C.sendChunked(player, PonderIndexPayload(base.categories, playerEntries))
     }
 
     fun getScene(id: ResourceLocation): PonderSceneDef? = scenes[id]
@@ -242,6 +253,7 @@ object PonderSceneLoader {
         }
 
         val triggers = parseTriggers(root.getAsJsonObject("triggers"))
+        val unlock = parseUnlock(root.getAsJsonObject("unlock"))
         val knowledge = parseKnowledgeCards(root.getAsJsonArray("knowledge_cards"))
         val steps = parseSteps(
             arr = root.getAsJsonArray("steps") ?: JsonArray(),
@@ -267,9 +279,29 @@ object PonderSceneLoader {
             startDir = startDir,
             escapedColor = escapedColor,
             triggers = triggers,
+            unlock = unlock,
             knowledgeCards = knowledge,
             steps = steps,
         )
+    }
+
+    private fun parseUnlock(obj: JsonObject?): PonderUnlockDef {
+        if (obj == null) return PonderUnlockDef()
+        val locked = obj.has("locked") && obj.get("locked").asBoolean
+        val mode = obj.str("mode", "all")
+        val hint = obj.str("hint", "")
+        val condArr = obj.getAsJsonArray("conditions")
+        val conds = ArrayList<PonderUnlockCondition>()
+        if (condArr != null) {
+            for (el in condArr) {
+                if (!el.isJsonObject) continue
+                val c = el.asJsonObject
+                val type = c.str("type", "manual")
+                val cid = c.str("id", "")
+                conds.add(PonderUnlockCondition(type = type, id = cid))
+            }
+        }
+        return PonderUnlockDef(locked = locked, mode = mode, hint = hint, conditions = conds)
     }
 
     private fun parseTriggers(obj: JsonObject?): PonderTriggers {

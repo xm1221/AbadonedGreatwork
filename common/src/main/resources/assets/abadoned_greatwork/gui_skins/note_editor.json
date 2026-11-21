@@ -1,0 +1,74 @@
+{
+  "texture": "abadoned_greatwork:textures/gui/notes/atlas.png",
+  "tex_size": [256, 256],
+  "sprites": {
+    "panel":              { "uv": [0, 0, 48, 48], "nine_slice": [8, 8, 8, 8] },
+    "sub_panel":          { "uv": [48, 0, 32, 32], "nine_slice": [4, 4, 4, 4] },
+    "page_paper":         { "uv": [80, 0, 140, 172], "nine_slice": [10, 10, 10, 10] },
+    "text_field":         { "uv": [0, 48, 48, 24], "nine_slice": [3, 3, 3, 3] },
+    "list_item_normal":   { "uv": [48, 48, 24, 24], "nine_slice": [3, 3, 3, 3] },
+    "list_item_selected": { "uv": [48, 72, 24, 24], "nine_slice": [3, 3, 3, 3] },
+    "button": {
+      "states": { "normal": [0, 80, 48, 16], "hover": [0, 96, 48, 16], "disabled": [0, 112, 48, 16] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "button_accent": {
+      "states": { "normal": [0, 128, 48, 16], "hover": [0, 144, 48, 16], "disabled": [0, 160, 48, 16] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "button_danger": {
+      "states": { "normal": [0, 176, 48, 16], "hover": [0, 192, 48, 16], "disabled": [0, 208, 48, 16] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "tab": {
+      "states": { "normal": [48, 104, 16, 16], "selected": [48, 120, 16, 16] },
+      "nine_slice": [3, 3, 3, 3]
+    },
+    "scrollbar_track":    { "uv": [64, 104, 8, 32], "nine_slice": [2, 2, 2, 2] },
+    "scrollbar_thumb":    { "uv": [72, 104, 8, 16], "nine_slice": [2, 2, 2, 2] },
+    "slot_frame":         { "uv": [0, 224, 32, 32], "nine_slice": [3, 3, 3, 3] },
+    "icon.add":           { "uv": [80, 176, 12, 12] },
+    "icon.delete":        { "uv": [96, 176, 12, 12] },
+    "icon.up":            { "uv": [112, 176, 12, 12] },
+    "icon.down":          { "uv": [128, 176, 12, 12] },
+    "icon.book":          { "uv": [144, 176, 12, 12] },
+    "icon.scrap":         { "uv": [160, 176, 12, 12] },
+    "icon.export":        { "uv": [176, 176, 12, 12] },
+    "icon.import":        { "uv": [192, 176, 12, 12] },
+    "icon.search":        { "uv": [208, 176, 12, 12] },
+    "icon.eye":           { "uv": [224, 176, 12, 12] },
+    "icon.page.text":           { "uv": [80, 192, 12, 12] },
+    "icon.page.spotlight":      { "uv": [96, 192, 12, 12] },
+    "icon.page.crafting":       { "uv": [112, 192, 12, 12] },
+    "icon.page.smelting":       { "uv": [128, 192, 12, 12] },
+    "icon.page.pattern":        { "uv": [144, 192, 12, 12] },
+    "icon.page.manual_pattern": { "uv": [160, 192, 12, 12] },
+    "icon.page.image":          { "uv": [176, 192, 12, 12] },
+    "icon.page.entity":         { "uv": [192, 192, 12, 12] },
+    "icon.page.link":           { "uv": [208, 192, 12, 12] },
+    "icon.page.empty":          { "uv": [224, 192, 12, 12] },
+    "icon.page.iota_display":   { "uv": [240, 192, 12, 12] }
+  },
+  "layout": {
+    "size": [396, 228],
+    "regions": {
+      "top_bar":     [10, 8, 376, 20],
+      "page_list":   [10, 32, 86, 164],
+      "form_panel":  [100, 32, 148, 164],
+      "paper_panel": [252, 32, 134, 164],
+      "footer_bar":  [10, 200, 376, 20]
+    }
+  },
+  "colors": {
+    "title": "FFF2E6FF",
+    "text": "FFEDE4FA",
+    "text_dim": "FF9E8EB8",
+    "paper_text": "FF2B2016",
+    "caret": "FF6B2FA0",
+    "selection": "558E44AD",
+    "button_text": "FFF6F0FF",
+    "button_text_disabled": "FF766B86",
+    "ok": "FF78E092",
+    "error": "FFEC6270"
+  }
+}

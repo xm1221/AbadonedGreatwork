@@ -67,6 +67,8 @@ object Abadoned_greatworkCreativeTabs : Abadoned_greatworkRegistrar<CreativeMode
         output.accept(Abadoned_greatworkItems.EYE_OF_LOCATING.value)
         output.accept(Abadoned_greatworkItems.EYE_OF_TRACKING.value)
         output.accept(Abadoned_greatworkItems.EYE_OF_WAYPOINT.value)
+        output.accept(Abadoned_greatworkItems.AMETHYST_PEN.value)
+        output.accept(Abadoned_greatworkItems.NOTE_SCRAP.value)
         // 预定义谜题（每谜题 × 3 变体）
         for (stack in TruthCrystalPuzzles.ALL) {
             output.accept(stack.copy())

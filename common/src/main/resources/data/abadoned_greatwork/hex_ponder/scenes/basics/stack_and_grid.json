@@ -12,8 +12,15 @@
   "clear_before": true,
   "start_dir": "NORTH_EAST",
   "triggers": {
-    "items": ["hexcasting:staff/oak", "hexcasting:staff/edified", "hexcasting:slate"],
-    "actions": ["hexcasting:get_caster", "hexcasting:entity_pos/eye"]
+    "items": [
+      "hexcasting:staff/oak",
+      "hexcasting:staff/edified",
+      "hexcasting:slate"
+    ],
+    "actions": [
+      "hexcasting:get_caster",
+      "hexcasting:entity_pos/eye"
+    ]
   },
   "knowledge_cards": [
     {
@@ -30,7 +37,10 @@
       "type": "execute",
       "chapter": "hexponder.scene.stack_and_grid.ch0",
       "action": "hexcasting:get_caster",
-      "origin": [-1, 2],
+      "origin": [
+        -1,
+        2
+      ],
       "callout": {
         "anchor": "stack",
         "anchor_index": 0,
@@ -41,7 +51,10 @@
     {
       "type": "execute",
       "action": "hexcasting:entity_pos/eye",
-      "origin": [-1, 1],
+      "origin": [
+        -1,
+        1
+      ],
       "callout": {
         "anchor": "stack",
         "anchor_index": 0,
@@ -53,7 +66,10 @@
       "type": "execute",
       "chapter": "hexponder.scene.stack_and_grid.ch1",
       "action": "hexcasting:get_caster",
-      "origin": [-1, 2],
+      "origin": [
+        -1,
+        2
+      ],
       "callout": {
         "anchor": "stack",
         "anchor_index": 0,
@@ -64,12 +80,18 @@
     {
       "type": "execute",
       "action": "hexcasting:get_entity_look",
-      "origin": [-1, 2]
+      "origin": [
+        -1,
+        2
+      ]
     },
     {
       "type": "execute",
       "action": "hexcasting:print",
-      "origin": [-1, 1],
+      "origin": [
+        -1,
+        1
+      ],
       "callout": {
         "anchor": "hud",
         "color": "#A875FF",

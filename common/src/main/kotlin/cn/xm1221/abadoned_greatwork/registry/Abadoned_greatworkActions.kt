@@ -6,6 +6,10 @@ import at.petrak.hexcasting.api.casting.math.HexDir
 import at.petrak.hexcasting.api.casting.math.HexPattern
 import at.petrak.hexcasting.common.lib.HexRegistries
 import at.petrak.hexcasting.common.lib.hex.HexActions
+import cn.xm1221.abadoned_greatwork.casting.actions.notes.OpNoteDelete
+import cn.xm1221.abadoned_greatwork.casting.actions.notes.OpNoteGet
+import cn.xm1221.abadoned_greatwork.casting.actions.notes.OpNoteImport
+import cn.xm1221.abadoned_greatwork.casting.actions.notes.OpNoteList
 import cn.xm1221.abadoned_greatwork.casting.actions.spells.OpCheck
 import cn.xm1221.abadoned_greatwork.casting.actions.spells.OpCurrentBiome
 import cn.xm1221.abadoned_greatwork.casting.actions.spells.OpLocate
@@ -28,6 +32,11 @@ object Abadoned_greatworkActions : Abadoned_greatworkRegistrar<ActionRegistryEnt
     val CURRENT_BIOME = make("current_biome", HexDir.NORTH_EAST,"qqqqeawa", OpCurrentBiome())
     val TRACKING_EYE = make("tracking_eye", HexDir.WEST,"qqqqaqwawawwwqded", OpTrackEye())
     val WAYPOINT_EYE = make("waypoint_eye", HexDir.WEST,"qqqqaqwawawwweddwaa", OpWaypointEye())
+
+    val NOTE_IMPORT = make("note/import", HexDir.NORTH_EAST, "aqwqqa", OpNoteImport())
+    val NOTE_LIST = make("note/list", HexDir.NORTH_EAST, "wwdewaq", OpNoteList())
+    val NOTE_GET = make("note/get", HexDir.NORTH_EAST, "wdea", OpNoteGet())
+    val NOTE_DELETE = make("note/delete", HexDir.NORTH_EAST, "dawdwa", OpNoteDelete())
 
     private fun make(name: String, startDir: HexDir, signature: String, action: Action) =
         make(name, startDir, signature) { action }
