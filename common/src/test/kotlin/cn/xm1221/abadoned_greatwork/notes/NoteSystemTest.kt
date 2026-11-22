@@ -1,5 +1,6 @@
 package cn.xm1221.abadoned_greatwork.notes
 
+import cn.xm1221.abadoned_greatwork.client.notes.screen.NoteBookTextPreview
 import net.minecraft.nbt.CompoundTag
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -50,6 +51,17 @@ class NoteSystemTest {
         )
         val badRes = NoteValidator.validateStructure(badLink, NoteValidator.Limits())
         assertTrue(badRes is NoteValidator.ValidationResult.Err)
+        assertEquals(0, (badRes as NoteValidator.ValidationResult.Err).pageIndex)
+
+        val secondPageErr = entityEntry.copy(
+            pages = listOf(
+                NotePage(type = NotePageType.TEXT, text = "Valid first page"),
+                NotePage(type = NotePageType.HEX_MANUAL_PATTERN, patterns = listOf(ManualPatternDef("EAST", "xyz_bad"))),
+            )
+        )
+        val secondRes = NoteValidator.validateStructure(secondPageErr, NoteValidator.Limits())
+        assertTrue(secondRes is NoteValidator.ValidationResult.Err)
+        assertEquals(1, (secondRes as NoteValidator.ValidationResult.Err).pageIndex)
     }
 
     @Test
@@ -103,6 +115,28 @@ class NoteSystemTest {
         )
         val res = NoteValidator.validateStructure(tooMany, NoteValidator.Limits(maxPagesPerEntry = 3))
         assertTrue(res is NoteValidator.ValidationResult.Err)
-        assertEquals("abadoned_greatwork.notes.error.too_many_pages", (res as NoteValidator.ValidationResult.Err).messageKey)
+        val err = res as NoteValidator.ValidationResult.Err
+        assertEquals("abadoned_greatwork.notes.error.too_many_pages", err.messageKey)
+        assertEquals(null, err.pageIndex)
+    }
+
+    @Test
+    fun `NoteBookTextPreview parses Patchouli macros and line breaks cleanly`() {
+        val raw = "Hello \$(thing)Hex/$ \$(l)Bold\$()!\$(br)Line 2\$(br2)Para 2"
+        val paras = NoteBookTextPreview.parseToParagraphs(raw)
+        assertEquals(4, paras.size)
+        assertEquals("Hello Hex Bold!", paras[0].string)
+        assertEquals("Line 2", paras[1].string)
+        assertEquals("", paras[2].string)
+        assertEquals("Para 2", paras[3].string)
+
+        val siblings = paras[0].siblings
+        val hexPart = siblings.first { it.string == "Hex" }
+        val boldPart = siblings.first { it.string == "Bold" }
+        val tailPart = siblings.last()
+        assertEquals(NoteBookTextPreview.UNIFORM_FONT_RL, hexPart.style.font)
+        assertEquals(0x8D6ACC, hexPart.style.color?.value)
+        assertTrue(boldPart.style.isBold)
+        assertEquals(0x2B1F16, tailPart.style.color?.value)
     }
 }

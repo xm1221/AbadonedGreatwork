@@ -22,6 +22,7 @@ object ClientNoteLibrary {
         private set
 
     private val listeners = mutableListOf<() -> Unit>()
+    private val resultListeners = mutableListOf<(Boolean, String, List<String>) -> Unit>()
 
     /** 由客户端初始化时注册：打开笔记库 / 残页预览（隔离 Screen 引用以保证专用服务器安全） */
     var openLibraryScreenHook: (() -> Unit)? = null
@@ -35,6 +36,14 @@ object ClientNoteLibrary {
         listeners.remove(listener)
     }
 
+    fun addResultListener(listener: (Boolean, String, List<String>) -> Unit) {
+        if (listener !in resultListeners) resultListeners.add(listener)
+    }
+
+    fun removeResultListener(listener: (Boolean, String, List<String>) -> Unit) {
+        resultListeners.remove(listener)
+    }
+
     fun applySync(newEntries: List<NoteEntry>, newExcludedActions: Collection<String>) {
         entries = newEntries
         excludedActions = newExcludedActions.toSet()
@@ -46,6 +55,7 @@ object ClientNoteLibrary {
         lastResultSuccess = success
         lastResultMessage = Component.translatable(messageKey, *args.toTypedArray())
         notifyListeners()
+        resultListeners.toList().forEach { it(success, messageKey, args) }
     }
 
     fun clearResult() {

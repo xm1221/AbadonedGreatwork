@@ -1,27 +1,29 @@
 # Texture-Driven GUI Skins (`gui_skins/`)
 
-All note GUI screens (`NoteLibraryScreen`, `NoteEditorScreen`, `NoteScrapPreviewScreen`) load their texture atlas, nine-slice margins, button states, region coordinates, and text colors from:
+All note GUI screens and modal dialogs load their texture atlas, 9-slice margins, state UVs, colors, and region coordinates from `assets/abadoned_greatwork/gui_skins/<name>.json`. Changes apply immediately on client resource reload (`F3+T`).
 
-- `assets/abadoned_greatwork/gui_skins/note_library.json`
-- `assets/abadoned_greatwork/gui_skins/note_editor.json`
-- `assets/abadoned_greatwork/gui_skins/note_preview.json`
+## Inheritance (`"extends"`)
 
-Changes take effect immediately on client resource reload (`F3+T`). If a sprite key or texture is missing, the renderer draws a magenta/black checkerboard and logs a single warning per missing sprite.
+- `note_common.json` defines the shared `512×256` pixel-art atlas (`textures/gui/notes/atlas.png`), all sprites, and the dark-leather + warm-parchment palette.
+- Screen skins (`note_library.json`, `note_editor.json`, `note_preview.json`, `note_modals.json`) set `"extends": "note_common"` and define their layout dimensions and region rectangles `[x, y, w, h]`.
 
-## Default Atlas Layout (`textures/gui/notes/atlas.png`, 256×256)
+## Default Atlas Map (`textures/gui/notes/atlas.png`, 512×256)
 
 | Sprite Key | UV `[u, v, w, h]` | Nine-Slice `[l, t, r, b]` | Purpose |
 |---|---:|---:|---|
-| `panel` | `[0, 0, 48, 48]` | `[8, 8, 8, 8]` | Outer window frame |
-| `sub_panel` | `[48, 0, 32, 32]` | `[4, 4, 4, 4]` | Recessed inner panels |
-| `page_paper` | `[80, 0, 140, 172]` | `[10, 10, 10, 10]` | Parchment page background |
-| `text_field` | `[0, 48, 48, 24]` | `[3, 3, 3, 3]` | Input field frame |
-| `list_item_normal` | `[48, 48, 24, 24]` | `[3, 3, 3, 3]` | Unselected list row |
-| `list_item_selected` | `[48, 72, 24, 24]` | `[3, 3, 3, 3]` | Selected / hovered list row |
-| `button` | `normal [0,80,48,16]`, `hover [0,96,48,16]`, `disabled [0,112,48,16]` | `[4, 4, 4, 4]` | Standard button |
-| `button_accent` | `normal [0,128,48,16]`, `hover [0,144,48,16]`, `disabled [0,160,48,16]` | `[4, 4, 4, 4]` | Primary action button |
-| `button_danger` | `normal [0,176,48,16]`, `hover [0,192,48,16]`, `disabled [0,208,48,16]` | `[4, 4, 4, 4]` | Destructive action button |
-| `tab` | `normal [48,104,16,16]`, `selected [48,120,16,16]` | `[3, 3, 3, 3]` | Toggle / tab state |
-| `scrollbar_track` / `scrollbar_thumb` | `[64,104,8,32]` / `[72,104,8,16]` | `[2, 2, 2, 2]` | List scrollbar |
-| `slot_frame` | `[0, 224, 32, 32]` | `[3, 3, 3, 3]` | Item / pattern preview box |
-| `icon.*` | 12×12 icons at `y=176` & `y=192` | — | Toolbar & page-type icons |
+| `book_cover` / `panel` | `[0, 0, 64, 64]` | `[10, 10, 10, 10]` | Dark amethyst leather book cover |
+| `book_page_left` | `[64, 0, 64, 64]` | `[10, 10, 10, 10]` | Left parchment page with inner spine fold |
+| `book_page_right` / `page_paper` | `[128, 0, 64, 64]` | `[10, 10, 10, 10]` | Right parchment page with inner spine fold |
+| `book_spine` | `[192, 0, 12, 64]` | `[2, 8, 2, 8]` | Stitched vertical book spine seam |
+| `modal_panel` | `[208, 0, 48, 48]` | `[8, 8, 8, 8]` | Elevated modal frame |
+| `sub_panel` / `paper_sub_panel` | `[0,64,32,32]` / `[32,64,32,32]` | `[4, 4, 4, 4]` | Recessed dark / parchment sub-panels |
+| `paper_slot` / `dark_slot` | `[64,64,24,24]` / `[88,64,24,24]` | `[3, 3, 3, 3]` | Item / pattern display slots |
+| `list_item_normal` / `list_item_selected` | `[112,64,24,24]` / `[136,64,24,24]` | `[3, 3, 3, 3]` | Scrollable list rows |
+| `scrollbar_track` / `scrollbar_thumb` | `[160,64,8,32]` / `[168,64,8,16]` | `[2, 2, 2, 2]` | Draggable scrollbar |
+| `card` | `normal [176,64,32,32]`, `hover [208,64,32,32]`, `selected [176,96,32,32]` | `[4, 4, 4, 4]` | Picker grid cards |
+| `dark_field` / `paper_field` | `normal y=96`, `focused y=112` (`48×16`) | `[3, 3, 3, 3]` | Dark & parchment text fields |
+| `button` / `button_accent` / `button_danger` | `x=0,48,96`, states at `y=128,144,160` | `[4, 4, 4, 4]` | Book chrome & modal buttons |
+| `paper_button` | `x=144`, states at `y=128,144,160,176` | `[4, 4, 4, 4]` | Parchment-toned page controls |
+| `page_tab` | `x=192`, `normal/selected/error` (`32×16`) | `[4, 4, 4, 4]` | Bottom page strip tabs |
+| `crafting_grid` / `smelting_frame` | `[256,0,104,58]` / `[368,0,86,56]` | — | Vanilla-density recipe backdrops |
+| `icon.*` / `icon.fmt.*` / `icon.page.*` | `12×12` icons at `y=128,144,160`, `x=256+` | — | Toolbar, format & page-type icons |

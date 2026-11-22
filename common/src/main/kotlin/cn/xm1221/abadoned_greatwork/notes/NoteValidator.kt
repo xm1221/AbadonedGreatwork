@@ -41,7 +41,11 @@ object NoteValidator {
 
     sealed class ValidationResult {
         data class Ok(val entry: NoteEntry) : ValidationResult()
-        data class Err(val messageKey: String, val args: List<String> = emptyList()) : ValidationResult()
+        data class Err(
+            val messageKey: String,
+            val args: List<String> = emptyList(),
+            val pageIndex: Int? = null,
+        ) : ValidationResult()
     }
 
     fun currentLimits(): Limits {
@@ -93,7 +97,7 @@ object NoteValidator {
         for ((index, page) in entry.pages.withIndex()) {
             val res = sanitizeAndValidatePageSyntax(page, index, limits)
             if (res is PageValidation.Err) {
-                return ValidationResult.Err(res.messageKey, res.args)
+                return ValidationResult.Err(res.messageKey, res.args, pageIndex = index)
             }
             cleanPages.add((res as PageValidation.Ok).page)
         }
@@ -144,19 +148,19 @@ object NoteValidator {
                     val itemStr = page.field("item")
                     val rl = ResourceLocation.tryParse(itemStr)
                     if (rl == null || !BuiltInRegistries.ITEM.containsKey(rl)) {
-                        return ValidationResult.Err("abadoned_greatwork.notes.error.bad_item", listOf(pageNum, itemStr))
+                        return ValidationResult.Err("abadoned_greatwork.notes.error.bad_item", listOf(pageNum, itemStr), pageIndex = index)
                     }
                 }
                 NotePageType.CRAFTING, NotePageType.SMELTING -> {
                     val r1 = ResourceLocation.tryParse(page.field("recipe"))
                     if (r1 == null || level.recipeManager.byKey(r1).isEmpty) {
-                        return ValidationResult.Err("abadoned_greatwork.notes.error.bad_recipe", listOf(pageNum, page.field("recipe")))
+                        return ValidationResult.Err("abadoned_greatwork.notes.error.bad_recipe", listOf(pageNum, page.field("recipe")), pageIndex = index)
                     }
                     val r2Str = page.field("recipe2")
                     if (r2Str.isNotEmpty()) {
                         val r2 = ResourceLocation.tryParse(r2Str)
                         if (r2 == null || level.recipeManager.byKey(r2).isEmpty) {
-                            return ValidationResult.Err("abadoned_greatwork.notes.error.bad_recipe", listOf(pageNum, r2Str))
+                            return ValidationResult.Err("abadoned_greatwork.notes.error.bad_recipe", listOf(pageNum, r2Str), pageIndex = index)
                         }
                     }
                 }
@@ -164,19 +168,19 @@ object NoteValidator {
                     val opStr = page.field("op_id")
                     val opId = ResourceLocation.tryParse(opStr)
                     if (opId == null || !HexActions.REGISTRY.containsKey(opId)) {
-                        return ValidationResult.Err("abadoned_greatwork.notes.error.bad_action", listOf(pageNum, opStr))
+                        return ValidationResult.Err("abadoned_greatwork.notes.error.bad_action", listOf(pageNum, opStr), pageIndex = index)
                     }
                     val key = ResourceKey.create(HexActions.REGISTRY.key(), opId)
                     val isPerWorld = perWorldTag.isPresent && perWorldTag.get().stream().anyMatch { it.`is`(key) }
                     if (isPerWorld) {
-                        return ValidationResult.Err("abadoned_greatwork.notes.error.per_world_forbidden", listOf(pageNum, opStr))
+                        return ValidationResult.Err("abadoned_greatwork.notes.error.per_world_forbidden", listOf(pageNum, opStr), pageIndex = index)
                     }
                 }
                 NotePageType.ENTITY -> {
                     val entStr = page.field("entity")
                     val rl = ResourceLocation.tryParse(entStr)
                     if (rl == null || !BuiltInRegistries.ENTITY_TYPE.containsKey(rl)) {
-                        return ValidationResult.Err("abadoned_greatwork.notes.error.bad_entity", listOf(pageNum, entStr))
+                        return ValidationResult.Err("abadoned_greatwork.notes.error.bad_entity", listOf(pageNum, entStr), pageIndex = index)
                     }
                 }
                 else -> {}

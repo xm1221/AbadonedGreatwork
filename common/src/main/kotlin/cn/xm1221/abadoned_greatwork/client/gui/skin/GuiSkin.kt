@@ -4,8 +4,11 @@ import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.util.FormattedCharSequence
 import java.util.concurrent.ConcurrentHashMap
 
 data class SkinRect(val x: Int, val y: Int, val w: Int, val h: Int)
@@ -25,6 +28,7 @@ data class SpriteDef(
 
 /**
  * 贴图驱动 GUI 皮肤定义：由资源包中的 `assets/abadoned_greatwork/gui_skins/<name>.json` 加载。
+ * 支持 `"extends"` 继承公共精灵、色板与局部区域覆盖。
  */
 data class GuiSkin(
     val name: String,
@@ -46,23 +50,24 @@ data class GuiSkin(
         fun emptyFallback(name: String): GuiSkin = GuiSkin(
             name = name,
             texture = Abadoned_greatwork.id("textures/gui/notes/atlas.png"),
-            texWidth = 256,
+            texWidth = 512,
             texHeight = 256,
             sprites = emptyMap(),
-            layoutWidth = 384,
-            layoutHeight = 236,
+            layoutWidth = 396,
+            layoutHeight = 230,
             regions = emptyMap(),
             colors = emptyMap(),
         )
 
-        fun fromJson(name: String, root: JsonObject): GuiSkin {
-            val texStr = root.get("texture")?.asString ?: "abadoned_greatwork:textures/gui/notes/atlas.png"
-            val texture = ResourceLocation.tryParse(texStr) ?: Abadoned_greatwork.id("textures/gui/notes/atlas.png")
-            val texSizeArr = root.getAsJsonArray("tex_size")
-            val texW = texSizeArr?.get(0)?.asInt ?: 256
-            val texH = texSizeArr?.get(1)?.asInt ?: 256
+        fun fromJson(name: String, root: JsonObject, parent: GuiSkin? = null): GuiSkin {
+            val base = parent ?: emptyFallback(name)
 
-            val sprites = mutableMapOf<String, SpriteDef>()
+            val texture = root.get("texture")?.asString?.let { ResourceLocation.tryParse(it) } ?: base.texture
+            val texSizeArr = root.getAsJsonArray("tex_size")
+            val texW = if (texSizeArr != null && texSizeArr.size() >= 2) texSizeArr[0].asInt else base.texWidth
+            val texH = if (texSizeArr != null && texSizeArr.size() >= 2) texSizeArr[1].asInt else base.texHeight
+
+            val sprites = base.sprites.toMutableMap()
             root.getAsJsonObject("sprites")?.entrySet()?.forEach { (k, v) ->
                 if (v.isJsonObject) {
                     val obj = v.asJsonObject
@@ -80,9 +85,9 @@ data class GuiSkin(
 
             val layoutObj = root.getAsJsonObject("layout")
             val sizeArr = layoutObj?.getAsJsonArray("size")
-            val layoutW = sizeArr?.get(0)?.asInt ?: 384
-            val layoutH = sizeArr?.get(1)?.asInt ?: 236
-            val regions = mutableMapOf<String, SkinRect>()
+            val layoutW = if (sizeArr != null && sizeArr.size() >= 2) sizeArr[0].asInt else base.layoutWidth
+            val layoutH = if (sizeArr != null && sizeArr.size() >= 2) sizeArr[1].asInt else base.layoutHeight
+            val regions = base.regions.toMutableMap()
             layoutObj?.getAsJsonObject("regions")?.entrySet()?.forEach { (rk, rv) ->
                 if (rv.isJsonArray && rv.asJsonArray.size() >= 4) {
                     val a = rv.asJsonArray
@@ -90,7 +95,7 @@ data class GuiSkin(
                 }
             }
 
-            val colors = mutableMapOf<String, Int>()
+            val colors = base.colors.toMutableMap()
             root.getAsJsonObject("colors")?.entrySet()?.forEach { (ck, cv) ->
                 if (cv.isJsonPrimitive) {
                     parseHexColor(cv.asString)?.let { colors[ck] = it }
@@ -99,6 +104,19 @@ data class GuiSkin(
 
             return GuiSkin(name, texture, texW, texH, sprites, layoutW, layoutH, regions, colors)
         }
+
+        /** 将子皮肤叠加到基础皮肤上（子皮肤提供同名 key 时覆盖父级） */
+        fun merge(base: GuiSkin, overlay: GuiSkin): GuiSkin = GuiSkin(
+            name = overlay.name,
+            texture = overlay.texture,
+            texWidth = overlay.texWidth,
+            texHeight = overlay.texHeight,
+            sprites = base.sprites + overlay.sprites,
+            layoutWidth = overlay.layoutWidth,
+            layoutHeight = overlay.layoutHeight,
+            regions = base.regions + overlay.regions,
+            colors = base.colors + overlay.colors,
+        )
 
         private fun parseUv(arr: JsonArray?): UvRect? {
             if (arr == null || arr.size() < 4) return null
@@ -110,7 +128,7 @@ data class GuiSkin(
             return NineSlice(arr[0].asInt, arr[1].asInt, arr[2].asInt, arr[3].asInt)
         }
 
-        private fun parseHexColor(raw: String): Int? {
+        fun parseHexColor(raw: String): Int? {
             val hex = raw.trim().removePrefix("#")
             return runCatching {
                 when (hex.length) {
@@ -171,6 +189,28 @@ object SkinRenderer {
         }
     }
 
+    fun drawDashedHLine(g: GuiGraphics, x: Int, y: Int, w: Int, color: Int, dash: Int = 3, gap: Int = 2) {
+        var cx = x
+        val endX = x + w
+        while (cx < endX) {
+            val seg = minOf(dash, endX - cx)
+            g.fill(cx, y, cx + seg, y + 1, color)
+            cx += dash + gap
+        }
+    }
+
+    fun drawCenteredNoShadow(g: GuiGraphics, font: Font, text: String, centerX: Int, y: Int, color: Int) {
+        g.drawString(font, text, centerX - font.width(text) / 2, y, color, false)
+    }
+
+    fun drawCenteredNoShadow(g: GuiGraphics, font: Font, text: Component, centerX: Int, y: Int, color: Int) {
+        g.drawString(font, text, centerX - font.width(text) / 2, y, color, false)
+    }
+
+    fun drawCenteredNoShadow(g: GuiGraphics, font: Font, text: FormattedCharSequence, centerX: Int, y: Int, color: Int) {
+        g.drawString(font, text, centerX - font.width(text) / 2, y, color, false)
+    }
+
     private fun drawNineSlice(
         g: GuiGraphics,
         tex: ResourceLocation,
@@ -212,17 +252,14 @@ object SkinRenderer {
             g.blit(tex, px, py, pw, ph, su.toFloat(), sv.toFloat(), sw, sh, texW, texH)
         }
 
-        // Corners
         blitPart(x0, y0, l, t, u0, v0, l, t)
         blitPart(x2, y0, r, t, u2, v0, r, t)
         blitPart(x0, y2, l, b, u0, v2, l, b)
         blitPart(x2, y2, r, b, u2, v2, r, b)
-        // Edges
         blitPart(x1, y0, dMidW, t, u1, v0, sMidW, t)
         blitPart(x1, y2, dMidW, b, u1, v2, sMidW, b)
         blitPart(x0, y1, l, dMidH, u0, v1, l, sMidH)
         blitPart(x2, y1, r, dMidH, u2, v1, r, sMidH)
-        // Center
         blitPart(x1, y1, dMidW, dMidH, u1, v1, sMidW, sMidH)
     }
 
