@@ -1,0 +1,162 @@
+{
+  "id": "abadoned_greatwork:staff_and_stack",
+  "title": "hexponder.scene.staff_and_stack.title",
+  "subtitle": "hexponder.scene.staff_and_stack.subtitle",
+  "category": "basics",
+  "sort_order": 0,
+  "icon": "hexcasting:staff/oak",
+  "cursor_item": "hexcasting:staff/oak",
+  "requires_mod": "",
+  "hex_size": 22,
+  "interval": 52,
+  "stroke_ticks": 16,
+  "clear_before": true,
+  "start_dir": "NORTH_EAST",
+  "triggers": {
+    "items": ["hexcasting:staff/oak"],
+    "actions": [
+      "hexcasting:get_caster",
+      "hexcasting:entity_pos/eye",
+      "hexcasting:get_entity_look",
+      "hexcasting:raycast"
+    ]
+  },
+  "knowledge_cards": [
+    {
+      "title": "hexponder.scene.staff_and_stack.k0.title",
+      "body": "hexponder.scene.staff_and_stack.k0.body"
+    },
+    {
+      "title": "hexponder.scene.staff_and_stack.k1.title",
+      "body": "hexponder.scene.staff_and_stack.k1.body",
+      "inline_iotas": [
+        "pattern:hexcasting:get_caster",
+        "pattern:hexcasting:entity_pos/eye",
+        "pattern:hexcasting:get_entity_look",
+        "pattern:hexcasting:raycast"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "type": "note",
+      "chapter": "hexponder.scene.staff_and_stack.ch0",
+      "hold_ticks": 55,
+      "callout": {
+        "anchor": "canvas",
+        "color": "#64C8FF",
+        "text": "hexponder.scene.staff_and_stack.s0.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "note",
+      "chapter": "hexponder.scene.staff_and_stack.ch0",
+      "hold_ticks": 55,
+      "callout": {
+        "anchor": "canvas",
+        "color": "#64C8FF",
+        "text": "hexponder.scene.staff_and_stack.s1.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "note",
+      "chapter": "hexponder.scene.staff_and_stack.ch0",
+      "hold_ticks": 60,
+      "callout": {
+        "anchor": "stack",
+        "color": "#7385DE",
+        "text": "hexponder.scene.staff_and_stack.s2.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "note",
+      "chapter": "hexponder.scene.staff_and_stack.ch0",
+      "hold_ticks": 60,
+      "callout": {
+        "anchor": "stack",
+        "color": "#7385DE",
+        "text": "hexponder.scene.staff_and_stack.s3.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "note",
+      "chapter": "hexponder.scene.staff_and_stack.ch0",
+      "hold_ticks": 60,
+      "callout": {
+        "anchor": "canvas",
+        "color": "#FECBE6",
+        "text": "hexponder.scene.staff_and_stack.s4.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.staff_and_stack.ch1",
+      "action": "hexcasting:get_caster",
+      "origin": [0, 0],
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#64C8FF",
+        "text": "hexponder.scene.staff_and_stack.s5.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.staff_and_stack.ch1",
+      "action": "hexcasting:entity_pos/eye",
+      "origin": [0, 0],
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#7385DE",
+        "text": "hexponder.scene.staff_and_stack.s6.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.staff_and_stack.ch2",
+      "action": "hexcasting:get_caster",
+      "origin": [-1, 0],
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#64C8FF",
+        "text": "hexponder.scene.staff_and_stack.s7.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.staff_and_stack.ch2",
+      "action": "hexcasting:get_entity_look",
+      "origin": [0, 0],
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#7385DE",
+        "text": "hexponder.scene.staff_and_stack.s8.tip",
+        "pause": false
+      }
+    },
+    {
+      "type": "execute",
+      "chapter": "hexponder.scene.staff_and_stack.ch3",
+      "action": "hexcasting:raycast",
+      "origin": [0, 0],
+      "callout": {
+        "anchor": "stack",
+        "anchor_index": 0,
+        "color": "#FECBE6",
+        "text": "hexponder.scene.staff_and_stack.s9.tip",
+        "pause": false
+      }
+    }
+  ]
+}

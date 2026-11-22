@@ -179,6 +179,11 @@ object UserNoteBookInjector {
         val mc = Minecraft.getInstance()
         val book = BookRegistry.INSTANCE.books[HEXBOOK_ID] ?: return
         refreshBookIfNeeded()
+        if (book.contents.currentGui is PreviewBookEntryScreen) {
+            book.contents.currentGui = null
+        }
+        book.contents.guiStack.removeIf { it is PreviewBookEntryScreen }
+
         val targetId = Abadoned_greatwork.id(NoteEntry.entryResourcePath(entryId))
         if (book.contents.entries.containsKey(targetId)) {
             ClientBookRegistry.INSTANCE.displayBookGui(HEXBOOK_ID, targetId, page)
@@ -212,24 +217,48 @@ object UserNoteBookInjector {
         )
         draft.build(level, builder)
         val spread = (pageIndex.coerceAtLeast(0)) / 2
-        mc.setScreen(PreviewBookEntryScreen(book, draft, spread, returnScreen))
+        val prevGui = book.contents.currentGui?.takeUnless { it is PreviewBookEntryScreen }
+        mc.setScreen(PreviewBookEntryScreen(book, draft, spread, returnScreen, prevGui))
     }
 
     /**
-     * 预览专用 `GuiBookEntry` 子类：关闭时返回编辑器/预览界面，且不污染已读历史记录。
+     * 预览专用 `GuiBookEntry` 子类：关闭时返回编辑器/预览界面，绝不覆盖 `book.contents.currentGui` / `guiStack` 或污染已读历史记录。
      */
     private class PreviewBookEntryScreen(
         book: Book,
         entry: BookEntry,
         spread: Int,
         private val returnScreen: Screen,
+        private val previousCurrentGui: GuiBook?,
     ) : GuiBookEntry(book, entry, spread) {
+
+        private fun restoreBookState() {
+            if (book.contents.currentGui === this || book.contents.currentGui is PreviewBookEntryScreen) {
+                book.contents.currentGui = previousCurrentGui
+            }
+            book.contents.guiStack.removeIf { it === this || it is PreviewBookEntryScreen }
+        }
+
+        override fun init() {
+            super.init()
+            restoreBookState()
+        }
+
+        override fun shouldAddAddBookmarkButton(): Boolean = false
+
+        override fun canSeeBackButton(): Boolean = false
 
         override fun onFirstOpened() {
             // 草稿预览不写入 PersistentData 历史与已读状态
         }
 
+        override fun removed() {
+            restoreBookState()
+            super.removed()
+        }
+
         override fun onClose() {
+            restoreBookState()
             Minecraft.getInstance().setScreen(returnScreen)
         }
     }
