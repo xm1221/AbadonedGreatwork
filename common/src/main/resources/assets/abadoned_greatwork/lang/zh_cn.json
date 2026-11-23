@@ -199,8 +199,8 @@
   "hexponder.index.unnamed_pattern": "未知图案",
   "hexponder.index.clear_filter": "清除",
   "hexponder.category.all": "全部",
-  "hexponder.category.basics": "基础",
-  "hexponder.category.basics.desc": "栈、网格、iota 与事故。",
+  "hexponder.category.basics": "一、基础知识与基本操作",
+  "hexponder.category.basics.desc": "认识咒术网格、思维栈、法杖操作与基础信息流转。",
   "hexponder.category.control_flow": "元求值",
   "hexponder.category.control_flow.desc": "考察、括号、分支、循环与续延。",
   "hexponder.category.spells": "法术",
@@ -385,7 +385,6 @@
   "command.abadoned_greatwork.ponder.unlocked_all": "已解锁全部问天章节",
   "command.abadoned_greatwork.ponder.locked": "已锁定问天章节：%s",
   "command.abadoned_greatwork.ponder.reset_locks": "已重置当前玩家的问天章节解锁状态",
-
   "item.abadoned_greatwork.amethyst_pen": "紫水晶笔",
   "item.abadoned_greatwork.note_scrap": "笔记残页",
   "hexcasting.iota.abadoned_greatwork:note": "笔记",
@@ -395,7 +394,6 @@
   "hexcasting.action.abadoned_greatwork:note/list": "维纳斯之精思",
   "hexcasting.action.abadoned_greatwork:note/get": "墨丘利之纯化",
   "hexcasting.action.abadoned_greatwork:note/delete": "删除条目",
-
   "text.autoconfig.abadoned_greatwork.option.server.maxEntriesPerPlayer": "单玩家笔记条目上限",
   "text.autoconfig.abadoned_greatwork.option.server.maxEntriesPerPlayer.@Tooltip": "每位玩家在存档中最多保存的自定义手册条目数量。",
   "text.autoconfig.abadoned_greatwork.option.server.maxPagesPerEntry": "单条笔记最大页数",
@@ -406,7 +404,6 @@
   "text.autoconfig.abadoned_greatwork.option.server.allowExternalLinks.@Tooltip": "是否允许玩家条目中使用 patchouli:link 外部网页链接页。",
   "text.autoconfig.abadoned_greatwork.option.server.paperPerPage": "残页每页消耗纸数",
   "text.autoconfig.abadoned_greatwork.option.server.paperPerPage.@Tooltip": "将笔记条目写入笔记残页时，每页书页消耗的纸张数量。",
-
   "abadoned_greatwork.category.player_notes": "玩家笔记",
   "abadoned_greatwork.category.player_notes.desc": "用紫水晶笔撰写并收录进《咒术笔记》的自定义条目。",
   "abadoned_greatwork.entry.player_notes.guide": "紫水晶笔与玩家笔记",
@@ -418,7 +415,6 @@
   "abadoned_greatwork.page.player_notes.guide.note_get": "接受一个从 0 开始的索引，返回对应的$(thing)笔记/$ iota。",
   "abadoned_greatwork.page.player_notes.guide.note_import": "接受单个$(thing)笔记/$ iota 或其列表，校验后收录进个人笔记库。",
   "abadoned_greatwork.page.player_notes.guide.note_delete": "按从 0 开始的索引删除对应笔记条目。",
-
   "abadoned_greatwork.notes.library_title": "个人笔记库",
   "abadoned_greatwork.notes.editor_title": "手册条目编辑器",
   "abadoned_greatwork.notes.scrap_preview_title": "笔记残页预览",
@@ -449,7 +445,6 @@
   "abadoned_greatwork.notes.exported": "已导出为 %s",
   "abadoned_greatwork.notes.page_build_error.title": "书页无法显示",
   "abadoned_greatwork.notes.page_build_error": "第 %s 页加载失败：%s",
-
   "abadoned_greatwork.notes.btn.new": "新建",
   "abadoned_greatwork.notes.btn.edit": "编辑",
   "abadoned_greatwork.notes.btn.open_book": "手册",
@@ -472,7 +467,6 @@
   "abadoned_greatwork.notes.btn.pop_iota": "移除末项",
   "abadoned_greatwork.notes.btn.clear_iotas": "清空",
   "abadoned_greatwork.notes.btn.import_scrap": "收录到我的笔记",
-
   "abadoned_greatwork.notes.field.icon": "图标",
   "abadoned_greatwork.notes.field.color": "颜色",
   "abadoned_greatwork.notes.field.page_title": "页标题（可选）",
@@ -495,7 +489,6 @@
   "abadoned_greatwork.notes.field.link_text": "按钮文本",
   "abadoned_greatwork.notes.field.draw_filler": "绘制空白装饰纹",
   "abadoned_greatwork.notes.field.snbt_paste": "粘贴序列化 Iota SNBT",
-
   "abadoned_greatwork.notes.page_type.text": "文本页",
   "abadoned_greatwork.notes.page_type.spotlight": "物品聚焦",
   "abadoned_greatwork.notes.page_type.crafting": "工作台配方",
@@ -507,11 +500,9 @@
   "abadoned_greatwork.notes.page_type.link": "外链页",
   "abadoned_greatwork.notes.page_type.empty": "空白页",
   "abadoned_greatwork.notes.page_type.iota_display": "Iota 展示页",
-
   "abadoned_greatwork.notes.status.saved": "笔记已保存",
   "abadoned_greatwork.notes.status.deleted": "笔记已删除",
   "abadoned_greatwork.notes.status.wrote_scrap": "已写入笔记残页（消耗 %s 张纸）",
-
   "abadoned_greatwork.notes.error.need_pen": "需要背包中有紫水晶笔！",
   "abadoned_greatwork.notes.error.need_paper": "纸张不足：需要 %s 张，当前拥有 %s 张",
   "abadoned_greatwork.notes.error.invalid_data": "笔记数据格式无效。",
@@ -535,14 +526,12 @@
   "abadoned_greatwork.notes.error.bad_entity": "第 %s 页：无效实体 ID「%s」",
   "abadoned_greatwork.notes.error.links_disabled": "第 %s 页：服务端已禁用外部链接页",
   "abadoned_greatwork.notes.error.bad_url": "第 %s 页：网址必须以 http:// 或 https:// 开头",
-
   "abadoned_greatwork.notes.untitled": "未命名",
   "abadoned_greatwork.notes.search_hint": "搜索…",
   "abadoned_greatwork.notes.state.on": "开",
   "abadoned_greatwork.notes.state.off": "关",
   "abadoned_greatwork.notes.field.title": "标题",
   "abadoned_greatwork.notes.page_overflow": "超页",
-
   "abadoned_greatwork.notes.library.title": "笔记库",
   "abadoned_greatwork.notes.library.empty": "暂无笔记",
   "abadoned_greatwork.notes.library.select_hint": "请选择左侧笔记",
@@ -550,10 +539,8 @@
   "abadoned_greatwork.notes.library.meta_author": "%s · %s页",
   "abadoned_greatwork.notes.library.meta_pages": "%s页",
   "abadoned_greatwork.notes.library.no_snippet": "暂无正文",
-
   "abadoned_greatwork.notes.scrap.preview_title": "笔记残页",
   "abadoned_greatwork.notes.scrap.meta": "%s · %s页",
-
   "abadoned_greatwork.notes.editor.title": "笔记编辑器",
   "abadoned_greatwork.notes.editor.title_hint": "标题…",
   "abadoned_greatwork.notes.editor.meta_tip": "图标与颜色",
@@ -564,7 +551,6 @@
   "abadoned_greatwork.notes.editor.clean_status": "%s/%s",
   "abadoned_greatwork.notes.editor.size_warn": "体积过大：%s/%s KB",
   "abadoned_greatwork.notes.editor.err_jump": "%s [第%s页]",
-
   "abadoned_greatwork.notes.btn.saving": "保存中…",
   "abadoned_greatwork.notes.btn.confirm": "确认",
   "abadoned_greatwork.notes.btn.add": "添加",
@@ -581,17 +567,14 @@
   "abadoned_greatwork.notes.btn.write_scrap_cost": "抄录 (%s/%s 纸)",
   "abadoned_greatwork.notes.btn.text_preview_view": "预览",
   "abadoned_greatwork.notes.btn.text_preview_tip": "切换编辑/排版预览",
-
   "abadoned_greatwork.notes.notice.imported": "已导入：%s",
   "abadoned_greatwork.notes.notice.exported": "已导出：%s",
-
   "abadoned_greatwork.notes.fmt.bold_tip": "粗体",
   "abadoned_greatwork.notes.fmt.italic_tip": "斜体",
   "abadoned_greatwork.notes.fmt.thing_tip": "概念高亮",
   "abadoned_greatwork.notes.fmt.item_tip": "物品高亮",
   "abadoned_greatwork.notes.fmt.br_tip": "换行",
   "abadoned_greatwork.notes.fmt.clear_tip": "重置样式",
-
   "abadoned_greatwork.notes.canvas.type_btn": "%s",
   "abadoned_greatwork.notes.canvas.heading": "页标题",
   "abadoned_greatwork.notes.canvas.heading_hint": "页眉（可选）",
@@ -625,7 +608,6 @@
   "abadoned_greatwork.notes.canvas.empty_tip": "空白间隔页",
   "abadoned_greatwork.notes.canvas.iota_empty": "无 iota",
   "abadoned_greatwork.notes.canvas.paste_iota": "粘贴 SNBT…",
-
   "abadoned_greatwork.notes.picker.page_type": "书页类型",
   "abadoned_greatwork.notes.picker.item": "选择物品",
   "abadoned_greatwork.notes.picker.recipe": "选择配方",
@@ -635,7 +617,6 @@
   "abadoned_greatwork.notes.picker.json_import": "导入 JSON",
   "abadoned_greatwork.notes.picker.tab_all": "全部",
   "abadoned_greatwork.notes.picker.tab_inv": "背包",
-
   "abadoned_greatwork.notes.page_type.desc.text": "纯文本排版页",
   "abadoned_greatwork.notes.page_type.desc.spotlight": "物品展示 + 正文",
   "abadoned_greatwork.notes.page_type.desc.crafting": "工作台配方预览",
@@ -647,17 +628,14 @@
   "abadoned_greatwork.notes.page_type.desc.link": "网页链接按钮",
   "abadoned_greatwork.notes.page_type.desc.empty": "空白间隔页",
   "abadoned_greatwork.notes.page_type.desc.iota_display": "序列化 iota 展示",
-
   "abadoned_greatwork.notes.meta.title": "笔记外观",
   "abadoned_greatwork.notes.meta.icon": "图标",
   "abadoned_greatwork.notes.meta.color": "颜色",
   "abadoned_greatwork.notes.meta.hex_hint": "色值",
-
   "abadoned_greatwork.notes.draw.title": "绘制图案",
   "abadoned_greatwork.notes.draw.clear": "清空",
   "abadoned_greatwork.notes.draw.hint": "拖动格点绘制图案",
   "abadoned_greatwork.notes.draw.captured": "%s · %s",
-
   "abadoned_greatwork.notes.modal.discard.title": "未保存修改",
   "abadoned_greatwork.notes.modal.discard.body": "是否保存修改？",
   "abadoned_greatwork.notes.modal.delete.title": "删除笔记",
@@ -667,55 +645,40 @@
   "abadoned_greatwork.notes.modal.snbt.hint": "标签预览",
   "abadoned_greatwork.notes.modal.snbt.invalid": "SNBT 无效",
   "abadoned_greatwork.notes.modal.snbt.unknown_type": "未知 hexcasting:type",
-
-  "hexponder.category.basics": "一、基础知识与基本操作",
-  "hexponder.category.basics.desc": "认识咒术网格、思维栈、法杖操作与基础信息流转。",
-
   "hexponder.scene.staff_and_stack.title": "如何使用法杖",
   "hexponder.scene.staff_and_stack.subtitle": "咒术网格、思维栈、Iota 与法杖基本操作",
-
   "hexponder.scene.staff_and_stack.ch0": "① 引入：网格与思维栈",
   "hexponder.scene.staff_and_stack.ch1": "② 简单操作：获取眼部坐标",
   "hexponder.scene.staff_and_stack.ch2": "② 简单操作：栈的叠放与取用",
   "hexponder.scene.staff_and_stack.ch3": "② 简单操作：多参数移除顺序",
-
   "hexponder.scene.staff_and_stack.s0.tip": "合成出法杖，手持对空右键，可以打开咒术网格。",
   "hexponder.scene.staff_and_stack.s1.tip": "在网格中按住并移动光标以绘制图案，松开以完成绘制，图案会被执行。",
   "hexponder.scene.staff_and_stack.s2.tip": "不同图案有不同效果：大部分作用于左侧的「思维栈」，少部分作用于物质世界。",
   "hexponder.scene.staff_and_stack.s3.tip": "思维栈是储存 Iota 的地方；Iota 即信息与数据，是世间万物的真名与索引。",
   "hexponder.scene.staff_and_stack.s4.tip": "借由图案获取信息、处理信息、依信息执行操作并在物理世界中创造奇迹，便是咒法学。",
-
   "hexponder.scene.staff_and_stack.s5.tip": "绘制「意识之精思」，将象征施法者自身的实体 Iota 放入栈中。",
   "hexponder.scene.staff_and_stack.s6.tip": "绘制「指南针之纯化」，移除实体 Iota 并以向量 Iota 放入眼睛部位的坐标。",
   "hexponder.scene.staff_and_stack.s7.tip": "再次绘制「意识之精思」：后入栈的 Iota 会被放在先入栈的 Iota 上方。",
   "hexponder.scene.staff_and_stack.s8.tip": "绘制「照准仪之纯化」：需要移除 Iota 时，在上方的 Iota 先被移除（转为视线方向）。",
   "hexponder.scene.staff_and_stack.s9.tip": "绘制「弓箭手之馏化」：移除多个 Iota 时按「从下到上」依次读取，正对应笔记中的「从左至右」。",
-
   "hexponder.scene.staff_and_stack.k0.title": "法杖持久栈与清栈操作",
   "hexponder.scene.staff_and_stack.k0.body": "法杖是咒法师最核心的施法媒介：普通右键打开网格时，思维栈会保留上次施法留下的全部 Iota；若想清空残栈从头开始，只需「潜行 + 右键」打开网格即可。",
-
   "hexponder.scene.staff_and_stack.k1.title": "出栈方向：自下而上 = 从左至右",
   "hexponder.scene.staff_and_stack.k1.body": "单参数操作（如 照准仪之纯化）总是移除最上方的栈顶；多参数操作（如 弓箭手之馏化：向量, 向量 → 向量）先决定移除几个，在被移除的 Iota 中按「自下而上」排列，恰好对应《咒术笔记》签名里的「从左至右」。",
-
-  "hexponder.scene.spells_and_mishaps.title": "2. 改写世界：法术、媒质与事故",
+  "hexponder.scene.spells_and_mishaps.title": "法术、媒质与事故",
   "hexponder.scene.spells_and_mishaps.subtitle": "将栈中的坐标化为现实干涉，并学会应对自然的反噬",
-
+  "hexponder.scene.spells_and_mishaps.k0.title": "媒质与贪婪的自然",
+  "hexponder.scene.spells_and_mishaps.k0.body": "任何作用于物质世界的法术都需要支付媒质，默认按背包里的「紫水晶粉（1 粉）→ 紫水晶碎片（5 粉）→ 充能紫水晶（10 粉）」顺序抽取。注意：若背包里只有整颗充能紫水晶，施放仅需 1 粉的小法术也会吞掉整颗水晶且不找零，随身准备大量小份媒质最为稳妥。",
+  "hexponder.scene.spells_and_mishaps.k1.title": "为什么点亮光源要先加面法向量？",
+  "hexponder.scene.spells_and_mishaps.k1.body": "弓箭手之馏化返回的是「被击中固体方块」的内部坐标；若直接在此处构筑方块或光源，会因空间已被占据而触发事故。配合 建筑师之馏化 取得垂直于表面的单位法向量并相加，便能精准定位紧贴该面的那一格空气。",
+  "hexponder.scene.spells_and_mishaps.k2.title": "事故（Mishap）与栈顶垃圾",
+  "hexponder.scene.spells_and_mishaps.k2.body": "当栈中 Iota 数量不足、类型不符或目标超出影响范围时，图案绘制会泛红并触发事故：当前施法立刻中断，出错位置被替换为「垃圾」Iota。无需慌张——用 簿记员之策略（单笔向下折线 v）弹出垃圾，或潜行右键重新打开法杖即可。",
   "hexponder.scene.spells_and_mishaps.ch0": "① 施放第一道法术",
-  "hexponder.scene.spells_and_mishaps.ch1": "② 事故与善后",
-
   "hexponder.scene.spells_and_mishaps.s0.tip": "假设「弓箭手之馏化」已将目标方块坐标 (12, 64, -8) 留在栈中。",
   "hexponder.scene.spells_and_mishaps.s1.tip": "再用「建筑师之馏化」获取视线命中面的法向量 (0, 1, 0)，指向方块上方的空气。",
   "hexponder.scene.spells_and_mishaps.s2.tip": "绘制「加法之馏化」将两向量相加，得到目标方块紧邻空气格的坐标 (12, 65, -8)。",
-  "hexponder.scene.spells_and_mishaps.s3.tip": "绘制「构筑光源」：消耗栈顶坐标与少量媒质，在真实世界中点亮一盏永久微光！",
+  "hexponder.scene.spells_and_mishaps.s3.tip": "绘制「构筑光源」：消耗栈顶坐标与少量媒质，在物质世界中召唤光源！“要有光”",
+  "hexponder.scene.spells_and_mishaps.ch1": "② 事故与善后",
   "hexponder.scene.spells_and_mishaps.s4.tip": "若在空栈上强行绘制「指南针之纯化」，自然会降下「Iota 过少」事故，并在栈底塞入垃圾。",
-  "hexponder.scene.spells_and_mishaps.s5.tip": "绘制向下的「簿记员之策略」（v），即可随手抹去栈顶无用的垃圾 Iota。",
-
-  "hexponder.scene.spells_and_mishaps.k0.title": "媒质与「找零陷阱」",
-  "hexponder.scene.spells_and_mishaps.k0.body": "任何作用于物质世界的法术都需要支付媒质，默认按背包里的「紫水晶粉（1 粉）→ 紫水晶碎片（5 粉）→ 充能紫水晶（10 粉）」顺序抽取。注意：若背包里只有整颗充能紫水晶，施放仅需 1 粉的小法术也会吞掉整颗水晶且不找零，随身备一组紫水晶粉最为稳妥。",
-
-  "hexponder.scene.spells_and_mishaps.k1.title": "为什么点亮光源要先加面法向量？",
-  "hexponder.scene.spells_and_mishaps.k1.body": "弓箭手之馏化返回的是「被击中固体方块」的内部坐标；若直接在此处构筑方块或光源，会因空间已被占据而触发事故。配合 建筑师之馏化 取得垂直于表面的单位法向量并相加，便能精准定位紧贴该面的那一格空气。",
-
-  "hexponder.scene.spells_and_mishaps.k2.title": "事故（Mishap）与栈顶垃圾",
-  "hexponder.scene.spells_and_mishaps.k2.body": "当栈中 Iota 数量不足、类型不符或目标超出影响范围时，图案绘制会泛红并触发事故：当前施法立刻中断，出错位置被替换为「垃圾」Iota。无需慌张——用 簿记员之策略（单笔向下折线 v）弹出垃圾，或潜行右键重新打开法杖即可。"
+  "hexponder.scene.spells_and_mishaps.s5.tip": "绘制向下的「簿记员之策略」（v），即可随手抹去栈顶无用的垃圾 Iota。"
 }

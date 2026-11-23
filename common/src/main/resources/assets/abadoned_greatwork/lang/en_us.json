@@ -199,8 +199,8 @@
   "hexponder.index.unnamed_pattern": "Unknown Pattern",
   "hexponder.index.clear_filter": "Clear",
   "hexponder.category.all": "All",
-  "hexponder.category.basics": "Basics",
-  "hexponder.category.basics.desc": "Stack, grid, iotas, and mishaps.",
+  "hexponder.category.basics": "I. Fundamentals & Basic Controls",
+  "hexponder.category.basics.desc": "Learn the Hex Grid, the Stack, Staff controls, and basic iota flow.",
   "hexponder.category.control_flow": "Meta-Eval",
   "hexponder.category.control_flow.desc": "Escaping, parens, branching, loops, and continuations.",
   "hexponder.category.spells": "Spells",
@@ -385,7 +385,6 @@
   "command.abadoned_greatwork.ponder.unlocked_all": "Unlocked all Tianwen chapters",
   "command.abadoned_greatwork.ponder.locked": "Locked Tianwen chapter: %s",
   "command.abadoned_greatwork.ponder.reset_locks": "Reset Tianwen unlock progress for current player",
-
   "item.abadoned_greatwork.amethyst_pen": "Amethyst Pen",
   "item.abadoned_greatwork.note_scrap": "Note Scrap",
   "hexcasting.iota.abadoned_greatwork:note": "Note",
@@ -395,7 +394,6 @@
   "hexcasting.action.abadoned_greatwork:note/list": "Venus' Reflection",
   "hexcasting.action.abadoned_greatwork:note/get": "Mercury's Purification",
   "hexcasting.action.abadoned_greatwork:note/delete": "Delete Note",
-
   "text.autoconfig.abadoned_greatwork.option.server.maxEntriesPerPlayer": "Max Notes per Player",
   "text.autoconfig.abadoned_greatwork.option.server.maxEntriesPerPlayer.@Tooltip": "Maximum number of custom guide entries stored per player.",
   "text.autoconfig.abadoned_greatwork.option.server.maxPagesPerEntry": "Max Pages per Note",
@@ -406,7 +404,6 @@
   "text.autoconfig.abadoned_greatwork.option.server.allowExternalLinks.@Tooltip": "Whether player notes may include patchouli:link web link pages.",
   "text.autoconfig.abadoned_greatwork.option.server.paperPerPage": "Paper Cost per Scrap Page",
   "text.autoconfig.abadoned_greatwork.option.server.paperPerPage.@Tooltip": "Number of paper items consumed per page when writing a note to a Note Scrap.",
-
   "abadoned_greatwork.category.player_notes": "Player Notes",
   "abadoned_greatwork.category.player_notes.desc": "Custom multi-page entries written and shared with the Amethyst Pen.",
   "abadoned_greatwork.entry.player_notes.guide": "Amethyst Pen & Notes",
@@ -418,7 +415,6 @@
   "abadoned_greatwork.page.player_notes.guide.note_get": "Takes a zero-based index and returns the corresponding $(thing)Note/$ iota.",
   "abadoned_greatwork.page.player_notes.guide.note_import": "Imports a $(thing)Note/$ iota or list of $(thing)Note/$ iotas into your personal library.",
   "abadoned_greatwork.page.player_notes.guide.note_delete": "Deletes the saved entry at the given zero-based index.",
-
   "abadoned_greatwork.notes.library_title": "Note Library",
   "abadoned_greatwork.notes.editor_title": "Note Editor",
   "abadoned_greatwork.notes.scrap_preview_title": "Note Scrap Preview",
@@ -449,7 +445,6 @@
   "abadoned_greatwork.notes.exported": "Exported to %s",
   "abadoned_greatwork.notes.page_build_error.title": "Page Render Error",
   "abadoned_greatwork.notes.page_build_error": "Page %s could not be displayed: %s",
-
   "abadoned_greatwork.notes.btn.new": "New",
   "abadoned_greatwork.notes.btn.edit": "Edit",
   "abadoned_greatwork.notes.btn.open_book": "Book",
@@ -472,7 +467,6 @@
   "abadoned_greatwork.notes.btn.pop_iota": "Remove Last",
   "abadoned_greatwork.notes.btn.clear_iotas": "Clear All",
   "abadoned_greatwork.notes.btn.import_scrap": "Import to Notes",
-
   "abadoned_greatwork.notes.field.icon": "Icon",
   "abadoned_greatwork.notes.field.color": "Color",
   "abadoned_greatwork.notes.field.page_title": "Page Title (Optional)",
@@ -495,7 +489,6 @@
   "abadoned_greatwork.notes.field.link_text": "Button Label",
   "abadoned_greatwork.notes.field.draw_filler": "Draw Filler Graphic",
   "abadoned_greatwork.notes.field.snbt_paste": "Paste Serialized Iota SNBT",
-
   "abadoned_greatwork.notes.page_type.text": "Text",
   "abadoned_greatwork.notes.page_type.spotlight": "Item Spotlight",
   "abadoned_greatwork.notes.page_type.crafting": "Crafting Recipe",
@@ -507,11 +500,9 @@
   "abadoned_greatwork.notes.page_type.link": "Web Link",
   "abadoned_greatwork.notes.page_type.empty": "Empty Page",
   "abadoned_greatwork.notes.page_type.iota_display": "Iota Display",
-
   "abadoned_greatwork.notes.status.saved": "Note saved",
   "abadoned_greatwork.notes.status.deleted": "Note deleted",
   "abadoned_greatwork.notes.status.wrote_scrap": "Wrote Note Scrap (cost %s paper)",
-
   "abadoned_greatwork.notes.error.need_pen": "Requires an Amethyst Pen in your inventory!",
   "abadoned_greatwork.notes.error.need_paper": "Need %s paper in inventory (have %s)!",
   "abadoned_greatwork.notes.error.invalid_data": "Invalid note payload.",
@@ -535,14 +526,12 @@
   "abadoned_greatwork.notes.error.bad_entity": "Page %s: invalid entity ID '%s'",
   "abadoned_greatwork.notes.error.links_disabled": "Page %s: web links are disabled on this server",
   "abadoned_greatwork.notes.error.bad_url": "Page %s: URL must start with http:// or https://",
-
   "abadoned_greatwork.notes.untitled": "Untitled",
   "abadoned_greatwork.notes.search_hint": "Search...",
   "abadoned_greatwork.notes.state.on": "ON",
   "abadoned_greatwork.notes.state.off": "OFF",
   "abadoned_greatwork.notes.field.title": "Title",
   "abadoned_greatwork.notes.page_overflow": "Over!",
-
   "abadoned_greatwork.notes.library.title": "Notes",
   "abadoned_greatwork.notes.library.empty": "No notes yet",
   "abadoned_greatwork.notes.library.select_hint": "Select a note",
@@ -550,10 +539,8 @@
   "abadoned_greatwork.notes.library.meta_author": "%s · %sp",
   "abadoned_greatwork.notes.library.meta_pages": "%sp",
   "abadoned_greatwork.notes.library.no_snippet": "No text",
-
   "abadoned_greatwork.notes.scrap.preview_title": "Note Scrap",
   "abadoned_greatwork.notes.scrap.meta": "%s · %sp",
-
   "abadoned_greatwork.notes.editor.title": "Note Editor",
   "abadoned_greatwork.notes.editor.title_hint": "Title...",
   "abadoned_greatwork.notes.editor.meta_tip": "Icon & Color",
@@ -564,7 +551,6 @@
   "abadoned_greatwork.notes.editor.clean_status": "%s/%s",
   "abadoned_greatwork.notes.editor.size_warn": "Large: %s/%s KB",
   "abadoned_greatwork.notes.editor.err_jump": "%s [P.%s]",
-
   "abadoned_greatwork.notes.btn.saving": "Saving...",
   "abadoned_greatwork.notes.btn.confirm": "Confirm",
   "abadoned_greatwork.notes.btn.add": "Add",
@@ -581,17 +567,14 @@
   "abadoned_greatwork.notes.btn.write_scrap_cost": "Scrap (%s/%s paper)",
   "abadoned_greatwork.notes.btn.text_preview_view": "View",
   "abadoned_greatwork.notes.btn.text_preview_tip": "Toggle preview",
-
   "abadoned_greatwork.notes.notice.imported": "Imported: %s",
   "abadoned_greatwork.notes.notice.exported": "Exported: %s",
-
   "abadoned_greatwork.notes.fmt.bold_tip": "Bold",
   "abadoned_greatwork.notes.fmt.italic_tip": "Italic",
   "abadoned_greatwork.notes.fmt.thing_tip": "Concept",
   "abadoned_greatwork.notes.fmt.item_tip": "Item",
   "abadoned_greatwork.notes.fmt.br_tip": "Line Break",
   "abadoned_greatwork.notes.fmt.clear_tip": "Reset Style",
-
   "abadoned_greatwork.notes.canvas.type_btn": "%s",
   "abadoned_greatwork.notes.canvas.heading": "Heading",
   "abadoned_greatwork.notes.canvas.heading_hint": "Heading (optional)",
@@ -625,7 +608,6 @@
   "abadoned_greatwork.notes.canvas.empty_tip": "Spacer page",
   "abadoned_greatwork.notes.canvas.iota_empty": "No iotas",
   "abadoned_greatwork.notes.canvas.paste_iota": "Paste SNBT...",
-
   "abadoned_greatwork.notes.picker.page_type": "Page Type",
   "abadoned_greatwork.notes.picker.item": "Item",
   "abadoned_greatwork.notes.picker.recipe": "Recipe",
@@ -635,7 +617,6 @@
   "abadoned_greatwork.notes.picker.json_import": "Import JSON",
   "abadoned_greatwork.notes.picker.tab_all": "All",
   "abadoned_greatwork.notes.picker.tab_inv": "Inventory",
-
   "abadoned_greatwork.notes.page_type.desc.text": "Plain text page",
   "abadoned_greatwork.notes.page_type.desc.spotlight": "Item showcase + text",
   "abadoned_greatwork.notes.page_type.desc.crafting": "Crafting recipes",
@@ -647,17 +628,14 @@
   "abadoned_greatwork.notes.page_type.desc.link": "Web link button",
   "abadoned_greatwork.notes.page_type.desc.empty": "Blank spacer page",
   "abadoned_greatwork.notes.page_type.desc.iota_display": "Serialized iota display",
-
   "abadoned_greatwork.notes.meta.title": "Appearance",
   "abadoned_greatwork.notes.meta.icon": "Icon",
   "abadoned_greatwork.notes.meta.color": "Color",
   "abadoned_greatwork.notes.meta.hex_hint": "Hex",
-
   "abadoned_greatwork.notes.draw.title": "Draw Pattern",
   "abadoned_greatwork.notes.draw.clear": "Clear",
   "abadoned_greatwork.notes.draw.hint": "Drag across hex dots",
   "abadoned_greatwork.notes.draw.captured": "%s · %s",
-
   "abadoned_greatwork.notes.modal.discard.title": "Unsaved Changes",
   "abadoned_greatwork.notes.modal.discard.body": "Save unsaved changes?",
   "abadoned_greatwork.notes.modal.delete.title": "Delete Note",
@@ -667,56 +645,40 @@
   "abadoned_greatwork.notes.modal.snbt.hint": "Tag preview",
   "abadoned_greatwork.notes.modal.snbt.invalid": "Invalid SNBT",
   "abadoned_greatwork.notes.modal.snbt.unknown_type": "Unknown hexcasting:type",
-
-  "hexponder.category.basics": "I. Fundamentals & Basic Controls",
-  "hexponder.category.basics.desc": "Learn the Hex Grid, the Stack, Staff controls, and basic iota flow.",
-
   "hexponder.scene.staff_and_stack.title": "1. How to Use a Staff",
   "hexponder.scene.staff_and_stack.subtitle": "Hex Grid, Stack, Iotas, and basic Staff casting",
-
   "hexponder.scene.staff_and_stack.ch0": "I. Introduction: Grid & Stack",
   "hexponder.scene.staff_and_stack.ch1": "II. Basic Actions: Eye Position",
   "hexponder.scene.staff_and_stack.ch2": "II. Basic Actions: Stacking Order",
   "hexponder.scene.staff_and_stack.ch3": "II. Basic Actions: Multi-Pop Order",
-
   "hexponder.scene.staff_and_stack.s0.tip": "Craft a Staff and right-click the air with it to open the Hex Grid.",
   "hexponder.scene.staff_and_stack.s1.tip": "Hold and drag the cursor across the grid to draw a pattern; release to finish and execute it.",
   "hexponder.scene.staff_and_stack.s2.tip": "Patterns have varied effects: most act on the Stack on the left, while a few affect the physical world.",
   "hexponder.scene.staff_and_stack.s3.tip": "The Stack stores Iotas—information and data serving as the true names and indices of all things.",
   "hexponder.scene.staff_and_stack.s4.tip": "Gathering data with patterns, processing it, and acting upon it to work wonders in the world—that is Hex Casting.",
-
   "hexponder.scene.staff_and_stack.s5.tip": "Draw Mind's Reflection to push an Entity iota representing the caster onto the stack.",
   "hexponder.scene.staff_and_stack.s6.tip": "Draw Compass' Purification to pop that entity and push its eye coordinates as a Vector iota.",
   "hexponder.scene.staff_and_stack.s7.tip": "Draw Mind's Reflection again: newer iotas pushed onto the stack are placed above earlier ones.",
   "hexponder.scene.staff_and_stack.s8.tip": "Draw Alidade's Purification: when an iota must be popped, the topmost one is removed first.",
   "hexponder.scene.staff_and_stack.s9.tip": "Draw Archer's Distillation: when popping multiple iotas, they are read bottom-to-top—matching left-to-right in the notebook.",
-
   "hexponder.scene.staff_and_stack.k0.title": "Persistent Staff Stack & Clearing",
   "hexponder.scene.staff_and_stack.k0.body": "A Staff preserves leftover iotas on the stack across normal right-click openings. To wipe the stack clean and start fresh, open the grid with Sneak + Right-click.",
-
   "hexponder.scene.staff_and_stack.k1.title": "Pop Order: Bottom-to-Top = Left-to-Right",
   "hexponder.scene.staff_and_stack.k1.body": "Single-input actions pop the topmost iota. Multi-input actions (such as Archer's Distillation: vector, vector → vector) pop the required count and order them bottom-to-top, matching the left-to-right signature in the Notebook.",
-
   "hexponder.scene.spells_and_mishaps.title": "2. Altering the World: Spells, Media & Mishaps",
   "hexponder.scene.spells_and_mishaps.subtitle": "Turn stack coordinates into physical wonders and handle Nature's backlash",
-
+  "hexponder.scene.spells_and_mishaps.k0.title": "Media & The No-Change Trap",
+  "hexponder.scene.spells_and_mishaps.k0.body": "Spells affecting the physical world draw media from your inventory in order: Amethyst Dust (1) → Amethyst Shard (5) → Charged Amethyst (10). If you only carry Charged Amethyst, even a 1-dust spell consumes the whole crystal with no change—always keep Amethyst Dust on hand.",
+  "hexponder.scene.spells_and_mishaps.k1.title": "Why Add the Surface Normal?",
+  "hexponder.scene.spells_and_mishaps.k1.body": "Archer's Distillation returns the coordinate of the solid block itself; conjuring a block or light inside an occupied space causes a Mishap. Adding the surface normal from Architect's Distillation shifts the target to the exact air block touching that face.",
+  "hexponder.scene.spells_and_mishaps.k2.title": "Mishaps & Stack Garbage",
+  "hexponder.scene.spells_and_mishaps.k2.body": "Missing inputs, wrong iota types, or out-of-range targets turn the grid red and trigger a Mishap: execution halts and Garbage is pushed onto the stack. Simply pop it with Bookkeeper's Gambit (v) or Sneak + Right-click to clear the grid.",
   "hexponder.scene.spells_and_mishaps.ch0": "I. Casting Your First Spell",
-  "hexponder.scene.spells_and_mishaps.ch1": "II. Mishaps & Cleanup",
-
   "hexponder.scene.spells_and_mishaps.s0.tip": "Suppose Archer's Distillation has left the target block position (12, 64, -8) on the stack.",
   "hexponder.scene.spells_and_mishaps.s1.tip": "Next, Archer's twin—Architect's Distillation—pushes the hit face's normal vector (0, 1, 0).",
   "hexponder.scene.spells_and_mishaps.s2.tip": "Draw Additive Distillation to sum both vectors into the adjacent air coordinate (12, 65, -8).",
   "hexponder.scene.spells_and_mishaps.s3.tip": "Draw Conjure Light: it consumes the vector and a pinch of media to ignite a light in the world!",
+  "hexponder.scene.spells_and_mishaps.ch1": "II. Mishaps & Cleanup",
   "hexponder.scene.spells_and_mishaps.s4.tip": "Drawing Compass' Purification on an empty stack triggers a Not Enough Iotas Mishap and leaves Garbage.",
-  "hexponder.scene.spells_and_mishaps.s5.tip": "Draw a downward Bookkeeper's Gambit (v) to cleanly discard the unwanted Garbage iota.",
-
-  "hexponder.scene.spells_and_mishaps.k0.title": "Media & The No-Change Trap",
-  "hexponder.scene.spells_and_mishaps.k0.body": "Spells affecting the physical world draw media from your inventory in order: Amethyst Dust (1) → Amethyst Shard (5) → Charged Amethyst (10). If you only carry Charged Amethyst, even a 1-dust spell consumes the whole crystal with no change—always keep Amethyst Dust on hand.",
-
-  "hexponder.scene.spells_and_mishaps.k1.title": "Why Add the Surface Normal?",
-  "hexponder.scene.spells_and_mishaps.k1.body": "Archer's Distillation returns the coordinate of the solid block itself; conjuring a block or light inside an occupied space causes a Mishap. Adding the surface normal from Architect's Distillation shifts the target to the exact air block touching that face.",
-
-  "hexponder.scene.spells_and_mishaps.k2.title": "Mishaps & Stack Garbage",
-  "hexponder.scene.spells_and_mishaps.k2.body": "Missing inputs, wrong iota types, or out-of-range targets turn the grid red and trigger a Mishap: execution halts and Garbage is pushed onto the stack. Simply pop it with Bookkeeper's Gambit (v) or Sneak + Right-click to clear the grid."
-
+  "hexponder.scene.spells_and_mishaps.s5.tip": "Draw a downward Bookkeeper's Gambit (v) to cleanly discard the unwanted Garbage iota."
 }

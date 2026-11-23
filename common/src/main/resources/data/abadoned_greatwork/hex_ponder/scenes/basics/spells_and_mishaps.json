@@ -12,17 +12,11 @@
   "stroke_ticks": 16,
   "clear_before": true,
   "start_dir": "NORTH_EAST",
-  "unlock": {
-    "mode": "all",
-    "conditions": [
-      {
-        "type": "scene",
-        "scene": "abadoned_greatwork:staff_and_stack"
-      }
-    ]
-  },
   "triggers": {
-    "items": ["minecraft:amethyst_shard", "hexcasting:amethyst_dust"],
+    "items": [
+      "minecraft:amethyst_shard",
+      "hexcasting:amethyst_dust"
+    ],
     "actions": [
       "hexcasting:raycast/axis",
       "hexcasting:add",
@@ -49,7 +43,8 @@
       "title": "hexponder.scene.spells_and_mishaps.k2.title",
       "body": "hexponder.scene.spells_and_mishaps.k2.body",
       "inline_iotas": [
-        "pattern:hexcasting:mask"
+        "pattern{SOUTH_EAST",
+        "a}"
       ]
     }
   ],
@@ -64,7 +59,8 @@
         "color": "#64C8FF",
         "text": "hexponder.scene.spells_and_mishaps.s0.tip",
         "pause": false
-      }
+      },
+      "push": "vec:{12,64,-8}"
     },
     {
       "type": "push",
@@ -76,13 +72,17 @@
         "color": "#7385DE",
         "text": "hexponder.scene.spells_and_mishaps.s1.tip",
         "pause": false
-      }
+      },
+      "push": "vec:{0,1,0}"
     },
     {
       "type": "execute",
       "chapter": "hexponder.scene.spells_and_mishaps.ch0",
       "action": "hexcasting:add",
-      "origin": [0, 0],
+      "origin": [
+        0,
+        0
+      ],
       "callout": {
         "anchor": "stack",
         "anchor_index": 0,
@@ -92,22 +92,29 @@
       }
     },
     {
-      "type": "execute",
+      "type": "peek",
       "chapter": "hexponder.scene.spells_and_mishaps.ch0",
       "action": "hexcasting:conjure_light",
-      "origin": [0, 0],
+      "origin": [
+        0,
+        0
+      ],
       "callout": {
         "anchor": "canvas",
         "color": "#FECBE6",
         "text": "hexponder.scene.spells_and_mishaps.s3.tip",
         "pause": false
-      }
+      },
+      "index": 0
     },
     {
       "type": "execute",
       "chapter": "hexponder.scene.spells_and_mishaps.ch1",
       "action": "hexcasting:entity_pos/eye",
-      "origin": [0, 0],
+      "origin": [
+        0,
+        0
+      ],
       "callout": {
         "anchor": "stack",
         "anchor_index": 0,
@@ -119,15 +126,20 @@
     {
       "type": "execute",
       "chapter": "hexponder.scene.spells_and_mishaps.ch1",
-      "action": "hexcasting:mask",
+      "action": "hexcasting:mask_v",
       "custom_pattern": "v",
-      "origin": [0, 0],
+      "origin": [
+        0,
+        0
+      ],
       "callout": {
         "anchor": "stack",
         "color": "#64C8FF",
         "text": "hexponder.scene.spells_and_mishaps.s5.tip",
         "pause": false
-      }
+      },
+      "pattern": "a",
+      "start_dir": "SOUTH_EAST"
     }
   ]
 }
