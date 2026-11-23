@@ -1,0 +1,25 @@
+{
+  "extends": "note_common",
+  "layout": {
+    "size": [396, 230],
+    "regions": {
+      "top_bar":       [10, 8, 376, 18],
+      "btn_meta":      [10, 8, 22, 18],
+      "title_field":   [35, 9, 175, 16],
+      "btn_preview":   [216, 9, 54, 16],
+      "btn_save":      [274, 9, 60, 16],
+      "btn_close":     [338, 9, 48, 16],
+
+      "left_page":     [10, 30, 184, 154],
+      "book_spine":    [194, 30, 8, 154],
+      "right_page":    [202, 30, 184, 154],
+
+      "format_bar":    [210, 36, 168, 15],
+      "text_area":     [210, 53, 168, 125],
+
+      "page_strip":    [10, 188, 268, 18],
+      "page_actions":  [282, 188, 104, 18],
+      "status_bar":    [10, 209, 376, 14]
+    }
+  }
+}

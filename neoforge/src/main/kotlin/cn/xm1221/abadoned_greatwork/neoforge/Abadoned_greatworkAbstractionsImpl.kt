@@ -24,8 +24,8 @@ fun setModEventBus(bus: IEventBus) {
  */
 fun <T : Any> initRegistry(registrar: Abadoned_greatworkRegistrar<T>) {
     val deferred = DeferredRegister.create<T>(registrar.registryKey, Abadoned_greatwork.MODID)
-    registrar.init { id, value ->
-        deferred.register(id.path, java.util.function.Supplier { value })
+    registrar.initLazy { id, supplier ->
+        deferred.register(id.path, java.util.function.Supplier(supplier))
     }
     deferred.register(modEventBus)
 }

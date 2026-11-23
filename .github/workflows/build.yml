@@ -85,7 +85,7 @@ jobs:
         include:
           - modloader: fabric
             mc-runtime-test: fabric
-            fabric-api: 0.116.11
+            fabric-api: 0.116.18
             # NOTE: these must be quoted and formatted exactly like this, since they'll be used as a bash array.
             # Hex Casting and PAUCAL 1.21.1 are not on Modrinth/CurseForge; jars come from BlameJared CI.
             # IoticBlocks has no Fabric 1.21.1 build (Modrinth/CurseForge are still 1.20.1); registration is skipped.
@@ -111,7 +111,6 @@ jobs:
               'https://cdn.modrinth.com/data/fin1PX4m/versions/FhE1RJsR/inline-neoforge-1.21.1-1.2.2.jar'
               'https://cdn.modrinth.com/data/40FYwb4z/versions/KsfI4QsR/caelus-neoforge-7.0.1%2B1.21.1.jar'
               'https://cdn.modrinth.com/data/nU0bVIaL/versions/BIogJv2D/Patchouli-1.21.1-93-NEOFORGE.jar'
-              'https://github.com/zprogmerz/IoticBlocks1_21_1/releases/download/IoticBlocks_1_1_0/IoticBlocks-neoforge-1.21.1-1.1.0.jar'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-java@v4

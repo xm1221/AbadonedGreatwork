@@ -1,0 +1,26 @@
+{
+  "parent": "abadoned_greatwork:attempt_puzzle",
+  "display": {
+    "icon": {
+      "id": "abadoned_greatwork:item_truth_crystal_0"
+    },
+    "title": {
+      "translate": "advancements.abadoned_greatwork.solve_puzzle.title"
+    },
+    "description": {
+      "translate": "advancements.abadoned_greatwork.solve_puzzle.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "impossible": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 50
+  }
+}

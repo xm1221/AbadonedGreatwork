@@ -83,6 +83,8 @@ subprojects {
                     'cloth-config-*-neoforge.jar',
                     'Patchouli-*-NEOFORGE.jar',
                     'inline-neoforge-*.jar',
+            ])
+            compileOnly fileTree(dir: libsDir, include: [
                     'IoticBlocks-neoforge-*.jar',
             ])
         } else if (project.name == 'fabric') {

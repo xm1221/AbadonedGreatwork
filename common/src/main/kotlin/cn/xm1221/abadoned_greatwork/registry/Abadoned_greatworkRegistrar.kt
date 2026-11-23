@@ -22,10 +22,14 @@ abstract class Abadoned_greatworkRegistrar<T : Any>(
     val entries: Set<Entry<out T>> = mutableEntries
 
     open fun init(registerer: (ResourceLocation, T) -> Unit) {
+        initLazy { id, supplier -> registerer(id, supplier()) }
+    }
+
+    open fun initLazy(registerer: (ResourceLocation, () -> T) -> Unit) {
         if (isInitialized) throw IllegalStateException("$this has already been initialized!")
         isInitialized = true
         for (entry in entries) {
-            registerer(entry.id, entry.value)
+            registerer(entry.id) { entry.value }
         }
         if (Platform.getEnv() == EnvType.CLIENT) {
             initClient()

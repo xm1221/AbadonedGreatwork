@@ -1,0 +1,57 @@
+{
+  "name": "abadoned_greatwork.entry.player_notes.guide",
+  "category": "hexcasting:abadoned_greatwork/player_notes",
+  "icon": "abadoned_greatwork:amethyst_pen",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "abadoned_greatwork:amethyst_pen",
+      "link_recipe": true,
+      "text": "abadoned_greatwork.page.player_notes.guide.0"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "abadoned_greatwork:amethyst_pen",
+      "text": "abadoned_greatwork.page.player_notes.guide.1"
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "abadoned_greatwork:note_scrap",
+      "text": "abadoned_greatwork.page.player_notes.guide.2"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "abadoned_greatwork.page.player_notes.guide.3"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:note/list",
+      "input": "",
+      "output": "[note]",
+      "text": "abadoned_greatwork.page.player_notes.guide.note_list"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:note/get",
+      "input": "number",
+      "output": "note",
+      "text": "abadoned_greatwork.page.player_notes.guide.note_get"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:note/import",
+      "input": "note | [note]",
+      "output": "",
+      "text": "abadoned_greatwork.page.player_notes.guide.note_import"
+    },
+    {
+      "type": "hexcasting:pattern",
+      "op_id": "abadoned_greatwork:note/delete",
+      "input": "number",
+      "output": "",
+      "text": "abadoned_greatwork.page.player_notes.guide.note_delete"
+    }
+  ]
+}

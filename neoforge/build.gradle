@@ -7,6 +7,14 @@ architectury {
     neoForge()
 }
 
+loom {
+    mods {
+        "abadoned_greatwork" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
 configurations {
     common {
         canBeResolved = true
@@ -36,6 +44,8 @@ dependencies {
     // neoforge.mods.toml declares it; keep it on the dev runtime as well.
     // Modrinth maven version id for kotlinforforge-5.13.0-all.jar (NeoForge 1.21.1).
     runtimeOnly 'maven.modrinth:kotlin-for-forge:9ZlVvei8'
+    // Hex Casting requires Caelus on NeoForge runtime.
+    runtimeOnly 'maven.modrinth:caelus:KsfI4QsR'
 
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')

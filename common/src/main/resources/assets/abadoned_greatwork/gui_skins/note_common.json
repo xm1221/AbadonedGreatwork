@@ -1,0 +1,119 @@
+{
+  "texture": "abadoned_greatwork:textures/gui/notes/atlas.png",
+  "tex_size": [512, 256],
+  "sprites": {
+    "panel":              { "uv": [0, 0, 64, 64], "nine_slice": [10, 10, 10, 10] },
+    "book_cover":         { "uv": [0, 0, 64, 64], "nine_slice": [10, 10, 10, 10] },
+    "book_page_left":     { "uv": [64, 0, 64, 64], "nine_slice": [10, 10, 10, 10] },
+    "book_page_right":    { "uv": [128, 0, 64, 64], "nine_slice": [10, 10, 10, 10] },
+    "page_paper":         { "uv": [128, 0, 64, 64], "nine_slice": [10, 10, 10, 10] },
+    "book_spine":         { "uv": [192, 0, 12, 64], "nine_slice": [2, 8, 2, 8] },
+    "modal_panel":        { "uv": [208, 0, 48, 48], "nine_slice": [8, 8, 8, 8] },
+    "sub_panel":          { "uv": [0, 64, 32, 32], "nine_slice": [4, 4, 4, 4] },
+    "paper_sub_panel":    { "uv": [32, 64, 32, 32], "nine_slice": [4, 4, 4, 4] },
+    "paper_slot":         { "uv": [64, 64, 24, 24], "nine_slice": [3, 3, 3, 3] },
+    "dark_slot":          { "uv": [88, 64, 24, 24], "nine_slice": [3, 3, 3, 3] },
+    "slot_frame":         { "uv": [88, 64, 24, 24], "nine_slice": [3, 3, 3, 3] },
+    "list_item_normal":   { "uv": [112, 64, 24, 24], "nine_slice": [3, 3, 3, 3] },
+    "list_item_selected": { "uv": [136, 64, 24, 24], "nine_slice": [3, 3, 3, 3] },
+    "scrollbar_track":    { "uv": [160, 64, 8, 32], "nine_slice": [2, 2, 2, 2] },
+    "scrollbar_thumb":    { "uv": [168, 64, 8, 16], "nine_slice": [2, 2, 2, 2] },
+    "card": {
+      "uv": [176, 64, 32, 32],
+      "states": { "normal": [176, 64, 32, 32], "hover": [208, 64, 32, 32], "selected": [176, 96, 32, 32] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "dark_field": {
+      "uv": [0, 96, 48, 16],
+      "states": { "normal": [0, 96, 48, 16], "focused": [0, 112, 48, 16] },
+      "nine_slice": [3, 3, 3, 3]
+    },
+    "text_field": {
+      "uv": [0, 96, 48, 16],
+      "states": { "normal": [0, 96, 48, 16], "focused": [0, 112, 48, 16] },
+      "nine_slice": [3, 3, 3, 3]
+    },
+    "paper_field": {
+      "uv": [48, 96, 48, 16],
+      "states": { "normal": [48, 96, 48, 16], "focused": [48, 112, 48, 16] },
+      "nine_slice": [3, 3, 3, 3]
+    },
+    "button": {
+      "uv": [0, 128, 48, 16],
+      "states": { "normal": [0, 128, 48, 16], "hover": [0, 144, 48, 16], "disabled": [0, 160, 48, 16], "selected": [0, 144, 48, 16] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "button_accent": {
+      "uv": [48, 128, 48, 16],
+      "states": { "normal": [48, 128, 48, 16], "hover": [48, 144, 48, 16], "disabled": [48, 160, 48, 16], "selected": [48, 144, 48, 16] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "button_danger": {
+      "uv": [96, 128, 48, 16],
+      "states": { "normal": [96, 128, 48, 16], "hover": [96, 144, 48, 16], "disabled": [96, 160, 48, 16], "selected": [96, 144, 48, 16] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "paper_button": {
+      "uv": [144, 128, 48, 16],
+      "states": { "normal": [144, 128, 48, 16], "hover": [144, 144, 48, 16], "disabled": [144, 160, 48, 16], "selected": [144, 176, 48, 16] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "page_tab": {
+      "uv": [192, 128, 32, 16],
+      "states": { "normal": [192, 128, 32, 16], "selected": [192, 144, 32, 16], "error": [192, 160, 32, 16] },
+      "nine_slice": [4, 4, 4, 4]
+    },
+    "crafting_grid":      { "uv": [256, 0, 104, 58] },
+    "smelting_frame":     { "uv": [368, 0, 86, 56] },
+
+    "icon.add":           { "uv": [256, 128, 12, 12] },
+    "icon.delete":        { "uv": [272, 128, 12, 12] },
+    "icon.up":            { "uv": [288, 128, 12, 12] },
+    "icon.down":          { "uv": [304, 128, 12, 12] },
+    "icon.left":          { "uv": [320, 128, 12, 12] },
+    "icon.right":         { "uv": [336, 128, 12, 12] },
+    "icon.book":          { "uv": [352, 128, 12, 12] },
+    "icon.scrap":         { "uv": [368, 128, 12, 12] },
+    "icon.export":        { "uv": [384, 128, 12, 12] },
+    "icon.import":        { "uv": [400, 128, 12, 12] },
+    "icon.search":        { "uv": [416, 128, 12, 12] },
+    "icon.eye":           { "uv": [432, 128, 12, 12] },
+    "icon.settings":      { "uv": [448, 128, 12, 12] },
+    "icon.draw":          { "uv": [464, 128, 12, 12] },
+
+    "icon.fmt.bold":      { "uv": [256, 144, 12, 12] },
+    "icon.fmt.italic":    { "uv": [272, 144, 12, 12] },
+    "icon.fmt.thing":     { "uv": [288, 144, 12, 12] },
+    "icon.fmt.item":      { "uv": [304, 144, 12, 12] },
+    "icon.fmt.br":        { "uv": [320, 144, 12, 12] },
+    "icon.fmt.clear":     { "uv": [336, 144, 12, 12] },
+
+    "icon.page.text":           { "uv": [256, 160, 12, 12] },
+    "icon.page.spotlight":      { "uv": [272, 160, 12, 12] },
+    "icon.page.crafting":       { "uv": [288, 160, 12, 12] },
+    "icon.page.smelting":       { "uv": [304, 160, 12, 12] },
+    "icon.page.pattern":        { "uv": [320, 160, 12, 12] },
+    "icon.page.manual_pattern": { "uv": [336, 160, 12, 12] },
+    "icon.page.image":          { "uv": [352, 160, 12, 12] },
+    "icon.page.entity":         { "uv": [368, 160, 12, 12] },
+    "icon.page.link":           { "uv": [384, 160, 12, 12] },
+    "icon.page.empty":          { "uv": [400, 160, 12, 12] },
+    "icon.page.iota_display":   { "uv": [416, 160, 12, 12] }
+  },
+  "colors": {
+    "title": "FFF2EBF9",
+    "text": "FFF2EBF9",
+    "text_dim": "FFA293B8",
+    "paper_text": "FF2B1F16",
+    "paper_text_dim": "FF6B5844",
+    "paper_button_text": "FF2B1F16",
+    "paper_button_text_disabled": "FF8C7B65",
+    "button_text": "FFF4EEFC",
+    "button_text_disabled": "FF7A7088",
+    "caret": "FF6B2FA0",
+    "selection": "448E44AD",
+    "guide_line": "66B04040",
+    "ok": "FF78E092",
+    "error": "FFEC6270"
+  }
+}

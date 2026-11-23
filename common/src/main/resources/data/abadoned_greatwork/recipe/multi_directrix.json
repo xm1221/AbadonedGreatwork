@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SAS",
+    "EDE",
+    "SAS"
+  ],
+  "key": {
+    "S": {
+      "item": "hexcasting:slate_block"
+    },
+    "A": {
+      "item": "hexcasting:charged_amethyst"
+    },
+    "E": {
+      "item": "minecraft:emerald"
+    },
+    "D": {
+      "item": "hexcasting:directrix/empty"
+    }
+  },
+  "result": {
+    "count": 1,
+    "id": "abadoned_greatwork:multi_directrix"
+  },
+  "show_notification": true
+}

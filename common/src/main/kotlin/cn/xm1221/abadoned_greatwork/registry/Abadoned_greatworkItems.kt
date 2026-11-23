@@ -1,9 +1,11 @@
 package cn.xm1221.abadoned_greatwork.registry
 
 import cn.xm1221.abadoned_greatwork.Abadoned_greatwork
+import cn.xm1221.abadoned_greatwork.item.ItemAmethystPen
 import cn.xm1221.abadoned_greatwork.item.ItemEyeOfLocating
 import cn.xm1221.abadoned_greatwork.item.ItemEyeOfTracking
 import cn.xm1221.abadoned_greatwork.item.ItemEyeOfWaypoint
+import cn.xm1221.abadoned_greatwork.item.ItemNoteScrap
 import cn.xm1221.abadoned_greatwork.item.ItemTruthCrystal
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
@@ -92,6 +94,12 @@ object Abadoned_greatworkItems : Abadoned_greatworkRegistrar<Item>(
 
     /** 路标之眼（可抛出，NBT 记录目标坐标） */
     val EYE_OF_WAYPOINT = registerItem("eye_of_waypoint") { ItemEyeOfWaypoint(Item.Properties().stacksTo(16)) }
+
+    /** 紫水晶笔（打开个人笔记库与贴图驱动编辑器） */
+    val AMETHYST_PEN = registerItem("amethyst_pen") { ItemAmethystPen(Item.Properties().stacksTo(1)) }
+
+    /** 笔记残页（携带 NoteIota 的分享载体） */
+    val NOTE_SCRAP = registerItem("note_scrap") { ItemNoteScrap(Item.Properties().stacksTo(1)) }
 
     /**
      * 注册一个普通物品。

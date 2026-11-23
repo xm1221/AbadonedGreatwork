@@ -304,4 +304,17 @@ object PonderGuiDraw {
             pose.popPose()
         }
     }
+
+    /** 绘制 7×8 原版像素风小锁徽章（用于未解锁章节卡片）。 */
+    fun drawLockBadge(g: GuiGraphics, x: Int, y: Int) {
+        // 锁梁（灰铁色）
+        g.fill(x + 2, y, x + 5, y + 1, 0xFF9C8FC0.toInt())
+        g.fill(x + 1, y + 1, x + 2, y + 3, 0xFF9C8FC0.toInt())
+        g.fill(x + 5, y + 1, x + 6, y + 3, 0xFF9C8FC0.toInt())
+        // 锁身（外黑框 + 暗金填充）
+        g.fill(x, y + 3, x + 7, y + 8, OUTLINE)
+        g.fill(x + 1, y + 4, x + 6, y + 7, 0xFFD99B26.toInt())
+        // 钥匙孔
+        g.fill(x + 3, y + 5, x + 4, y + 7, OUTLINE)
+    }
 }

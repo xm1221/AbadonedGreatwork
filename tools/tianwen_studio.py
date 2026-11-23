@@ -17,11 +17,13 @@ import io
 import json
 import os
 import re
+import struct
 import subprocess
 import sys
 import urllib.parse
 import webbrowser
 import zipfile
+import zlib
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -487,6 +489,598 @@ class AssetResolver:
 
 RESOLVER = AssetResolver()
 
+# ==================== Iota SNBT / Binary NBT / Ascii85 Codec ====================
+HEX_DIRS = ["NORTH_EAST", "EAST", "SOUTH_EAST", "SOUTH_WEST", "WEST", "NORTH_WEST"]
+ANGLE_CHARS = ["w", "e", "d", "s", "a", "q"]
+CHAR_TO_ANGLE = {c: i for i, c in enumerate(ANGLE_CHARS)}
+_CATALOG_BY_SIG_CACHE: dict[str, dict[str, str]] | None = None
+
+
+class NbtVal:
+    def __init__(self, value: Any) -> None:
+        self.value = value
+
+
+class NbtByte(NbtVal): pass
+class NbtShort(NbtVal): pass
+class NbtLong(NbtVal): pass
+class NbtFloat(NbtVal): pass
+class NbtDouble(NbtVal): pass
+class NbtByteArray(NbtVal): pass
+class NbtIntArray(NbtVal): pass
+class NbtLongArray(NbtVal): pass
+
+
+def _get_catalog_by_sig() -> dict[str, dict[str, str]]:
+    global _CATALOG_BY_SIG_CACHE
+    if _CATALOG_BY_SIG_CACHE is not None:
+        return _CATALOG_BY_SIG_CACHE
+    out: dict[str, dict[str, str]] = {}
+    if EDITOR_HTML.is_file():
+        m = re.search(r"const HEX_CATALOG = (\[.*?\]);", EDITOR_HTML.read_text("utf-8"))
+        if m:
+            try:
+                for item in json.loads(m.group(1)):
+                    sig = item.get("sig", "")
+                    if sig and sig not in out:
+                        out[sig] = item
+            except Exception:
+                pass
+    _CATALOG_BY_SIG_CACHE = out
+    return out
+
+
+def _get_catalog_by_id() -> dict[str, dict[str, str]]:
+    by_sig = _get_catalog_by_sig()
+    out = {v["id"]: v for v in by_sig.values() if "id" in v}
+    if EDITOR_HTML.is_file():
+        m = re.search(r"const HEX_CATALOG = (\[.*?\]);", EDITOR_HTML.read_text("utf-8"))
+        if m:
+            try:
+                for item in json.loads(m.group(1)):
+                    out[item["id"]] = item
+            except Exception:
+                pass
+    return out
+
+
+def parse_snbt(text: str) -> Any:
+    s = text.strip()
+    n = len(s)
+    pos = [0]
+
+    def skip_ws() -> None:
+        while pos[0] < n and s[pos[0]].isspace():
+            pos[0] += 1
+
+    def parse_str() -> str:
+        quote = s[pos[0]]
+        pos[0] += 1
+        out: list[str] = []
+        while pos[0] < n:
+            ch = s[pos[0]]
+            pos[0] += 1
+            if ch == "\\":
+                if pos[0] < n:
+                    esc = s[pos[0]]
+                    pos[0] += 1
+                    out.append({"n": "\n", "t": "\t", "r": "\r"}.get(esc, esc))
+            elif ch == quote:
+                return "".join(out)
+            else:
+                out.append(ch)
+        raise ValueError("Unterminated string in SNBT")
+
+    def parse_unquoted() -> str:
+        start = pos[0]
+        while pos[0] < n and (s[pos[0]].isalnum() or s[pos[0]] in "_.+-"):
+            pos[0] += 1
+        if pos[0] == start:
+            raise ValueError(f"Unexpected token at {pos[0]}: {s[pos[0]:pos[0]+12]}")
+        return s[start:pos[0]]
+
+    def parse_primitive(tok: str) -> Any:
+        low = tok.lower()
+        if low == "true":
+            return NbtByte(1)
+        if low == "false":
+            return NbtByte(0)
+        if re.fullmatch(r"[+-]?\d+[bB]", tok):
+            return NbtByte(int(tok[:-1]))
+        if re.fullmatch(r"[+-]?\d+[sS]", tok):
+            return NbtShort(int(tok[:-1]))
+        if re.fullmatch(r"[+-]?\d+[lL]", tok):
+            return NbtLong(int(tok[:-1]))
+        if re.fullmatch(r"[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?[fF]", tok):
+            return NbtFloat(float(tok[:-1]))
+        if re.fullmatch(r"[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?[dD]", tok):
+            return NbtDouble(float(tok[:-1]))
+        if re.fullmatch(r"[+-]?\d+", tok):
+            return int(tok)
+        if re.fullmatch(r"[+-]?(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?", tok):
+            return NbtDouble(float(tok))
+        return tok
+
+    def parse_val() -> Any:
+        skip_ws()
+        if pos[0] >= n:
+            raise ValueError("Unexpected end of SNBT")
+        ch = s[pos[0]]
+        if ch == "{":
+            pos[0] += 1
+            obj: dict[str, Any] = {}
+            skip_ws()
+            if pos[0] < n and s[pos[0]] == "}":
+                pos[0] += 1
+                return obj
+            while True:
+                skip_ws()
+                k = parse_str() if s[pos[0]] in ('"', "'") else parse_unquoted()
+                skip_ws()
+                if pos[0] >= n or s[pos[0]] != ":":
+                    raise ValueError(f"Expected ':' after key {k}")
+                pos[0] += 1
+                obj[k] = parse_val()
+                skip_ws()
+                if pos[0] < n and s[pos[0]] == ",":
+                    pos[0] += 1
+                    skip_ws()
+                    if pos[0] < n and s[pos[0]] == "}":
+                        pos[0] += 1
+                        return obj
+                    continue
+                if pos[0] < n and s[pos[0]] == "}":
+                    pos[0] += 1
+                    return obj
+                raise ValueError("Expected ',' or '}' in compound")
+        if ch == "[":
+            pos[0] += 1
+            skip_ws()
+            arr_kind: str | None = None
+            if pos[0] + 1 < n and s[pos[0]] in ("B", "I", "L") and s[pos[0] + 1] == ";":
+                arr_kind = s[pos[0]]
+                pos[0] += 2
+                skip_ws()
+            items: list[Any] = []
+            if pos[0] < n and s[pos[0]] == "]":
+                pos[0] += 1
+            else:
+                while True:
+                    items.append(parse_val())
+                    skip_ws()
+                    if pos[0] < n and s[pos[0]] == ",":
+                        pos[0] += 1
+                        skip_ws()
+                        if pos[0] < n and s[pos[0]] == "]":
+                            pos[0] += 1
+                            break
+                        continue
+                    if pos[0] < n and s[pos[0]] == "]":
+                        pos[0] += 1
+                        break
+                    raise ValueError("Expected ',' or ']' in list")
+            if arr_kind == "B":
+                return NbtByteArray([x.value if isinstance(x, NbtVal) else int(x) for x in items])
+            if arr_kind == "I":
+                return NbtIntArray([x.value if isinstance(x, NbtVal) else int(x) for x in items])
+            if arr_kind == "L":
+                return NbtLongArray([x.value if isinstance(x, NbtVal) else int(x) for x in items])
+            return items
+        if ch in ('"', "'"):
+            return parse_str()
+        return parse_primitive(parse_unquoted())
+
+    return parse_val()
+
+
+def format_snbt(val: Any) -> str:
+    if isinstance(val, NbtByte):
+        return f"{val.value}b"
+    if isinstance(val, NbtShort):
+        return f"{val.value}s"
+    if isinstance(val, NbtLong):
+        return f"{val.value}L"
+    if isinstance(val, NbtFloat):
+        return f"{val.value}f"
+    if isinstance(val, NbtDouble):
+        v = float(val.value)
+        s = repr(v)
+        if "." not in s and "e" not in s and "E" not in s:
+            s += ".0"
+        return f"{s}d"
+    if isinstance(val, NbtByteArray):
+        return "[B;" + ",".join(f"{b}b" for b in val.value) + "]"
+    if isinstance(val, NbtIntArray):
+        return "[I;" + ",".join(str(x) for x in val.value) + "]"
+    if isinstance(val, NbtLongArray):
+        return "[L;" + ",".join(f"{x}L" for x in val.value) + "]"
+    if isinstance(val, bool):
+        return "1b" if val else "0b"
+    if isinstance(val, int):
+        return str(val)
+    if isinstance(val, float):
+        return f"{val}d"
+    if isinstance(val, str):
+        escaped = val.replace("\\", "\\\\").replace('"', '\\"')
+        return f'"{escaped}"'
+    if isinstance(val, list):
+        return "[" + ",".join(format_snbt(x) for x in val) + "]"
+    if isinstance(val, dict):
+        parts = []
+        for k, v in val.items():
+            ks = k if re.fullmatch(r"[A-Za-z0-9_.+-]+", k) else ('"' + k.replace('"', '\\"') + '"')
+            parts.append(f"{ks}:{format_snbt(v)}")
+        return "{" + ",".join(parts) + "}"
+    return '""'
+
+
+def _decode_a85_bytes(s: str) -> bytes:
+    out = bytearray()
+    g = [0] * 5
+    gi = 0
+    for ch in s:
+        if ch == "z":
+            out.extend(b"\x00\x00\x00\x00")
+            gi = 0
+            continue
+        code = ord(ch) - 33
+        if code < 0 or code >= 85:
+            raise ValueError(f"非法 Ascii85 字符: {ch!r}")
+        g[gi] = code
+        gi += 1
+        if gi == 5:
+            v = (((g[0] * 85 + g[1]) * 85 + g[2]) * 85 + g[3]) * 85 + g[4]
+            out.extend(struct.pack(">I", v & 0xFFFFFFFF))
+            gi = 0
+    if gi > 0:
+        for j in range(gi, 5):
+            g[j] = 84
+        v = (((g[0] * 85 + g[1]) * 85 + g[2]) * 85 + g[3]) * 85 + g[4]
+        for j in range(gi - 1):
+            out.append((v >> (24 - 8 * j)) & 0xFF)
+    return bytes(out)
+
+
+def _read_nbt_root(raw_nbt: bytes) -> dict[str, Any]:
+    buf = io.BytesIO(raw_nbt)
+
+    def r_bytes(k: int) -> bytes:
+        b = buf.read(k)
+        if len(b) != k:
+            raise ValueError("NBT 数据截断")
+        return b
+
+    def r_str() -> str:
+        ln = struct.unpack(">H", r_bytes(2))[0]
+        return r_bytes(ln).decode("utf-8", errors="replace")
+
+    def r_payload(tag_id: int) -> Any:
+        if tag_id == 1:
+            return NbtByte(struct.unpack(">b", r_bytes(1))[0])
+        if tag_id == 2:
+            return NbtShort(struct.unpack(">h", r_bytes(2))[0])
+        if tag_id == 3:
+            return struct.unpack(">i", r_bytes(4))[0]
+        if tag_id == 4:
+            return NbtLong(struct.unpack(">q", r_bytes(8))[0])
+        if tag_id == 5:
+            return NbtFloat(struct.unpack(">f", r_bytes(4))[0])
+        if tag_id == 6:
+            return NbtDouble(struct.unpack(">d", r_bytes(8))[0])
+        if tag_id == 7:
+            ln = struct.unpack(">i", r_bytes(4))[0]
+            return NbtByteArray([struct.unpack("b", bytes([b]))[0] for b in r_bytes(ln)])
+        if tag_id == 8:
+            return r_str()
+        if tag_id == 9:
+            et = r_bytes(1)[0]
+            ln = struct.unpack(">i", r_bytes(4))[0]
+            return [r_payload(et) for _ in range(ln)]
+        if tag_id == 10:
+            comp: dict[str, Any] = {}
+            while True:
+                tid = r_bytes(1)[0]
+                if tid == 0:
+                    break
+                name = r_str()
+                comp[name] = r_payload(tid)
+            return comp
+        if tag_id == 11:
+            ln = struct.unpack(">i", r_bytes(4))[0]
+            return NbtIntArray(list(struct.unpack(f">{ln}i", r_bytes(4 * ln))))
+        if tag_id == 12:
+            ln = struct.unpack(">i", r_bytes(4))[0]
+            return NbtLongArray(list(struct.unpack(f">{ln}q", r_bytes(8 * ln))))
+        raise ValueError(f"未知 NBT Tag: {tag_id}")
+
+    root_id = r_bytes(1)[0]
+    if root_id != 10:
+        raise ValueError("NBT 根节点必须是 CompoundTag")
+    _ = r_str()
+    return r_payload(10)
+
+
+def _num_val(x: Any, default: float = 0.0) -> float:
+    if isinstance(x, NbtVal):
+        return float(x.value)
+    if isinstance(x, (int, float)):
+        return float(x)
+    return default
+
+
+def nbt_to_ast(tag: Any) -> dict[str, Any]:
+    if not isinstance(tag, dict):
+        return {"kind": "raw", "snbt": format_snbt(tag), "summary": format_snbt(tag)}
+    htype = str(tag.get("hexcasting:type") or "")
+    data = tag.get("hexcasting:data")
+
+    if htype == "hexcasting:null":
+        return {"kind": "null"}
+    if htype == "hexcasting:double":
+        return {"kind": "double", "value": _num_val(data, 0.0)}
+    if htype == "hexcasting:boolean":
+        b = bool(int(_num_val(data, 0)))
+        return {"kind": "boolean", "value": b}
+    if htype == "hexcasting:vec3" and isinstance(data, dict):
+        return {
+            "kind": "vec3",
+            "x": _num_val(data.get("x"), 0.0),
+            "y": _num_val(data.get("y"), 0.0),
+            "z": _num_val(data.get("z"), 0.0),
+        }
+    if htype == "hexcasting:pattern" and isinstance(data, dict):
+        sd_idx = int(_num_val(data.get("start_dir"), 0)) % 6
+        start_dir = HEX_DIRS[sd_idx]
+        raw_angles = data.get("angles")
+        angles_bytes = raw_angles.value if isinstance(raw_angles, NbtByteArray) else (raw_angles or [])
+        sig = "".join(ANGLE_CHARS[int(b) % 6] for b in angles_bytes)
+        cat = _get_catalog_by_sig().get(sig)
+        return {
+            "kind": "pattern",
+            "action": cat["id"] if cat else "",
+            "dir": start_dir,
+            "angles": sig,
+            "zh": cat["zh"] if cat else "",
+        }
+    if htype == "hexcasting:list" and isinstance(data, list):
+        return {"kind": "list", "items": [nbt_to_ast(el) for el in data]}
+
+    return {"kind": "raw", "type": htype, "snbt": format_snbt(tag)}
+
+
+def ast_to_nbt(ast: dict[str, Any]) -> dict[str, Any]:
+    kind = str(ast.get("kind") or "null")
+    if kind == "null":
+        return {"hexcasting:type": "hexcasting:null", "hexcasting:data": {}}
+    if kind == "double":
+        return {"hexcasting:type": "hexcasting:double", "hexcasting:data": NbtDouble(float(ast.get("value", 0.0)))}
+    if kind == "boolean":
+        return {"hexcasting:type": "hexcasting:boolean", "hexcasting:data": NbtByte(1 if ast.get("value") else 0)}
+    if kind == "vec3":
+        return {
+            "hexcasting:type": "hexcasting:vec3",
+            "hexcasting:data": {
+                "x": NbtDouble(float(ast.get("x", 0.0))),
+                "y": NbtDouble(float(ast.get("y", 0.0))),
+                "z": NbtDouble(float(ast.get("z", 0.0))),
+            },
+        }
+    if kind == "pattern":
+        act_id = str(ast.get("action") or "").strip()
+        dir_name = str(ast.get("dir") or "NORTH_EAST").upper()
+        angles = str(ast.get("angles") or "").strip()
+        if act_id:
+            cat = _get_catalog_by_id().get(act_id)
+            if cat:
+                dir_name = cat.get("dir", dir_name)
+                angles = cat.get("sig", angles)
+        sd_idx = HEX_DIRS.index(dir_name) if dir_name in HEX_DIRS else 0
+        arr = [CHAR_TO_ANGLE[c] for c in angles if c in CHAR_TO_ANGLE]
+        return {
+            "hexcasting:type": "hexcasting:pattern",
+            "hexcasting:data": {
+                "angles": NbtByteArray(arr),
+                "start_dir": NbtByte(sd_idx),
+            },
+        }
+    if kind == "list":
+        return {
+            "hexcasting:type": "hexcasting:list",
+            "hexcasting:data": [ast_to_nbt(it) for it in (ast.get("items") or [])],
+        }
+    if kind == "raw":
+        parsed = parse_snbt(str(ast.get("snbt") or "{}"))
+        if isinstance(parsed, dict):
+            return parsed
+    raise ValueError(f"无法序列化 Iota 类型: {kind}")
+
+
+def ast_to_inline(ast: dict[str, Any]) -> str:
+    kind = str(ast.get("kind") or "null")
+    if kind == "null":
+        return "null"
+    if kind == "double":
+        v = float(ast.get("value", 0.0))
+        return f"double:{int(v) if v.is_integer() else v}"
+    if kind == "vec3":
+        return f"vec:{{{ast.get('x', 0)},{ast.get('y', 0)},{ast.get('z', 0)}}}"
+    if kind == "pattern":
+        act_id = str(ast.get("action") or "").strip()
+        if act_id:
+            return f"pattern:{act_id}"
+        return f"pattern{{{str(ast.get('dir') or 'NORTH_EAST').upper()},{ast.get('angles') or ''}}}"
+    if kind == "list":
+        items = ast.get("items") or []
+        inner = ",".join(ast_to_inline(it) for it in items)
+        return f"iota:[{inner}]"
+    if kind == "boolean":
+        return format_snbt(ast_to_nbt(ast))
+    if kind == "raw":
+        return str(ast.get("snbt") or "{}")
+    return "null"
+
+
+def summarize_ast(ast: dict[str, Any]) -> str:
+    kind = str(ast.get("kind") or "null")
+    if kind == "null":
+        return "Null"
+    if kind == "double":
+        v = float(ast.get("value", 0.0))
+        return f"数值 {int(v) if v.is_integer() else v}"
+    if kind == "boolean":
+        return "布尔 " + ("True" if ast.get("value") else "False")
+    if kind == "vec3":
+        return f"向量 ({ast.get('x', 0)}, {ast.get('y', 0)}, {ast.get('z', 0)})"
+    if kind == "pattern":
+        if ast.get("zh"):
+            return f"图案 {ast['zh']}"
+        if ast.get("action"):
+            return f"图案 {ast['action']}"
+        return f"图案 [{ast.get('angles', '')}]"
+    if kind == "list":
+        items = ast.get("items") or []
+        head = ", ".join(summarize_ast(it) for it in items[:3])
+        more = ", ..." if len(items) > 3 else ""
+        return f"列表 ({len(items)}项): {head}{more}"
+    return f"NBT ({ast.get('type') or 'custom'})"
+
+
+def _split_top_level(s: str) -> list[str]:
+    out: list[str] = []
+    depth = 0
+    cur: list[str] = []
+    for ch in s:
+        if ch in "{[(":
+            depth += 1
+        elif ch in "}])":
+            depth -= 1
+        if ch == "," and depth == 0:
+            part = "".join(cur).strip()
+            if part:
+                out.append(part)
+            cur.clear()
+        else:
+            cur.append(ch)
+    tail = "".join(cur).strip()
+    if tail:
+        out.append(tail)
+    return out
+
+
+def parse_iota_input_to_nbt(raw: str) -> dict[str, Any]:
+    s = raw.strip()
+    if not s:
+        return ast_to_nbt({"kind": "null"})
+    if s.startswith("{"):
+        obj = json.loads(s) if s.startswith('{"nbt"') else None
+        if isinstance(obj, dict) and "nbt" in obj:
+            parsed = parse_snbt(str(obj["nbt"]))
+        else:
+            parsed = parse_snbt(s)
+        if not isinstance(parsed, dict):
+            raise ValueError("SNBT 根节点必须是对象")
+        return parsed
+    if s == "null":
+        return ast_to_nbt({"kind": "null"})
+    if s.startswith("double:"):
+        return ast_to_nbt({"kind": "double", "value": float(s[7:].strip())})
+    if s.startswith("vec:{") and s.endswith("}"):
+        parts = [float(x.strip()) for x in s[5:-1].split(",")]
+        if len(parts) != 3:
+            raise ValueError("向量需要 3 个分量")
+        return ast_to_nbt({"kind": "vec3", "x": parts[0], "y": parts[1], "z": parts[2]})
+    if s.startswith("pattern:"):
+        return ast_to_nbt({"kind": "pattern", "action": s[8:].strip()})
+    if (s.startswith("pattern{") and s.endswith("}")) or (s.startswith("pattern[") and s.endswith("]")):
+        parts = [x.strip() for x in s[8:-1].split(",")]
+        return ast_to_nbt({"kind": "pattern", "dir": parts[0], "angles": parts[1] if len(parts) > 1 else ""})
+    if s.startswith("iota:[") and s.endswith("]"):
+        items = [parse_iota_input_to_nbt(p) for p in _split_top_level(s[6:-1])]
+        return {"hexcasting:type": "hexcasting:list", "hexcasting:data": items}
+    if s.startswith("iota:"):
+        body = s[5:]
+        if body.endswith("**n"):
+            body = body[:-3]
+        if body.endswith("*b") or body.endswith("*w"):
+            body = body[:-2]
+        elif len(body) >= 7 and body[-7] == "*" and re.fullmatch(r"[0-9a-fA-F]{6}", body[-6:]):
+            body = body[:-7]
+        if body.endswith(".json"):
+            fname = body.split(":")[-1]
+            p = safe_resolve_under(IOTAS_DIR, fname)
+            if p is None or not p.is_file():
+                raise ValueError(f"找不到预设文件: {fname}")
+            return parse_iota_input_to_nbt(p.read_text("utf-8"))
+        comp = _decode_a85_bytes(body)
+        return _read_nbt_root(zlib.decompress(comp))
+    raise ValueError("未识别的 Iota 格式，支持 null / double: / vec: / pattern: / iota:[...] / iota:<a85> / SNBT")
+
+
+def inspect_iota_file(rel: str, path: Path) -> dict[str, Any]:
+    try:
+        nbt = parse_iota_input_to_nbt(path.read_text("utf-8"))
+        ast = nbt_to_ast(nbt)
+        return {
+            "name": rel,
+            "type": str(nbt.get("hexcasting:type") or "unknown"),
+            "summary": summarize_ast(ast),
+            "ast": ast,
+            "snbt": format_snbt(nbt),
+        }
+    except Exception as e:
+        return {"name": rel, "type": "error", "summary": f"解析失败: {e}", "ast": {"kind": "raw", "snbt": "{}"}, "snbt": ""}
+
+
+def decode_iota_endpoint(body: dict[str, Any]) -> dict[str, Any]:
+    raw = str(body.get("raw") or "").strip()
+    nbt = parse_iota_input_to_nbt(raw)
+    ast = nbt_to_ast(nbt)
+    return {
+        "ok": True,
+        "type": str(nbt.get("hexcasting:type") or "unknown"),
+        "summary": summarize_ast(ast),
+        "ast": ast,
+        "inline": ast_to_inline(ast),
+        "snbt": format_snbt(nbt),
+    }
+
+
+def save_iota_preset(body: dict[str, Any]) -> dict[str, Any]:
+    name = str(body.get("name") or "").strip()
+    if name.endswith(".json"):
+        name = name[:-5]
+    if not SLUG_RE.match(name):
+        raise ValueError("预设名称只能包含小写字母、数字和下划线 [a-z0-9_]")
+    if "ast" in body and isinstance(body["ast"], dict):
+        nbt = ast_to_nbt(body["ast"])
+    elif "raw" in body:
+        nbt = parse_iota_input_to_nbt(str(body["raw"]))
+    else:
+        raise ValueError("缺少 ast 或 raw 数据")
+
+    snbt = format_snbt(nbt)
+    dest = IOTAS_DIR / f"{name}.json"
+    atomic_write_json(dest, {"nbt": snbt})
+    ast = nbt_to_ast(nbt)
+    return {
+        "ok": True,
+        "name": f"{name}.json",
+        "ref": f"iota:{name}.json",
+        "summary": summarize_ast(ast),
+        "snbt": snbt,
+    }
+
+
+def delete_iota_preset(body: dict[str, Any]) -> dict[str, Any]:
+    name = str(body.get("name") or "").strip()
+    if not name.endswith(".json"):
+        name += ".json"
+    target = safe_resolve_under(IOTAS_DIR, name)
+    if target is None or not target.is_file():
+        raise ValueError(f"预设文件 '{name}' 不存在")
+    target.unlink()
+    return {"ok": True, "deleted": name}
+
 
 def load_workspace_payload() -> dict[str, Any]:
     zh_cn: dict[str, str] = read_json(LANG_ZH)
@@ -535,8 +1129,12 @@ def load_workspace_payload() -> dict[str, Any]:
     scenes.sort(key=lambda s: (s["category"], s["sort_order"], s["slug"]))
 
     iotas: list[str] = []
+    iota_details: list[dict[str, Any]] = []
     if IOTAS_DIR.is_dir():
-        iotas = sorted(p.relative_to(IOTAS_DIR).as_posix() for p in IOTAS_DIR.rglob("*.json"))
+        for p in sorted(IOTAS_DIR.rglob("*.json")):
+            rel = p.relative_to(IOTAS_DIR).as_posix()
+            iotas.append(rel)
+            iota_details.append(inspect_iota_file(rel, p))
 
     action_zh, action_en = RESOLVER.get_action_dicts()
     return {
@@ -549,6 +1147,7 @@ def load_workspace_payload() -> dict[str, Any]:
         "action_zh": action_zh,
         "action_en": action_en,
         "iotas": iotas,
+        "iota_details": iota_details,
         "items": RESOLVER.list_items(),
     }
 
@@ -690,6 +1289,32 @@ def save_scene(body: dict[str, Any]) -> dict[str, Any]:
     else:
         scene.pop("subtitle", None)
 
+    # Unlock rule & optional natural-language lock hint
+    raw_unlock = scene.get("unlock")
+    lh_zh = str(raw_texts.get("lock_hint_zh") or "").strip()
+    lh_en = str(raw_texts.get("lock_hint_en") or "").strip()
+    if isinstance(raw_unlock, dict) and raw_unlock.get("locked"):
+        u_out: dict[str, Any] = {
+            "locked": True,
+            "mode": "any" if str(raw_unlock.get("mode") or "all").lower() == "any" else "all",
+        }
+        if lh_zh or lh_en:
+            base_lh = lh_zh or lh_en
+            u_out["hint"] = put_pair(f"{prefix}lock_hint", base_lh, lh_en or base_lh)
+        conds_in = raw_unlock.get("conditions") or []
+        clean_conds: list[dict[str, str]] = []
+        for c in conds_in:
+            if not isinstance(c, dict):
+                continue
+            ctype = str(c.get("type") or "manual").strip().lower()
+            cid = str(c.get("id") or "").strip()
+            if ctype == "manual" or cid:
+                clean_conds.append({"type": ctype, "id": cid})
+        u_out["conditions"] = clean_conds
+        scene["unlock"] = u_out
+    else:
+        scene.pop("unlock", None)
+
     # Canonical key order at top level while preserving optional keys
     cards_in = scene.get("knowledge_cards") or []
     card_texts = raw_texts.get("cards") or []
@@ -810,6 +1435,49 @@ def delete_scene(body: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "deleted": rel_file, **lang_res}
 
 
+def reorder_items(body: dict[str, Any]) -> dict[str, Any]:
+    kind = str(body.get("kind") or "").strip()
+    order = body.get("order")
+    if not isinstance(order, list) or not order:
+        raise ValueError("缺少 order 列表")
+
+    updated = 0
+    if kind == "categories":
+        for idx, cid in enumerate(order):
+            cid_str = str(cid).strip()
+            if not SLUG_RE.match(cid_str):
+                continue
+            cf = CATS_DIR / f"{cid_str}.json"
+            if cf.is_file():
+                obj = read_json(cf)
+                obj["sort_order"] = idx
+                atomic_write_json(cf, obj)
+                updated += 1
+        return {"ok": True, "kind": "categories", "updated": updated}
+
+    if kind == "scenes":
+        cat = str(body.get("category") or "").strip()
+        if not SLUG_RE.match(cat):
+            raise ValueError("无效的分类 ID")
+        slug_to_file: dict[str, Path] = {}
+        for sf in sorted(SCENES_DIR.rglob("*.json")):
+            obj = read_json(sf)
+            if str(obj.get("category") or "") == cat:
+                sid = str(obj.get("id") or sf.stem)
+                slug = sid.split(":", 1)[-1]
+                slug_to_file[slug] = sf
+        for idx, slug in enumerate(order):
+            sf = slug_to_file.get(str(slug).strip())
+            if sf and sf.is_file():
+                obj = read_json(sf)
+                obj["sort_order"] = idx
+                atomic_write_json(sf, obj)
+                updated += 1
+        return {"ok": True, "kind": "scenes", "category": cat, "updated": updated}
+
+    raise ValueError(f"未知的排序类型: {kind}")
+
+
 def run_validation() -> dict[str, Any]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -860,6 +1528,13 @@ def run_validation() -> dict[str, Any]:
                     referenced_hp_keys.add(val)
                     if val not in zh_cn or val not in en_us:
                         errors.append(f"场景 {rel} 缺少翻译键: {val}")
+            unlock_obj = sc.get("unlock")
+            if isinstance(unlock_obj, dict):
+                hint_val = str(unlock_obj.get("hint") or "")
+                if hint_val.startswith("hexponder."):
+                    referenced_hp_keys.add(hint_val)
+                    if hint_val not in zh_cn or hint_val not in en_us:
+                        errors.append(f"场景 {rel} 锁定提示缺少翻译键: {hint_val}")
             for card in sc.get("knowledge_cards") or []:
                 for f in ("title", "body"):
                     val = str(card.get(f) or "")
@@ -1008,6 +1683,14 @@ class StudioHandler(BaseHTTPRequestHandler):
                 self._send_json(HTTPStatus.OK, save_scene(body))
             elif parsed.path == "/api/scene/delete":
                 self._send_json(HTTPStatus.OK, delete_scene(body))
+            elif parsed.path == "/api/reorder":
+                self._send_json(HTTPStatus.OK, reorder_items(body))
+            elif parsed.path == "/api/iota/decode":
+                self._send_json(HTTPStatus.OK, decode_iota_endpoint(body))
+            elif parsed.path == "/api/iota/save":
+                self._send_json(HTTPStatus.OK, save_iota_preset(body))
+            elif parsed.path == "/api/iota/delete":
+                self._send_json(HTTPStatus.OK, delete_iota_preset(body))
             elif parsed.path == "/api/validate":
                 self._send_json(HTTPStatus.OK, run_validation())
             else:

@@ -1,0 +1,12 @@
+{
+  "extends": "note_common",
+  "layout": {
+    "size": [316, 220],
+    "regions": {
+      "header":        [10, 8, 296, 26],
+      "page_list":     [10, 38, 114, 150],
+      "snippet_paper": [128, 38, 178, 150],
+      "footer_bar":    [10, 194, 296, 18]
+    }
+  }
+}

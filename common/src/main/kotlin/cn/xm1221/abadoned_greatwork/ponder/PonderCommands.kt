@@ -10,6 +10,7 @@ import cn.xm1221.abadoned_greatwork.networking.msg.MsgPonderLoadS2C
 import cn.xm1221.abadoned_greatwork.networking.msg.MsgPonderOpenIndexS2C
 import cn.xm1221.abadoned_greatwork.ponder.data.PonderIotaCodec
 import cn.xm1221.abadoned_greatwork.ponder.data.PonderSceneLoader
+import cn.xm1221.abadoned_greatwork.ponder.data.PonderUnlockManager
 import cn.xm1221.abadoned_greatwork.ponder.sim.PonderPreSimulator
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
@@ -67,11 +68,70 @@ object PonderCommands {
                                 ctx.source.sendFailure(Component.translatable("command.abadoned_greatwork.ponder.not_found", id.toString()))
                                 return@executes 0
                             }
+                            if (!player.hasPermissions(2) && !PonderUnlockManager.isUnlocked(player, scene)) {
+                                ctx.source.sendFailure(Component.translatable("hexponder.ui.locked_deny"))
+                                return@executes 0
+                            }
+                            PonderUnlockManager.markViewed(player, scene.id)
                             val bundle = PonderPreSimulator.simulate(scene, player)
                             MsgPonderLoadS2C.sendChunked(player, bundle)
                             1
                         }
                 )
+            )
+            .then(
+                Commands.literal("unlock").requires { it.hasPermission(2) }.then(
+                    Commands.argument("scene", ResourceLocationArgument.id())
+                        .suggests { _, builder ->
+                            SharedSuggestionProvider.suggestResource(PonderSceneLoader.scenes.keys, builder)
+                        }
+                        .executes { ctx ->
+                            val player = ctx.source.playerOrException
+                            val id = ResourceLocationArgument.getId(ctx, "scene")
+                            if (PonderSceneLoader.getScene(id) == null) {
+                                ctx.source.sendFailure(Component.translatable("command.abadoned_greatwork.ponder.not_found", id.toString()))
+                                return@executes 0
+                            }
+                            PonderUnlockManager.unlockScene(player, id)
+                            ctx.source.sendSuccess({ Component.translatable("command.abadoned_greatwork.ponder.unlocked", id.toString()) }, false)
+                            1
+                        }
+                )
+            )
+            .then(
+                Commands.literal("unlock_all").requires { it.hasPermission(2) }.executes { ctx ->
+                    val player = ctx.source.playerOrException
+                    PonderUnlockManager.unlockAll(player)
+                    ctx.source.sendSuccess({ Component.translatable("command.abadoned_greatwork.ponder.unlocked_all") }, false)
+                    1
+                }
+            )
+            .then(
+                Commands.literal("lock").requires { it.hasPermission(2) }.then(
+                    Commands.argument("scene", ResourceLocationArgument.id())
+                        .suggests { _, builder ->
+                            SharedSuggestionProvider.suggestResource(PonderSceneLoader.scenes.keys, builder)
+                        }
+                        .executes { ctx ->
+                            val player = ctx.source.playerOrException
+                            val id = ResourceLocationArgument.getId(ctx, "scene")
+                            if (PonderSceneLoader.getScene(id) == null) {
+                                ctx.source.sendFailure(Component.translatable("command.abadoned_greatwork.ponder.not_found", id.toString()))
+                                return@executes 0
+                            }
+                            PonderUnlockManager.lockScene(player, id)
+                            ctx.source.sendSuccess({ Component.translatable("command.abadoned_greatwork.ponder.locked", id.toString()) }, false)
+                            1
+                        }
+                )
+            )
+            .then(
+                Commands.literal("reset_locks").requires { it.hasPermission(2) }.executes { ctx ->
+                    val player = ctx.source.playerOrException
+                    PonderUnlockManager.resetPlayer(player)
+                    ctx.source.sendSuccess({ Component.translatable("command.abadoned_greatwork.ponder.reset_locks") }, false)
+                    1
+                }
             )
             .then(
                 Commands.literal("export").requires { it.hasPermission(2) }.then(

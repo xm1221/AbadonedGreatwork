@@ -59,12 +59,42 @@ object Abadoned_greatworkServerConfig {
         @Tooltip
         var debugEyeLocating: Boolean = false
 
+        /** 玩家笔记上限 */
+        @Tooltip
+        var maxEntriesPerPlayer: Int = 128
+
+        /** 单条笔记最大页数 */
+        @Tooltip
+        var maxPagesPerEntry: Int = 32
+
+        /** 单页最大文本字符数 */
+        @Tooltip
+        var maxTextPerPage: Int = 4096
+
+        /** 是否允许玩家在笔记中使用 patchouli:link 外部链接页 */
+        @Tooltip
+        var allowExternalLinks: Boolean = true
+
+        /** 写入笔记残页时每页消耗的纸数量 */
+        @Tooltip
+        var paperPerPage: Int = 1
+
         fun encode(buf: FriendlyByteBuf) {
             buf.writeBoolean(debugEyeLocating)
+            buf.writeVarInt(maxEntriesPerPlayer)
+            buf.writeVarInt(maxPagesPerEntry)
+            buf.writeVarInt(maxTextPerPage)
+            buf.writeBoolean(allowExternalLinks)
+            buf.writeVarInt(paperPerPage)
         }
 
         fun decode(buf: FriendlyByteBuf): ServerConfig {
             debugEyeLocating = buf.readBoolean()
+            maxEntriesPerPlayer = buf.readVarInt()
+            maxPagesPerEntry = buf.readVarInt()
+            maxTextPerPage = buf.readVarInt()
+            allowExternalLinks = buf.readBoolean()
+            paperPerPage = buf.readVarInt()
             return this
         }
     }

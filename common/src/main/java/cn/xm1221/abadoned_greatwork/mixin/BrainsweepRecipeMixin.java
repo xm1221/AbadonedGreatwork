@@ -1,6 +1,7 @@
 package cn.xm1221.abadoned_greatwork.mixin;
 
 import at.petrak.hexcasting.common.recipe.BrainsweepRecipe;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -22,11 +23,11 @@ public abstract class BrainsweepRecipeMixin {
 
     @Shadow(remap = false)
     @Final
-    private ResourceLocation id;
+    private BlockState result;
 
     @Unique
-    private static final ResourceLocation ABW_WAVE_TRANSMITTER_RECIPE =
-        ResourceLocation.fromNamespaceAndPath("abadoned_greatwork", "brainsweep/wave_transmitter");
+    private static final ResourceLocation ABW_WAVE_TRANSMITTER_BLOCK =
+        ResourceLocation.fromNamespaceAndPath("abadoned_greatwork", "wave_transmitter");
 
     @Inject(
         method = "matches(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/server/level/ServerLevel;)Z",
@@ -42,7 +43,7 @@ public abstract class BrainsweepRecipeMixin {
         if (!cir.getReturnValueZ()) {
             return;
         }
-        if (ABW_WAVE_TRANSMITTER_RECIPE.equals(this.id)) {
+        if (ABW_WAVE_TRANSMITTER_BLOCK.equals(BuiltInRegistries.BLOCK.getKey(this.result.getBlock()))) {
             boolean isCaptain = entity instanceof Raider raider
                 && (raider.isPatrolLeader() || abw$isWearingOminousBanner(raider));
             if (!isCaptain) {

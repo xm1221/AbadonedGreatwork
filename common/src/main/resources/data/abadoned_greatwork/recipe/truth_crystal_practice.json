@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " A ",
+    "ACA",
+    " A "
+  ],
+  "key": {
+    "A": {
+      "item": "hexcasting:amethyst_dust"
+    },
+    "C": {
+      "item": "hexcasting:focus"
+    }
+  },
+  "result": {
+    "id": "abadoned_greatwork:item_truth_crystal_0"
+  }
+}

@@ -450,7 +450,7 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
     }
 
     @Inject(method = "saveModData", at = @At("TAIL"), remap = false)
-    private void abw$saveBranches(CompoundTag tag, CallbackInfo ci) {
+    private void abw$saveBranches(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries, CallbackInfo ci) {
         ListTag list;
         if (this.abw$lazyBranches != null) {
             // 还没反序列化过，原样写回，别丢
@@ -470,7 +470,7 @@ public abstract class ImpetusBranchMixin implements ImpetusBranchHost {
     }
 
     @Inject(method = "loadModData", at = @At("TAIL"), remap = false)
-    private void abw$loadBranches(CompoundTag tag, CallbackInfo ci) {
+    private void abw$loadBranches(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries, CallbackInfo ci) {
         this.abw$lazyBranches = tag.contains(ABW_TAG_BRANCHES, Tag.TAG_LIST)
             ? tag.getList(ABW_TAG_BRANCHES, Tag.TAG_COMPOUND)
             : null;

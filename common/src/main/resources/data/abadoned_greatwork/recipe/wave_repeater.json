@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " A ",
+    "SHS",
+    "QSQ"
+  ],
+  "key": {
+    "A": {
+      "item": "hexcasting:charged_amethyst"
+    },
+    "S": {
+      "item": "hexcasting:slate"
+    },
+    "H": {
+      "item": "minecraft:goat_horn"
+    },
+    "Q": {
+      "item": "hexcasting:quenched_allay_shard"
+    }
+  },
+  "result": {
+    "count": 1,
+    "id": "abadoned_greatwork:wave_repeater"
+  },
+  "show_notification": true
+}

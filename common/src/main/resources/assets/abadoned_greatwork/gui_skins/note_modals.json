@@ -1,0 +1,14 @@
+{
+  "extends": "note_common",
+  "layout": {
+    "size": [288, 196],
+    "regions": {
+      "grid_modal":         [0, 0, 288, 196],
+      "page_type_modal":    [0, 0, 292, 178],
+      "entry_meta_modal":   [0, 0, 248, 168],
+      "pattern_draw_modal": [0, 0, 264, 196],
+      "confirm_modal":      [0, 0, 246, 98],
+      "snbt_modal":         [0, 0, 260, 108]
+    }
+  }
+}

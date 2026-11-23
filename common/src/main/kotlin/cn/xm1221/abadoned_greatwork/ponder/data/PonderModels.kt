@@ -111,6 +111,24 @@ data class PonderStepDef(
 )
 
 /**
+ * 单条数据驱动解锁条件定义。
+ */
+data class PonderUnlockCondition(
+    val type: String = "manual",
+    val id: String = "",
+)
+
+/**
+ * 场景锁定与数据驱动解锁规则。
+ */
+data class PonderUnlockDef(
+    val locked: Boolean = false,
+    val mode: String = "all",
+    val hint: String = "",
+    val conditions: List<PonderUnlockCondition> = emptyList(),
+)
+
+/**
  * 完整的数据驱动思索场景定义（由数据包加载并保存在服务端）。
  */
 data class PonderSceneDef(
@@ -129,6 +147,7 @@ data class PonderSceneDef(
     val startDir: String,
     val escapedColor: Int,
     val triggers: PonderTriggers,
+    val unlock: PonderUnlockDef = PonderUnlockDef(),
     val knowledgeCards: List<PonderKnowledgeCardDef>,
     val steps: List<PonderStepDef>,
 ) {
@@ -176,6 +195,8 @@ data class PonderSceneDef(
             searchTerms = termSet.toList(),
             actionIds = actionSet.toList(),
             patternSigs = sigSet.toList(),
+            locked = unlock.locked,
+            lockHint = unlock.hint,
         )
     }
 }
@@ -195,6 +216,8 @@ data class PonderIndexEntry(
     val searchTerms: List<String> = emptyList(),
     val actionIds: List<String> = emptyList(),
     val patternSigs: List<String> = emptyList(),
+    val locked: Boolean = false,
+    val lockHint: String = "",
 ) {
     fun writeToBuf(buf: FriendlyByteBuf) {
         buf.writeResourceLocation(id)
@@ -208,6 +231,8 @@ data class PonderIndexEntry(
         writeStringList(buf, searchTerms)
         writeStringList(buf, actionIds)
         writeStringList(buf, patternSigs)
+        buf.writeBoolean(locked)
+        buf.writeUtf(lockHint)
     }
 
     companion object {
@@ -223,6 +248,8 @@ data class PonderIndexEntry(
             searchTerms = readStringList(buf),
             actionIds = readStringList(buf),
             patternSigs = readStringList(buf),
+            locked = buf.readBoolean(),
+            lockHint = buf.readUtf(),
         )
     }
 }

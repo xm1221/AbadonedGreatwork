@@ -1,0 +1,15 @@
+{
+  "extends": "note_common",
+  "layout": {
+    "size": [376, 224],
+    "regions": {
+      "title_bar":      [10, 8, 356, 16],
+      "search_bar":     [10, 26, 108, 16],
+      "btn_new":        [120, 26, 46, 16],
+      "entry_list":     [10, 45, 156, 146],
+      "detail_paper":   [172, 26, 194, 165],
+      "footer_left":    [10, 196, 156, 18],
+      "footer_right":   [172, 196, 194, 18]
+    }
+  }
+}

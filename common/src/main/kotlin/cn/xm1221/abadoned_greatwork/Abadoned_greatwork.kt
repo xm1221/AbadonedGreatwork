@@ -9,6 +9,7 @@ import cn.xm1221.abadoned_greatwork.casting.circles.AmbitNetwork
 import cn.xm1221.abadoned_greatwork.casting.circles.AmbitReshapeHook
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkServerConfig
 import cn.xm1221.abadoned_greatwork.networking.Abadoned_greatworkNetworking
+import cn.xm1221.abadoned_greatwork.notes.NoteSync
 import cn.xm1221.abadoned_greatwork.ponder.PonderCommands
 import cn.xm1221.abadoned_greatwork.ponder.data.PonderSceneLoader
 import cn.xm1221.abadoned_greatwork.registry.Abadoned_greatworkActions
@@ -64,6 +65,18 @@ object Abadoned_greatwork {
         }
         dev.architectury.event.events.common.PlayerEvent.PLAYER_JOIN.register { player ->
             PonderSceneLoader.syncIndexTo(player)
+            NoteSync.syncAll(player)
+        }
+        dev.architectury.event.events.common.PlayerEvent.PLAYER_RESPAWN.register { player, _, _ ->
+            NoteSync.syncAll(player)
+        }
+        dev.architectury.event.events.common.PlayerEvent.CHANGE_DIMENSION.register { player, _, _ ->
+            NoteSync.syncAll(player)
+        }
+        dev.architectury.event.events.common.TickEvent.PLAYER_POST.register { player ->
+            if (player is net.minecraft.server.level.ServerPlayer && player.tickCount % 20 == 0) {
+                cn.xm1221.abadoned_greatwork.ponder.data.PonderUnlockManager.evaluateAndSyncIfChanged(player, sendToast = true)
+            }
         }
         dev.architectury.event.events.common.CommandRegistrationEvent.EVENT.register { dispatcher, _, _ ->
             PonderCommands.register(dispatcher)
