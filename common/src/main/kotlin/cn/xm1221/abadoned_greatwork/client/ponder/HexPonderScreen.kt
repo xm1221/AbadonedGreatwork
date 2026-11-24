@@ -15,6 +15,9 @@ import at.petrak.hexcasting.client.render.drawSpot
 import at.petrak.hexcasting.client.render.findDupIndices
 import at.petrak.hexcasting.common.lib.HexSounds
 import cn.xm1221.MieLib.registry.DrawPatternHook
+import cn.xm1221.abadoned_greatwork.api.tianwen.TianwenApi
+import cn.xm1221.abadoned_greatwork.api.tianwen.TianwenStageRegistry
+import cn.xm1221.abadoned_greatwork.api.tianwen.TianwenStageRenderer
 import cn.xm1221.abadoned_greatwork.networking.msg.MsgPonderSandboxExecC2S
 import cn.xm1221.abadoned_greatwork.networking.msg.MsgPonderSandboxExecS2C
 import cn.xm1221.abadoned_greatwork.ponder.data.PonderPlaybackBundle
@@ -75,6 +78,7 @@ class HexPonderScreen(
 
     // 沙盒模式（「亲自一试」）状态
     private var sandboxMode: Boolean = false
+    private val stageRenderers = HashMap<String, TianwenStageRenderer>()
     private var sandboxSpellcasting: GuiSpellcasting? = null
     private var sandboxImageNbt: CompoundTag = CompoundTag()
     private var sandboxStackTags: List<CompoundTag> = emptyList()
@@ -160,6 +164,29 @@ class HexPonderScreen(
         computeLayout()
     }
 
+    private fun currentStageId(): String =
+        currentSnapshot()?.stageId?.ifBlank { TianwenApi.STAGE_HEX_GRID } ?: TianwenApi.STAGE_HEX_GRID
+
+    private fun activeStageRenderer(): TianwenStageRenderer? {
+        val sid = currentStageId()
+        if (sid == TianwenApi.STAGE_HEX_GRID) return null
+        return stageRenderers.getOrPut(sid) {
+            TianwenStageRegistry.create(sid) ?: return null
+        }
+    }
+
+    private fun isCurrentLeftPanelVisible(): Boolean {
+        if (sandboxMode) return true
+        val sid = currentStageId()
+        if (sid == TianwenApi.STAGE_HEX_GRID) return true
+        return activeStageRenderer()?.hasLeftPanel == true
+    }
+
+    private fun currentStageSupportsSandbox(): Boolean {
+        val sid = currentStageId()
+        return sid == TianwenApi.STAGE_HEX_GRID || activeStageRenderer()?.supportsSandbox == true
+    }
+
     private fun computeLayout() {
         pad = if (width < 430) 4 else 8
         topBarY = pad
@@ -171,13 +198,14 @@ class HexPonderScreen(
         bodyH = (bottomBarY - bodyY - 4).coerceAtLeast(110)
 
         leftX = pad
-        leftW = (width * 0.27f).roundToInt().coerceIn(124, 196)
+        val showLeft = isCurrentLeftPanelVisible()
+        leftW = if (showLeft) (width * 0.27f).roundToInt().coerceIn(124, 196) else 0
 
         val inlineDrawer = knowledgeOpen && width >= 480
         knowledgeW = if (inlineDrawer) 148 else 0
         knowledgeX = width - pad - knowledgeW
 
-        stageX = leftX + leftW + 4
+        stageX = if (showLeft) leftX + leftW + 4 else pad
         stageY = bodyY
         stageW = (width - stageX - pad - if (inlineDrawer) knowledgeW + 4 else 0).coerceAtLeast(140)
         stageH = bodyH
@@ -192,6 +220,7 @@ class HexPonderScreen(
         timelineW = width - pad * 2 - 12
         timelineH = 10
 
+        activeStageRenderer()?.onLayout(innerX, innerY, innerW, innerH)
         rebuildButtons()
     }
 
@@ -251,7 +280,7 @@ class HexPonderScreen(
         val rightEdge = width - pad - 5
         val kwX = rightEdge - kwW
         val sbX = kwX - (if (compact) 2 else 4) - sbW
-        buttons.add(BtnBox(sbX, by, sbW, bh, text("hexponder.ui.sandbox"), active = sandboxMode, enabled = total > 0) {
+        buttons.add(BtnBox(sbX, by, sbW, bh, text("hexponder.ui.sandbox"), active = sandboxMode, enabled = total > 0 && currentStageSupportsSandbox()) {
             toggleSandbox()
         })
         buttons.add(BtnBox(kwX, by, kwW, bh, text("hexponder.ui.knowledge"), active = knowledgeOpen, enabled = bundle.knowledgeCards.isNotEmpty()) {
@@ -376,13 +405,19 @@ class HexPonderScreen(
     private fun stepTo(targetIdx: Int, autoPlay: Boolean) {
         if (sandboxMode) exitSandbox()
         if (bundle.snapshots.isEmpty()) return
+        val prevShowLeft = isCurrentLeftPanelVisible()
         currentStepIndex = targetIdx.coerceIn(0, bundle.snapshots.lastIndex)
         stepTicks = 0f
         lastSegmentSounded = -1
         stepFinishedTriggered = false
         playing = autoPlay
         stackScroll = 0
-        rebuildButtons()
+        if (prevShowLeft != isCurrentLeftPanelVisible()) {
+            computeLayout()
+        } else {
+            activeStageRenderer()?.onLayout(innerX, innerY, innerW, innerH)
+            rebuildButtons()
+        }
     }
 
     private fun toggleSandbox() {
@@ -498,7 +533,9 @@ class HexPonderScreen(
         graphics.fill(0, 0, width, height, 0xCC09070F.toInt())
 
         renderTopBar(graphics)
-        renderLeftPanel(graphics, mouseX, mouseY)
+        if (leftW > 0) {
+            renderLeftPanel(graphics, mouseX, mouseY)
+        }
         renderStagePanel(graphics, mouseX, mouseY, partialTick)
         if (knowledgeOpen && knowledgeW > 0) {
             renderKnowledgeDrawer(graphics, knowledgeX, bodyY, knowledgeW, bodyH)
@@ -545,6 +582,9 @@ class HexPonderScreen(
         if (!(knowledgeOpen && knowledgeW == 0)) {
             hoveredStackTag?.let { tag ->
                 graphics.renderTooltip(font, IotaType.getDisplay(tag), mouseX, mouseY)
+            }
+            if (!sandboxMode) {
+                activeStageRenderer()?.renderOverlayTooltip(minecraft!!, font, graphics, mouseX, mouseY)
             }
         }
         renderTimelineTooltip(graphics, mouseX, mouseY)
@@ -719,9 +759,30 @@ class HexPonderScreen(
         if (sandboxMode) {
             renderSandboxStage(g, mouseX, mouseY, partialTick)
         } else {
-            renderPlaybackStage(g, partialTick)
+            val customStage = activeStageRenderer()
+            if (customStage != null) {
+                customStage.renderStage(
+                    mc = minecraft!!,
+                    font = font,
+                    g = g,
+                    innerX = innerX,
+                    innerY = innerY,
+                    innerW = innerW,
+                    innerH = innerH,
+                    snapshots = bundle.snapshots,
+                    currentStepIndex = currentStepIndex,
+                    stepTicks = stepTicks,
+                    partialTick = partialTick,
+                    playing = playing,
+                    speed = speed,
+                    mouseX = mouseX,
+                    mouseY = mouseY,
+                )
+            } else {
+                renderPlaybackStage(g, partialTick)
+                renderParenthesizedTray(g, mouseX, mouseY)
+            }
         }
-        renderParenthesizedTray(g, mouseX, mouseY)
         g.disableScissor()
 
         // 舞台顶部动作/章节小标牌（仅演示时显示精简名称）
@@ -1056,27 +1117,43 @@ class HexPonderScreen(
 
         var targetX = innerX + innerW / 2
         var targetY = innerY + innerH / 2
-        when (callout.anchor) {
-            "stack" -> {
-                targetX = leftX + leftW - 8
-                targetY = (bodyY + 24 + callout.anchorIndex.coerceIn(0, 6) * 15).coerceAtMost(bodyY + bodyH - 60)
-            }
-            "hud" -> {
-                targetX = leftX + leftW - 10
-                targetY = bodyY + bodyH - 58
-            }
-            "coord" -> {
-                val visible = collectVisiblePatterns(currentStepIndex)
-                val (fitHex, off) = computeStageTransform(visible)
-                val q = callout.anchorQ ?: snap.originQ
-                val r = callout.anchorR ?: snap.originR
-                val px = coordToPx(HexCoord(q, r), fitHex, off)
-                targetX = px.x.roundToInt().coerceIn(innerX + 6, innerX + innerW - 6)
-                targetY = px.y.roundToInt().coerceIn(innerY + 6, innerY + innerH - 6)
-            }
-            else -> {
-                targetX = innerX + (innerW * 0.42f).roundToInt()
-                targetY = innerY + (innerH * 0.45f).roundToInt()
+        val customAnchor = activeStageRenderer()?.resolveAnchorScreenPos(
+            anchor = callout.anchor,
+            anchorQ = callout.anchorQ,
+            anchorR = callout.anchorR,
+            innerX = innerX,
+            innerY = innerY,
+            innerW = innerW,
+            innerH = innerH,
+            snapshots = bundle.snapshots,
+            currentStepIndex = currentStepIndex,
+        )
+        if (customAnchor != null) {
+            targetX = customAnchor.x.roundToInt().coerceIn(innerX + 6, innerX + innerW - 6)
+            targetY = customAnchor.y.roundToInt().coerceIn(innerY + 6, innerY + innerH - 6)
+        } else {
+            when (callout.anchor) {
+                "stack" -> {
+                    targetX = if (leftW > 0) leftX + leftW - 8 else innerX + 20
+                    targetY = (bodyY + 24 + callout.anchorIndex.coerceIn(0, 6) * 15).coerceAtMost(bodyY + bodyH - 60)
+                }
+                "hud" -> {
+                    targetX = if (leftW > 0) leftX + leftW - 10 else innerX + 20
+                    targetY = bodyY + bodyH - 58
+                }
+                "coord" -> {
+                    val visible = collectVisiblePatterns(currentStepIndex)
+                    val (fitHex, off) = computeStageTransform(visible)
+                    val q = callout.anchorQ ?: snap.originQ
+                    val r = callout.anchorR ?: snap.originR
+                    val px = coordToPx(HexCoord(q, r), fitHex, off)
+                    targetX = px.x.roundToInt().coerceIn(innerX + 6, innerX + innerW - 6)
+                    targetY = px.y.roundToInt().coerceIn(innerY + 6, innerY + innerH - 6)
+                }
+                else -> {
+                    targetX = innerX + (innerW * 0.42f).roundToInt()
+                    targetY = innerY + (innerH * 0.45f).roundToInt()
+                }
             }
         }
 
@@ -1228,6 +1305,9 @@ class HexPonderScreen(
         if (sandboxMode && mouseX >= innerX && mouseX <= innerX + innerW && mouseY >= innerY && mouseY <= innerY + innerH) {
             return sandboxSpellcasting?.mouseClicked(mouseX, mouseY, button) ?: false
         }
+        if (!sandboxMode && activeStageRenderer()?.mouseClicked(mouseX, mouseY, button) == true) {
+            return true
+        }
         return super.mouseClicked(mouseX, mouseY, button)
     }
 
@@ -1235,12 +1315,18 @@ class HexPonderScreen(
         if (sandboxMode) {
             return sandboxSpellcasting?.mouseDragged(mouseX, mouseY, button, dragX, dragY) ?: false
         }
+        if (activeStageRenderer()?.mouseDragged(mouseX, mouseY, button, dragX, dragY) == true) {
+            return true
+        }
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY)
     }
 
     override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (sandboxMode) {
             return sandboxSpellcasting?.mouseReleased(mouseX, mouseY, button) ?: false
+        }
+        if (activeStageRenderer()?.mouseReleased(mouseX, mouseY, button) == true) {
+            return true
         }
         return super.mouseReleased(mouseX, mouseY, button)
     }
@@ -1254,12 +1340,15 @@ class HexPonderScreen(
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, delta: Double): Boolean {
         val dir = if (delta > 0) -1 else 1
-        if (mouseX >= leftX && mouseX <= leftX + leftW) {
+        if (leftW > 0 && mouseX >= leftX && mouseX <= leftX + leftW) {
             stackScroll = (stackScroll + dir).coerceAtLeast(0)
             return true
         }
         if (knowledgeOpen && (knowledgeW == 0 || mouseX >= knowledgeX)) {
             knowledgeScroll = (knowledgeScroll + dir * 14).coerceAtLeast(0)
+            return true
+        }
+        if (!sandboxMode && activeStageRenderer()?.mouseScrolled(mouseX, mouseY, delta) == true) {
             return true
         }
         return super.mouseScrolled(mouseX, mouseY, delta)

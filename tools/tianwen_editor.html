@@ -399,7 +399,16 @@
         <div id="noStepHint" class="muted" style="padding:12px;">请先选择或添加一个步骤。</div>
         <div id="stepEditorFields" style="display:none;flex-direction:column;gap:6px;">
           <div class="form-group recessed">
-            <div class="section-head"><span>基础动作</span></div>
+            <div class="section-head"><span>基础动作与舞台切换</span></div>
+            <div class="form-row">
+              <label>本步舞台</label>
+              <select id="fStage" onchange="updateStepStage(this.value)">
+                <option value="">(继承上步/默认)</option>
+                <option value="hex_grid">hex_grid (咒术网格)</option>
+                <option value="world_3d">world_3d (3D 方块微缩)</option>
+                <option value="interaction_2d">interaction_2d (2D 物品交互)</option>
+              </select>
+            </div>
             <div class="form-row">
               <label>步骤类型</label>
               <select id="fType" onchange="updateStepField('type', this.value)">
@@ -409,6 +418,7 @@
                 <option value="peek">peek (移除栈项)</option>
                 <option value="clear">clear (清空画布)</option>
                 <option value="note">note (仅讲解)</option>
+                <option value="stage">stage (非网格舞台)</option>
               </select>
             </div>
             <div class="form-row"><label>动作 Action</label><input id="fAction" placeholder="hexcasting:get_caster" oninput="updateStepField('action', this.value)" /></div>
@@ -447,6 +457,27 @@
               </div>
             </div>
             <div class="form-row"><label>图案染色</label><input id="fColor" placeholder="留空=Hex原生；可填 #64C8FF" oninput="updateStepField('color', this.value)" /></div>
+          </div>
+
+          <div id="stageWorldBox" class="form-group recessed" style="display:none;">
+            <div class="section-head">
+              <span>3D 方块微缩舞台 (world)</span>
+              <button class="mini primary" onclick="openIconPicker(id => appendWorldBlock(id))">+ 添加方块</button>
+            </div>
+            <textarea id="fWorldJson" class="code" style="min-height:120px;" placeholder='{"blocks":[{"pos":[0,0,0],"block":"minecraft:deepslate_tiles"}]}' oninput="updateStepJsonObj('world', this.value)"></textarea>
+          </div>
+
+          <div id="stageInterBox" class="form-group recessed" style="display:none;">
+            <div class="section-head">
+              <span>2D 物品交互舞台 (interaction)</span>
+              <div style="display:flex;gap:3px;">
+                <button class="mini primary" onclick="openIconPicker(id => appendInterSlot('inputs', id))">+输入</button>
+                <button class="mini primary" onclick="openIconPicker(id => appendInterSlot('outputs', id))">+输出</button>
+              </div>
+            </div>
+            <div class="form-row"><label>交互动作</label><input id="fInterAct" placeholder="如：右键使用 / 刻印" oninput="updateInterField('action_label', this.value)" /></div>
+            <div class="form-row"><label>底部说明</label><input id="fInterCap" placeholder="简短流程说明" oninput="updateInterField('caption', this.value)" /></div>
+            <textarea id="fInterJson" class="code" style="min-height:90px;" oninput="updateStepJsonObj('interaction', this.value)"></textarea>
           </div>
 
           <div class="form-group recessed">
@@ -549,11 +580,18 @@
           <div class="form-row"><label>副标题 (EN)</label><input id="sSubEn" placeholder="留空自动同步中文" oninput="updateSceneText('subtitle', 'en', this.value)" /></div>
 
           <div class="grid-2">
+            <div class="form-row" style="grid-template-columns:46px 1fr;"><label>默认舞台</label>
+              <select id="sDefaultStage" onchange="updateScene('default_stage', this.value); syncAfterEdit();">
+                <option value="hex_grid">hex_grid</option>
+                <option value="world_3d">world_3d</option>
+                <option value="interaction_2d">interaction_2d</option>
+              </select>
+            </div>
             <div class="form-row" style="grid-template-columns:46px 1fr;"><label>分类</label>
               <select id="sCat" onchange="updateScene('category', this.value)"></select>
             </div>
-            <div class="form-row" style="grid-template-columns:42px 1fr;"><label>排序</label><input id="sSort" type="number" oninput="updateSceneNum('sort_order', this.value)" /></div>
           </div>
+          <div class="form-row"><label>排序权重</label><input id="sSort" type="number" oninput="updateSceneNum('sort_order', this.value)" /></div>
 
           <div class="form-row">
             <label>章节图标</label>
@@ -1918,6 +1956,14 @@ function resolveStepNaturalTitle(idx) {
   return st.type || "execute";
 }
 
+function getEffectiveStepStage(idx) {
+  let stg = scene.default_stage || "hex_grid";
+  for (let i = 0; i <= idx && i < scene.steps.length; i++) {
+    if (scene.steps[i].stage) stg = scene.steps[i].stage;
+  }
+  return stg;
+}
+
 function getEffectiveStepMeta(idx) {
   ensureSceneTextsSync();
   let lastChapter = "", lastColor = "";
@@ -1929,6 +1975,7 @@ function getEffectiveStepMeta(idx) {
   }
   const s = scene.steps[idx];
   const tx = sceneTexts.steps[idx];
+  const stage = getEffectiveStepStage(idx);
   const entry = resolveCatalogEntry(s.action);
   const sig = s.pattern || (entry ? entry.sig : "");
   const dir = s.start_dir || (entry ? entry.dir : (scene.start_dir || "NORTH_EAST"));
@@ -1943,6 +1990,7 @@ function getEffectiveStepMeta(idx) {
     strokeTicks, holdTicks, clearBefore, color: lastColor,
     chapter: lastChapter, title: titleText, calloutText,
     hasExplicitChapter: !!(tx.chapter_zh || tx.chapter_en),
+    stage,
     cursorItem: s.cursor_item !== undefined ? s.cursor_item : (scene.cursor_item || "hexcasting:staff/oak")
   };
 }
@@ -2093,6 +2141,27 @@ function renderCanvas() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
 
+  const curMeta = scene.steps[selectedStepIdx] ? getEffectiveStepMeta(selectedStepIdx) : null;
+  const effStage = curMeta ? curMeta.stage : (scene.default_stage || "hex_grid");
+  if (stageMode !== "draw" && effStage === "world_3d") {
+    renderWorld3DPreview(w, h, curMeta);
+    const curStep = scene.steps[selectedStepIdx];
+    const calloutTxt = curMeta ? curMeta.calloutText : "";
+    if (curStep && curStep.callout && calloutTxt && document.getElementById("chkShowCallout").checked) {
+      drawCalloutOnCanvas(curStep.callout, calloutTxt, w, h, 22, w * 0.5, h * 0.5, curMeta);
+    }
+    return;
+  }
+  if (stageMode !== "draw" && effStage === "interaction_2d") {
+    renderInteraction2DPreview(w, h, curMeta);
+    const curStep = scene.steps[selectedStepIdx];
+    const calloutTxt = curMeta ? curMeta.calloutText : "";
+    if (curStep && curStep.callout && calloutTxt && document.getElementById("chkShowCallout").checked) {
+      drawCalloutOnCanvas(curStep.callout, calloutTxt, w, h, 22, w * 0.5, h * 0.5, curMeta);
+    }
+    return;
+  }
+
   const { hex, ox, oy } = getViewportTransform();
   for (let r = -7; r <= 7; r++) {
     for (let q = -9; q <= 9; q++) {
@@ -2113,7 +2182,6 @@ function renderCanvas() {
   }
 
   const visible = collectVisibleSteps();
-  const curMeta = scene.steps[selectedStepIdx] ? getEffectiveStepMeta(selectedStepIdx) : null;
   const drawProg = curMeta && stageMode === "play" ? Math.min(1, Math.max(0, playTick / curMeta.strokeTicks)) : 1;
 
   let cursorTip = null, cursorColor = "#64c8ff";
@@ -2169,6 +2237,121 @@ function renderCanvas() {
   if (curStep && curStep.callout && calloutTxt && document.getElementById("chkShowCallout").checked) {
     drawCalloutOnCanvas(curStep.callout, calloutTxt, w, h, hex, ox, oy, curMeta);
   }
+}
+
+function renderWorld3DPreview(w, h, curMeta) {
+  const blocks = new Map();
+  let startIdx = selectedStepIdx;
+  while (startIdx > 0) {
+    const m = getEffectiveStepMeta(startIdx);
+    if (m.stage !== "world_3d" || m.clearBefore || scene.steps[startIdx].type === "clear") break;
+    startIdx--;
+  }
+  for (let i = startIdx; i <= selectedStepIdx; i++) {
+    const st = scene.steps[i];
+    if (getEffectiveStepStage(i) !== "world_3d") continue;
+    const wd = st.world || st.stage_data || {};
+    for (const b of (wd.blocks || [])) {
+      const k = (b.pos || [0,0,0]).join(",");
+      if (b.block === "minecraft:air") blocks.delete(k);
+      else blocks.set(k, b);
+    }
+  }
+  const curWd = (scene.steps[selectedStepIdx]?.world || scene.steps[selectedStepIdx]?.stage_data || {});
+  const list = [...blocks.values()];
+  const proj = (x, y, z) => ({
+    px: w * 0.5 + (x - z) * 28,
+    py: h * 0.56 + (x + z) * 14 - y * 28
+  });
+
+  // Painter's sort back-to-front
+  list.sort((a, b) => {
+    const pa = a.pos || [0,0,0], pb = b.pos || [0,0,0];
+    return (pa[0] + pa[2] + pa[1] * 0.1) - (pb[0] + pb[2] + pb[1] * 0.1);
+  });
+
+  for (const b of list) {
+    const [x, y, z] = b.pos || [0,0,0];
+    const c = proj(x, y, z);
+    const shortName = String(b.block || "").split(":").pop();
+    const isMod = String(b.block || "").startsWith("abadoned_greatwork:");
+    ctx.fillStyle = isMod ? "#523a88" : "#3a3548";
+    ctx.strokeStyle = "#08060d";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(c.px, c.py - 18); ctx.lineTo(c.px + 24, c.py - 6); ctx.lineTo(c.px, c.py + 6); ctx.lineTo(c.px - 24, c.py - 6); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = isMod ? "#3b2863" : "#282433";
+    ctx.beginPath();
+    ctx.moveTo(c.px - 24, c.py - 6); ctx.lineTo(c.px, c.py + 6); ctx.lineTo(c.px, c.py + 28); ctx.lineTo(c.px - 24, c.py + 16); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = isMod ? "#463075" : "#302b3d";
+    ctx.beginPath();
+    ctx.moveTo(c.px + 24, c.py - 6); ctx.lineTo(c.px, c.py + 6); ctx.lineTo(c.px, c.py + 28); ctx.lineTo(c.px + 24, c.py + 16); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = "#e8e0ff"; ctx.font = "10px Consolas, monospace"; ctx.textAlign = "center";
+    ctx.fillText(shortName.slice(0, 14), c.px, c.py - 2);
+  }
+  ctx.textAlign = "left";
+
+  for (const hl of (curWd.highlights || [])) {
+    const [x, y, z] = hl.pos || [0,0,0];
+    const c = proj(x, y, z);
+    ctx.strokeStyle = hl.color || "#64C8FF"; ctx.lineWidth = 2;
+    ctx.strokeRect(c.px - 25, c.py - 19, 50, 48);
+  }
+  for (const lnk of (curWd.links || [])) {
+    const f = proj(...(lnk.from || [0,0,0])), t = proj(...(lnk.to || [0,0,0]));
+    ctx.strokeStyle = lnk.color || "#B886FF"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(f.px, f.py); ctx.lineTo(t.px, t.py); ctx.stroke();
+  }
+}
+
+function renderInteraction2DPreview(w, h, curMeta) {
+  const st = scene.steps[selectedStepIdx] || {};
+  const inter = st.interaction || st.stage_data || {};
+  const inputs = inter.inputs || [];
+  const outputs = inter.outputs || [];
+  const slotSize = 44, gap = 10, arrowW = 90;
+  const inW = inputs.length ? inputs.length * slotSize + (inputs.length - 1) * gap : 0;
+  const outW = outputs.length ? outputs.length * slotSize + (outputs.length - 1) * gap : 0;
+  let sx = (w - (inW + arrowW + outW)) * 0.5;
+  const cy = h * 0.48;
+
+  const drawSlot = (sl, x, border) => {
+    ctx.fillStyle = "#141020"; ctx.fillRect(x, cy - slotSize / 2, slotSize, slotSize);
+    ctx.strokeStyle = border; ctx.lineWidth = 2; ctx.strokeRect(x, cy - slotSize / 2, slotSize, slotSize);
+    const img = getCanvasCursorImg(sl.item);
+    if (img) {
+      ctx.save(); ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, x + 6, cy - 16, 32, 32);
+      ctx.restore();
+    }
+    if (sl.label) {
+      const txt = studioData?.zh_cn?.[sl.label] || sl.label;
+      ctx.fillStyle = "#9c8fc0"; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+      ctx.fillText(txt.slice(0, 10), x + slotSize / 2, cy + slotSize / 2 + 14);
+    }
+  };
+
+  for (const sl of inputs) { drawSlot(sl, sx, "#64c8ff"); sx += slotSize + gap; }
+  const prog = Math.min(1, Math.max(0, playTick / (curMeta?.strokeTicks || 16)));
+  ctx.fillStyle = "#100c19"; ctx.fillRect(sx + 8, cy - 4, arrowW - 24, 8);
+  ctx.fillStyle = "#b886ff"; ctx.fillRect(sx + 8, cy - 4, (arrowW - 24) * prog, 8);
+  const actLbl = studioData?.zh_cn?.[inter.action_label] || inter.action_label || "";
+  if (actLbl) {
+    ctx.fillStyle = "#ffd93d"; ctx.font = "12px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(actLbl, sx + arrowW * 0.5, cy - 16);
+  }
+  sx += arrowW;
+  for (const sl of outputs) { drawSlot(sl, sx, "#ffd93d"); sx += slotSize + gap; }
+  const cap = studioData?.zh_cn?.[inter.caption] || inter.caption || "";
+  if (cap) {
+    ctx.fillStyle = "#d4cbe8"; ctx.font = "12px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(cap, w * 0.5, cy + 56);
+  }
+  ctx.textAlign = "left";
 }
 
 function drawCalloutOnCanvas(co, txt, w, h, hex, ox, oy, meta) {
@@ -2568,10 +2751,18 @@ function renderSteps() {
 function renderStageHudOverlays() {
   const cur = scene.steps[selectedStepIdx];
   const meta = cur ? getEffectiveStepMeta(selectedStepIdx) : null;
-  document.getElementById("stageTitleBadge").textContent = meta ? meta.title : (sceneTexts.title.zh || "-");
+  document.getElementById("stageTitleBadge").textContent = meta ? `[${meta.stage}] ${meta.title}` : (sceneTexts.title.zh || "-");
 
-  const sim = cur ? simulateUpTo(selectedStepIdx) : { stack: [], openParens: 0, parenBuf: [] };
+  const isHex = !meta || meta.stage === "hex_grid";
   const sBox = document.getElementById("stageStackMini");
+  const pBox = document.getElementById("stageParensMini");
+  if (!isHex) {
+    sBox.style.display = "none";
+    pBox.style.display = "none";
+    return;
+  }
+  sBox.style.display = "block";
+  const sim = cur ? simulateUpTo(selectedStepIdx) : { stack: [], openParens: 0, parenBuf: [] };
   let sHtml = `<div style="color:var(--amethyst);font-weight:bold;">栈 (${sim.stack.length})</div>`;
   if (!sim.stack.length) sHtml += `<div class="muted" style="margin-top:2px;">空栈</div>`;
   else [...sim.stack].reverse().slice(0, 5).forEach((v, i) => {
@@ -2579,7 +2770,6 @@ function renderStageHudOverlays() {
   });
   sBox.innerHTML = sHtml;
 
-  const pBox = document.getElementById("stageParensMini");
   if (sim.openParens > 0 || sim.parenBuf.length > 0) {
     pBox.style.display = "block";
     let pHtml = `<div class="hdr">括号 [×${sim.openParens}] (${sim.parenBuf.length})</div>`;
@@ -2598,6 +2788,20 @@ function syncInspectorOnly() {
   document.getElementById("noStepHint").style.display = has ? "none" : "block";
   document.getElementById("stepEditorFields").style.display = has ? "flex" : "none";
   if (!has) return;
+
+  document.getElementById("fStage").value = st.stage || "";
+  const effStage = getEffectiveStepStage(selectedStepIdx);
+  document.getElementById("stageWorldBox").style.display = effStage === "world_3d" ? "flex" : "none";
+  document.getElementById("stageInterBox").style.display = effStage === "interaction_2d" ? "flex" : "none";
+  if (effStage === "world_3d") {
+    document.getElementById("fWorldJson").value = JSON.stringify(st.world || st.stage_data || { blocks: [] }, null, 2);
+  }
+  if (effStage === "interaction_2d") {
+    const inter = st.interaction || st.stage_data || { inputs: [], action_label: "", outputs: [], caption: "" };
+    document.getElementById("fInterAct").value = inter.action_label || "";
+    document.getElementById("fInterCap").value = inter.caption || "";
+    document.getElementById("fInterJson").value = JSON.stringify(inter, null, 2);
+  }
 
   document.getElementById("fType").value = st.type || "execute";
   document.getElementById("fAction").value = st.action || "";
@@ -2655,6 +2859,7 @@ function syncSceneFields() {
   document.getElementById("sSubZh").value = sceneTexts.subtitle.zh || "";
   document.getElementById("sSubEn").value = sceneTexts.subtitle.en || "";
 
+  document.getElementById("sDefaultStage").value = scene.default_stage || "hex_grid";
   document.getElementById("sCat").value = scene.category || "basics";
   document.getElementById("sSort").value = scene.sort_order ?? 0;
   document.getElementById("sIcon").value = scene.icon || "";
@@ -2740,6 +2945,44 @@ function updateStepTitleMode(mode) {
   document.getElementById("fTitleKeyBox").style.display = mode === "key" ? "flex" : "none";
   setDirty(true); syncAfterEdit();
 }
+function updateStepStage(v) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  if (!v) delete st.stage;
+  else {
+    st.stage = v;
+    if (v !== "hex_grid" && !st.type) st.type = "stage";
+  }
+  setDirty(true); syncInspectorOnly(); syncAfterEdit();
+}
+function updateStepJsonObj(field, raw) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  try {
+    st[field] = JSON.parse(raw);
+    setDirty(true); refreshExports(); renderCanvas();
+  } catch (_) {}
+}
+function appendWorldBlock(blockId) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  st.world = st.world || { blocks: [] };
+  st.world.blocks = st.world.blocks || [];
+  st.world.blocks.push({ pos: [st.world.blocks.length, 0, 0], block: blockId, animate: "drop" });
+  setDirty(true); syncInspectorOnly(); syncAfterEdit();
+}
+function appendInterSlot(arrKey, itemId) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  st.interaction = st.interaction || { inputs: [], outputs: [] };
+  st.interaction[arrKey] = st.interaction[arrKey] || [];
+  st.interaction[arrKey].push({ item: itemId, label: itemId.split(":").pop() });
+  setDirty(true); syncInspectorOnly(); syncAfterEdit();
+}
+function updateInterField(k, v) {
+  const st = scene.steps[selectedStepIdx]; if (!st) return;
+  st.interaction = st.interaction || { inputs: [], outputs: [] };
+  st.interaction[k] = v;
+  document.getElementById("fInterJson").value = JSON.stringify(st.interaction, null, 2);
+  setDirty(true); syncAfterEdit();
+}
+
 function updateStepField(k, v, allowEmpty) {
   const st = scene.steps[selectedStepIdx]; if (!st) return;
   if (v === "" && !allowEmpty) delete st[k]; else st[k] = v;

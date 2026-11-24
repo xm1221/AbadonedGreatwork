@@ -13,10 +13,13 @@ import cn.xm1221.abadoned_greatwork.client.notes.NoteClientCommands
 import cn.xm1221.abadoned_greatwork.client.notes.NotePatchouliCompat
 import cn.xm1221.abadoned_greatwork.client.notes.screen.NoteLibraryScreen
 import cn.xm1221.abadoned_greatwork.client.notes.screen.NoteScrapPreviewScreen
+import cn.xm1221.abadoned_greatwork.api.tianwen.TianwenApi
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderClientState
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderDrawPatternWorker
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderPatchouliCompat
 import cn.xm1221.abadoned_greatwork.client.ponder.PonderScryingTrigger
+import cn.xm1221.abadoned_greatwork.client.ponder.stage.Interaction2DStageRenderer
+import cn.xm1221.abadoned_greatwork.client.ponder.stage.World3DStageRenderer
 import cn.xm1221.abadoned_greatwork.client.renderer.AmbitBoundaryRenderer
 import cn.xm1221.abadoned_greatwork.config.Abadoned_greatworkClientConfig
 import cn.xm1221.abadoned_greatwork.notes.ClientNoteLibrary
@@ -38,8 +41,10 @@ object Abadoned_greatworkClient {
         registerBlockTints()
         registerScryingLensOverlays()
 
-        // 注册 MieLib 问天图案渲染钩子与探知透镜按图案检索触发器
+        // 注册 MieLib 问天图案渲染钩子、探知透镜触发器与内置问天舞台类型
         DrawPatternHook.register(Abadoned_greatwork.id("ponder_pattern_color"), PonderDrawPatternWorker)
+        TianwenApi.registerStageType(TianwenApi.STAGE_WORLD_3D) { World3DStageRenderer() }
+        TianwenApi.registerStageType(TianwenApi.STAGE_INTERACTION_2D) { Interaction2DStageRenderer() }
         PonderScryingTrigger.init()
 
         // 贴图驱动 GUI 皮肤、玩家笔记与 Patchouli 注入

@@ -31,6 +31,11 @@ import java.util.UUID
 object PonderUnlockManager {
 
     private const val DATA_NAME = "${Abadoned_greatwork.MODID}_ponder_unlocks"
+    private val customEvaluators = java.util.concurrent.ConcurrentHashMap<String, (ServerPlayer, String) -> Boolean>()
+
+    fun registerCustomEvaluator(type: String, evaluator: (ServerPlayer, String) -> Boolean) {
+        customEvaluators[type.lowercase()] = evaluator
+    }
 
     class PlayerProgress {
         val unlocked: LinkedHashSet<ResourceLocation> = LinkedHashSet()
@@ -235,7 +240,7 @@ object PonderUnlockManager {
                 prog.viewed.contains(rl)
             }
             "manual" -> false
-            else -> false
+            else -> customEvaluators[cond.type.lowercase()]?.invoke(player, cond.id) ?: false
         }
     }
 }

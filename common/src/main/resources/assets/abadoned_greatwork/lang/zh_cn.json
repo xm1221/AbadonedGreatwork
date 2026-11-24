@@ -680,5 +680,6 @@
   "hexponder.scene.spells_and_mishaps.s3.tip": "绘制「构筑光源」：消耗栈顶坐标与少量媒质，在物质世界中召唤光源！“要有光”",
   "hexponder.scene.spells_and_mishaps.ch1": "② 事故与善后",
   "hexponder.scene.spells_and_mishaps.s4.tip": "若在空栈上强行绘制「指南针之纯化」，自然会降下「Iota 过少」事故，并在栈底塞入垃圾。",
-  "hexponder.scene.spells_and_mishaps.s5.tip": "绘制向下的「簿记员之策略」（v），即可随手抹去栈顶无用的垃圾 Iota。"
+  "hexponder.scene.spells_and_mishaps.s5.tip": "绘制向下的「簿记员之策略」（v），即可随手抹去栈顶无用的垃圾 Iota。",
+  "hexponder.ui.world3d_hint": "左键拖拽旋转视角 · 滚轮缩放"
 }

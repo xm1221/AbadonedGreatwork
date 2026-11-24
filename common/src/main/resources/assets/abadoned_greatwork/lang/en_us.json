@@ -680,5 +680,6 @@
   "hexponder.scene.spells_and_mishaps.s3.tip": "Draw Conjure Light: it consumes the vector and a pinch of media to ignite a light in the world!",
   "hexponder.scene.spells_and_mishaps.ch1": "II. Mishaps & Cleanup",
   "hexponder.scene.spells_and_mishaps.s4.tip": "Drawing Compass' Purification on an empty stack triggers a Not Enough Iotas Mishap and leaves Garbage.",
-  "hexponder.scene.spells_and_mishaps.s5.tip": "Draw a downward Bookkeeper's Gambit (v) to cleanly discard the unwanted Garbage iota."
+  "hexponder.scene.spells_and_mishaps.s5.tip": "Draw a downward Bookkeeper's Gambit (v) to cleanly discard the unwanted Garbage iota.",
+  "hexponder.ui.world3d_hint": "Drag to orbit · Scroll to zoom"
 }

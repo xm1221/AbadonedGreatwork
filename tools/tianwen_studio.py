@@ -1577,6 +1577,23 @@ def run_validation() -> dict[str, Any]:
                         fname += ".json"
                     if not (IOTAS_DIR / fname).is_file():
                         errors.append(f"场景 {rel} 压栈引用不存在的预设 iota: {push_val}")
+                for stage_key in ("interaction", "world", "stage_data"):
+                    sd = st.get(stage_key)
+                    if isinstance(sd, dict):
+                        for fld in ("action_label", "caption"):
+                            v = str(sd.get(fld) or "")
+                            if v.startswith("hexponder."):
+                                referenced_hp_keys.add(v)
+                                if v not in zh_cn or v not in en_us:
+                                    errors.append(f"场景 {rel} 舞台文案缺少翻译键: {v}")
+                        for arr_k in ("inputs", "outputs"):
+                            for slot in sd.get(arr_k) or []:
+                                if isinstance(slot, dict):
+                                    lv = str(slot.get("label") or "")
+                                    if lv.startswith("hexponder."):
+                                        referenced_hp_keys.add(lv)
+                                        if lv not in zh_cn or lv not in en_us:
+                                            errors.append(f"场景 {rel} 物品标签缺少翻译键: {lv}")
 
     orphan_scene_keys = sorted(
         k for k in zh_cn.keys() if k.startswith("hexponder.scene.") and k not in referenced_hp_keys

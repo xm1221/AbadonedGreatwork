@@ -246,6 +246,7 @@ object PonderSceneLoader {
         val defaultStrokeTicks = root.int("stroke_ticks", 14)
         val clearBefore = if (root.has("clear_before")) root.get("clear_before").asBoolean else true
         val startDir = root.str("start_dir", "NORTH_EAST")
+        val defaultStage = root.str("default_stage", "hex_grid")
         val escapedColor = if (root.has("escaped_color")) {
             parseColor(root.get("escaped_color").asString, DEFAULT_COLOR_ESCAPED)
         } else {
@@ -260,6 +261,7 @@ object PonderSceneLoader {
             globalInterval = defaultInterval,
             globalStrokeTicks = defaultStrokeTicks,
             globalStartDir = startDir,
+            globalStage = defaultStage,
             vectors = vectors,
         )
 
@@ -278,6 +280,7 @@ object PonderSceneLoader {
             clearBefore = clearBefore,
             startDir = startDir,
             escapedColor = escapedColor,
+            defaultStage = defaultStage,
             triggers = triggers,
             unlock = unlock,
             knowledgeCards = knowledge,
@@ -336,17 +339,33 @@ object PonderSceneLoader {
         globalInterval: Int,
         globalStrokeTicks: Int,
         globalStartDir: String,
+        globalStage: String,
         vectors: Map<String, Pair<Int, Int>>,
     ): List<PonderStepDef> {
         val out = ArrayList<PonderStepDef>(arr.size())
         var lastColor = -1
         var lastTitle = ""
         var lastChapter = ""
+        var lastStage = globalStage
 
         for (el in arr) {
             if (!el.isJsonObject) continue
             val o = el.asJsonObject
             val type = o.str("type", "execute")
+            val stepStage = if (o.has("stage")) {
+                val stg = o.get("stage").asString.ifBlank { globalStage }
+                lastStage = stg
+                stg
+            } else {
+                lastStage
+            }
+            val stageDataElem = when {
+                o.has("stage_data") -> o.get("stage_data")
+                o.has("world") -> o.get("world")
+                o.has("interaction") -> o.get("interaction")
+                else -> null
+            }
+            val stageDataJson = stageDataElem?.toString() ?: ""
             val action = o.str("action", "")
             val pattern = o.str("pattern", "")
             val stepStartDir = o.str("start_dir", globalStartDir)
@@ -430,6 +449,8 @@ object PonderSceneLoader {
             out.add(
                 PonderStepDef(
                     type = type,
+                    stage = stepStage,
+                    stageDataJson = stageDataJson,
                     action = action,
                     pattern = pattern,
                     startDir = stepStartDir,

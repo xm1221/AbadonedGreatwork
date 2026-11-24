@@ -91,6 +91,8 @@ data class PonderKnowledgeCardDef(
  */
 data class PonderStepDef(
     val type: String = "execute",
+    val stage: String = "hex_grid",
+    val stageDataJson: String = "",
     val action: String = "",
     val pattern: String = "",
     val startDir: String = "NORTH_EAST",
@@ -145,6 +147,7 @@ data class PonderSceneDef(
     val clearBefore: Boolean,
     val startDir: String,
     val escapedColor: Int,
+    val defaultStage: String = "hex_grid",
     val triggers: PonderTriggers,
     val unlock: PonderUnlockDef = PonderUnlockDef(),
     val knowledgeCards: List<PonderKnowledgeCardDef>,
@@ -356,6 +359,8 @@ data class ResolvedKnowledgeCard(
 data class StepSnapshot(
     val stepIndex: Int,
     val stepType: String,
+    val stageId: String = "hex_grid",
+    val stageDataJson: String = "",
     val actionId: String,
     val title: String,
     val chapter: String,
@@ -386,6 +391,8 @@ data class StepSnapshot(
     fun writeToBuf(buf: FriendlyByteBuf) {
         buf.writeInt(stepIndex)
         buf.writeUtf(stepType)
+        buf.writeUtf(stageId)
+        buf.writeUtf(stageDataJson)
         buf.writeUtf(actionId)
         buf.writeUtf(title)
         buf.writeUtf(chapter)
@@ -420,6 +427,8 @@ data class StepSnapshot(
         fun readFromBuf(buf: FriendlyByteBuf): StepSnapshot = StepSnapshot(
             stepIndex = buf.readInt(),
             stepType = buf.readUtf(),
+            stageId = buf.readUtf(),
+            stageDataJson = buf.readUtf(),
             actionId = buf.readUtf(),
             title = buf.readUtf(),
             chapter = buf.readUtf(),

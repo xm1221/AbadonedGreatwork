@@ -59,64 +59,67 @@ object PonderPreSimulator {
             val prevStackSize = vm.image.stack.size
             env.capturedMessages.clear()
 
-            val displayPat = resolveDisplayPattern(step)
-            val execPat = resolveExecPattern(step)
+            val isHexGrid = step.stage == "hex_grid"
+            val displayPat = if (isHexGrid) resolveDisplayPattern(step) else null
+            val execPat = if (isHexGrid) resolveExecPattern(step) else null
             var resolutionType = when (step.type) {
                 "push" -> "PUSH"
                 "peek" -> "PEEK"
                 "clear" -> "CLEAR"
-                "note" -> "NOTE"
+                "note", "stage" -> "NOTE"
                 else -> "EVALUATED"
             }
 
-            when (step.type) {
-                "push" -> {
-                    val pushTag = PonderIotaCodec.resolveElement(step.pushRaw, presets)
-                    if (pushTag != null) {
-                        val iota = IotaType.deserialize(pushTag, world)
-                        if (iota != null) {
-                            vm.image = vm.image.copy(stack = vm.image.stack + iota)
+            if (isHexGrid) {
+                when (step.type) {
+                    "push" -> {
+                        val pushTag = PonderIotaCodec.resolveElement(step.pushRaw, presets)
+                        if (pushTag != null) {
+                            val iota = IotaType.deserialize(pushTag, world)
+                            if (iota != null) {
+                                vm.image = vm.image.copy(stack = vm.image.stack + iota)
+                            }
                         }
                     }
-                }
-                "push_in" -> {
-                    val pushTag = PonderIotaCodec.resolveElement(step.pushRaw, presets)
-                    if (pushTag != null) {
-                        val iota = IotaType.deserialize(pushTag, world)
-                        if (iota != null) {
-                            val res = vm.queueExecuteAndWrapIota(iota, world)
+                    "push_in" -> {
+                        val pushTag = PonderIotaCodec.resolveElement(step.pushRaw, presets)
+                        if (pushTag != null) {
+                            val iota = IotaType.deserialize(pushTag, world)
+                            if (iota != null) {
+                                val res = vm.queueExecuteAndWrapIota(iota, world)
+                                resolutionType = res.resolutionType.name
+                            }
+                        }
+                    }
+                    "peek" -> {
+                        val removeTargets = if (step.peekIndices.isNotEmpty()) {
+                            step.peekIndices
+                        } else if (step.peekIndex >= 0) {
+                            listOf(step.peekIndex)
+                        } else {
+                            emptyList()
+                        }
+                        if (removeTargets.isNotEmpty()) {
+                            val mutable = vm.image.stack.toMutableList()
+                            val realIndices = removeTargets
+                                .map { mutable.size - 1 - it }
+                                .filter { it in mutable.indices }
+                                .distinct()
+                                .sortedDescending()
+                            for (realIdx in realIndices) {
+                                mutable.removeAt(realIdx)
+                            }
+                            vm.image = vm.image.copy(stack = mutable)
+                        }
+                    }
+                    "clear", "note", "stage" -> {
+                        // clear 仅由客户端画布在绘制前清空旧图案，note/stage 为纯讲解节点，均不改动 VM 栈
+                    }
+                    else -> {
+                        if (execPat != null) {
+                            val res = vm.queueExecuteAndWrapIota(PatternIota(execPat), world)
                             resolutionType = res.resolutionType.name
                         }
-                    }
-                }
-                "peek" -> {
-                    val removeTargets = if (step.peekIndices.isNotEmpty()) {
-                        step.peekIndices
-                    } else if (step.peekIndex >= 0) {
-                        listOf(step.peekIndex)
-                    } else {
-                        emptyList()
-                    }
-                    if (removeTargets.isNotEmpty()) {
-                        val mutable = vm.image.stack.toMutableList()
-                        val realIndices = removeTargets
-                            .map { mutable.size - 1 - it }
-                            .filter { it in mutable.indices }
-                            .distinct()
-                            .sortedDescending()
-                        for (realIdx in realIndices) {
-                            mutable.removeAt(realIdx)
-                        }
-                        vm.image = vm.image.copy(stack = mutable)
-                    }
-                }
-                "clear", "note" -> {
-                    // clear 仅由客户端画布在绘制前清空旧图案，note 为纯讲解节点，均不改动 VM 栈
-                }
-                else -> {
-                    if (execPat != null) {
-                        val res = vm.queueExecuteAndWrapIota(PatternIota(execPat), world)
-                        resolutionType = res.resolutionType.name
                     }
                 }
             }
@@ -162,6 +165,8 @@ object PonderPreSimulator {
                 StepSnapshot(
                     stepIndex = index,
                     stepType = step.type,
+                    stageId = step.stage,
+                    stageDataJson = step.stageDataJson,
                     actionId = step.action,
                     title = stepTitle,
                     chapter = step.chapter,
@@ -173,7 +178,7 @@ object PonderPreSimulator {
                     clearCanvasBefore = clearBefore,
                     patternColor = resolvedColor,
                     cursorItemId = cursorId,
-                    strokeTicks = if (displayPat != null) step.strokeTicks else 1,
+                    strokeTicks = if (displayPat != null || !isHexGrid) step.strokeTicks else 1,
                     holdTicks = step.holdTicks,
                     stackTags = stackTags,
                     poppedCount = poppedCount,
